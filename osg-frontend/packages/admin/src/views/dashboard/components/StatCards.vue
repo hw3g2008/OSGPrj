@@ -24,6 +24,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import type { DashboardStats } from '@/api/dashboard'
 
 const props = defineProps<{
@@ -31,6 +32,7 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const { t } = useI18n()
 
 const cards = computed(() => {
   const s = props.stats
@@ -40,9 +42,9 @@ const cards = computed(() => {
       icon: 'mdi-account-group',
       iconColor: '#6366F1',
       iconBg: '#EEF2FF',
-      label: '学员总数',
+      label: t('admin.dashboard.stat-cards.total-students'),
       value: String(s.studentCount),
-      sub: `本月新增 ${s.newStudentsThisMonth}`,
+      sub: t('admin.dashboard.stat-cards.new-this-month-sub', { count: s.newStudentsThisMonth }),
       subIcon: 'mdi-trending-up',
       subStyle: { color: '#22C55E' },
       route: '/students',
@@ -51,7 +53,7 @@ const cards = computed(() => {
       icon: 'mdi-account-tie',
       iconColor: '#3B82F6',
       iconBg: '#DBEAFE',
-      label: '导师总数',
+      label: t('admin.dashboard.stat-cards.total-mentors'),
       value: String(s.mentorCount),
       sub: `Lead ${s.leadMentorCount} · Mentor ${s.mentorOnlyCount}`,
       subStyle: {},
@@ -61,9 +63,9 @@ const cards = computed(() => {
       icon: 'mdi-clipboard-clock',
       iconColor: '#F59E0B',
       iconBg: '#FEF3C7',
-      label: '待审课时',
+      label: t('admin.dashboard.stat-cards.pending-hours'),
       value: String(s.pendingClassHours),
-      sub: `最早 ${s.earliestPendingDays}天前`,
+      sub: t('admin.dashboard.stat-cards.earliest-days-sub', { count: s.earliestPendingDays }),
       subIcon: 'mdi-clock',
       subStyle: { color: '#F59E0B' },
       route: '/reports',
@@ -72,7 +74,7 @@ const cards = computed(() => {
       icon: 'mdi-cash-check',
       iconColor: '#22C55E',
       iconBg: '#D1FAE5',
-      label: '待结算',
+      label: t('admin.dashboard.stat-cards.pending-settlement'),
       value: `$${s.pendingSettlement.toLocaleString()}`,
       sub: `Report $${s.settlementReport.toLocaleString()} · Other $${s.settlementOther.toLocaleString()}`,
       subStyle: {},
@@ -82,9 +84,9 @@ const cards = computed(() => {
       icon: 'mdi-receipt-text-clock',
       iconColor: '#EF4444',
       iconBg: '#FEE2E2',
-      label: '待审报销',
+      label: t('admin.dashboard.stat-cards.pending-expense'),
       value: String(s.pendingExpense),
-      sub: `共计 $${s.expenseTotal.toLocaleString()}`,
+      sub: t('admin.dashboard.stat-cards.total-expense-sub', { amount: '$' + s.expenseTotal.toLocaleString() }),
       subStyle: {},
       route: '/expense',
     },

@@ -3,9 +3,9 @@
     <div class="dashboard-card__header recent-activity__header">
       <span class="dashboard-card__title recent-activity__title-wrap">
         <span class="mdi mdi-history recent-activity__header-icon" />
-        <span>最近活动</span>
+        {{ t('admin.dashboard.recent-activity.title') }}
       </span>
-      <a class="recent-activity__link" @click="router.push('/logs')">查看全部</a>
+      <a class="recent-activity__link" @click="router.push('/logs')">{{ t('admin.dashboard.recent-activity.view-all') }}</a>
     </div>
     <div class="dashboard-card__body recent-activity__body">
       <div
@@ -28,7 +28,7 @@
         </div>
       </div>
       <div v-if="!activities || activities.length === 0" class="recent-activity__empty">
-        暂无活动记录
+        {{ t('admin.dashboard.recent-activity.no-data') }}
       </div>
     </div>
   </div>
@@ -36,6 +36,7 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import type { ActivityItem } from '@/api/dashboard'
 
 defineProps<{
@@ -43,6 +44,7 @@ defineProps<{
 }>()
 
 const router = useRouter()
+const { t } = useI18n()
 </script>
 
 <style scoped lang="scss">

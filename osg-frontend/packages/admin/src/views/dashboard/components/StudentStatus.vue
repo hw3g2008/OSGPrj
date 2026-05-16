@@ -3,7 +3,7 @@
     <div class="dashboard-card__header">
       <span class="dashboard-card__title student-status__title-wrap">
         <span class="mdi mdi-chart-pie student-status__title-icon" />
-        <span>学员状态</span>
+        {{ t('admin.dashboard.student-status.title') }}
       </span>
     </div>
     <div v-if="data" class="dashboard-card__body student-status__body">
@@ -24,13 +24,16 @@
         </div>
       </div>
     </div>
-    <div v-else class="dashboard-card__body student-status__empty">暂无数据</div>
+    <div v-else class="dashboard-card__body student-status__empty">{{ t('admin.dashboard.student-status.no-data') }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { StudentStatusData } from '@/api/dashboard'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   data: StudentStatusData | null

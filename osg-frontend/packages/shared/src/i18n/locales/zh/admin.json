@@ -95,7 +95,8 @@
       "approved-hours": "已审课时",
       "hours-consumed": "课时消耗",
       "settled-amount": "已结算金额",
-      "no-data": "暂无数据"
+      "no-data": "暂无数据",
+      "count-unit": "{count}条"
     },
     "quick-actions": {
       "title": "快捷操作",
@@ -117,7 +118,10 @@
       "earliest-days": "最早",
       "pending-settlement": "待结算",
       "pending-expense": "待审报销",
-      "total-expense": "共计"
+      "total-expense": "共计",
+      "new-this-month-sub": "本月新增 {count}",
+      "earliest-days-sub": "最早 {count}天前",
+      "total-expense-sub": "共计 {amount}"
     },
     "student-status": {
       "title": "学员状态",

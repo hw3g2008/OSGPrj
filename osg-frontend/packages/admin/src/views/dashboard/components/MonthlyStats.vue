@@ -3,7 +3,7 @@
     <div class="dashboard-card__header">
       <span class="dashboard-card__title monthly-stats__title-wrap">
         <span class="mdi mdi-calendar-month monthly-stats__title-icon" />
-        <span>本月统计</span>
+        <span>{{ t('admin.dashboard.monthly-stats.title') }}</span>
       </span>
     </div>
     <div v-if="data" class="dashboard-card__body monthly-stats__body">
@@ -16,27 +16,30 @@
         <span class="monthly-stats__value" :style="item.style">{{ item.value }}</span>
       </div>
     </div>
-    <div v-else class="dashboard-card__body monthly-stats__empty">暂无数据</div>
+    <div v-else class="dashboard-card__body monthly-stats__empty">{{ t('admin.dashboard.monthly-stats.no-data') }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { MonthlyStatsData } from '@/api/dashboard'
 
 const props = defineProps<{
   data: MonthlyStatsData | null
 }>()
 
+const { t } = useI18n()
+
 const items = computed(() => {
   const d = props.data
   if (!d) return []
   return [
-    { label: '新增学员', value: String(d.newStudents), style: {} },
-    { label: '新签合同', value: `$${d.newContracts.toLocaleString()}`, style: {} },
-    { label: '已审课时', value: `${d.approvedClassHours}条`, style: {} },
-    { label: '课时消耗', value: `${d.classHoursConsumed}h`, style: {} },
-    { label: '已结算金额', value: `$${d.settledAmount.toLocaleString()}`, style: { color: 'var(--success, #22C55E)' } },
+    { label: t('admin.dashboard.monthly-stats.new-students'), value: String(d.newStudents), style: {} },
+    { label: t('admin.dashboard.monthly-stats.new-contracts'), value: `$${d.newContracts.toLocaleString()}`, style: {} },
+    { label: t('admin.dashboard.monthly-stats.approved-hours'), value: t('admin.dashboard.monthly-stats.count-unit', { count: d.approvedClassHours }), style: {} },
+    { label: t('admin.dashboard.monthly-stats.hours-consumed'), value: `${d.classHoursConsumed}h`, style: {} },
+    { label: t('admin.dashboard.monthly-stats.settled-amount'), value: `$${d.settledAmount.toLocaleString()}`, style: { color: 'var(--success, #22C55E)' } },
   ]
 })
 </script>

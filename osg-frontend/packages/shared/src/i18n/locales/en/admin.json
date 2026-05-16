@@ -95,7 +95,8 @@
       "approved-hours": "Approved Hours",
       "hours-consumed": "Hours Consumed",
       "settled-amount": "Settled Amount",
-      "no-data": "No data available"
+      "no-data": "No data available",
+      "count-unit": "{count}"
     },
     "quick-actions": {
       "title": "Quick Actions",
@@ -117,7 +118,10 @@
       "earliest-days": "Earliest",
       "pending-settlement": "Pending Settlement",
       "pending-expense": "Pending Expense",
-      "total-expense": "Total"
+      "total-expense": "Total",
+      "new-this-month-sub": "New this month: {count}",
+      "earliest-days-sub": "Earliest: {count} days ago",
+      "total-expense-sub": "Total: {amount}"
     },
     "student-status": {
       "title": "Student Status",

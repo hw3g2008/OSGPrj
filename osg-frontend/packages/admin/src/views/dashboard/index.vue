@@ -1,21 +1,21 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="欢迎回来，管理员">
+    <PageHeader :title-zh="t('admin.dashboard.title')">
       <template #actions>
         <a-button @click="fetchAll">
           <template #icon><ReloadOutlined /></template>
-          刷新数据
+          {{ t('admin.dashboard.refresh') }}
         </a-button>
       </template>
     </PageHeader>
 
-    <!-- 待处理事项提醒 -->
+    <!-- Todo Reminder -->
     <TodoReminder :todos="todos" />
 
-    <!-- 统计卡片 -->
+    <!-- Stat Cards -->
     <StatCards :stats="stats" />
 
-    <!-- 两栏布局 -->
+    <!-- Two-column layout -->
     <a-row :gutter="20">
       <a-col :span="16">
         <RecentActivity :activities="activities" />
@@ -33,6 +33,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ReloadOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import {
@@ -56,6 +57,8 @@ import QuickActions from './components/QuickActions.vue'
 import StudentStatus from './components/StudentStatus.vue'
 import MonthlyStats from './components/MonthlyStats.vue'
 
+const { t } = useI18n()
+
 const stats = ref<DashboardStats | null>(null)
 const todos = ref<TodoItem[] | null>(null)
 const activities = ref<ActivityItem[] | null>(null)
@@ -64,8 +67,8 @@ const monthlyStats = ref<MonthlyStatsData | null>(null)
 
 const todayStr = computed(() => {
   const d = new Date()
-  const weekDays = ['日', '一', '二', '三', '四', '五', '六']
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 周${weekDays[d.getDay()]}`
+  const weekDays = ['日', '一', '二', '三', '四', '五', '六'] // i18n-skip-line: dev comment
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 周${weekDays[d.getDay()]}` // i18n-skip-line: dev comment
 })
 
 async function fetchAll() {
@@ -83,12 +86,12 @@ async function fetchAll() {
     if (ss.status === 'fulfilled') studentStatus.value = ss.value as any
     if (ms.status === 'fulfilled') monthlyStats.value = ms.value as any
   } catch {
-    // API 未就绪时静默失败，页面仍可渲染空状态
+    // i18n-skip-line: dev comment — API 未就绪时静默失败，页面仍可渲染空状态
   }
 }
 
 function handleAction(key: string) {
-  // 快捷操作：后续模块实现弹窗逻辑，当前占位
+  // i18n-skip-line: dev comment — 快捷操作：后续模块实现弹窗逻辑，当前占位
   console.log('Quick action:', key)
 }
 

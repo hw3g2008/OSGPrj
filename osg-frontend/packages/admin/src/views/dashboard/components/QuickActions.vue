@@ -3,7 +3,7 @@
     <div class="dashboard-card__header">
       <span class="dashboard-card__title quick-actions__title-wrap">
         <span class="mdi mdi-lightning-bolt quick-actions__title-icon" />
-        <span>快捷操作</span>
+        {{ t('admin.dashboard.quick-actions.title') }}
       </span>
     </div>
     <div class="dashboard-card__body quick-actions__body">
@@ -21,16 +21,21 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
 defineEmits<{
   (e: 'action', key: string): void
 }>()
 
-const actions = [
-  { key: 'add-student', icon: 'mdi-account-plus', label: '新增学员' },
-  { key: 'add-staff', icon: 'mdi-account-tie', label: '新增导师' },
-  { key: 'add-contract', icon: 'mdi-file-sign', label: '新增合同' },
-  { key: 'send-notice', icon: 'mdi-bell-plus', label: '发送通知' },
-]
+const { t } = useI18n()
+
+const actions = computed(() => [
+  { key: 'add-student', icon: 'mdi-account-plus', label: t('admin.dashboard.quick-actions.add-student') },
+  { key: 'add-staff', icon: 'mdi-account-tie', label: t('admin.dashboard.quick-actions.add-staff') },
+  { key: 'add-contract', icon: 'mdi-file-sign', label: t('admin.dashboard.quick-actions.add-contract') },
+  { key: 'send-notice', icon: 'mdi-bell-plus', label: t('admin.dashboard.quick-actions.send-notice') },
+])
 </script>
 
 <style scoped lang="scss">

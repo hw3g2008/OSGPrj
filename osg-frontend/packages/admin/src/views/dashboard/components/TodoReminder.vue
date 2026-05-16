@@ -4,7 +4,7 @@
       <span class="mdi mdi-bell-ring todo-reminder__bell" />
     </div>
     <div class="todo-reminder__content">
-      <strong class="todo-reminder__title">待处理事项</strong>
+      <strong class="todo-reminder__title">{{ t('admin.dashboard.todo-reminder.title') }}</strong>
       <div class="todo-reminder__list">
         <a
           v-for="item in todos"
@@ -13,16 +13,17 @@
           @click="handleClick(item.route)"
         >
           <span class="mdi" :class="routeIconMap[item.route] || 'mdi-circle-small'" />
-          <span>{{ item.count }}条{{ item.label }}</span>
+          <span>{{ item.count }}{{ t('admin.dashboard.todo-reminder.count-label') }}{{ item.label }}</span>
         </a>
       </div>
     </div>
-    <button class="todo-reminder__btn" @click="handleViewAll">查看全部</button>
+    <button class="todo-reminder__btn" @click="handleViewAll">{{ t('admin.dashboard.todo-reminder.view-all') }}</button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import type { TodoItem } from '@/api/dashboard'
 
 defineProps<{
@@ -30,6 +31,7 @@ defineProps<{
 }>()
 
 const router = useRouter()
+const { t } = useI18n()
 
 const routeIconMap: Record<string, string> = {
   '/reports': 'mdi-clipboard-clock',
