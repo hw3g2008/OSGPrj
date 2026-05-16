@@ -1,10 +1,10 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="学员求职总览" title-en="Job Overview">
+    <PageHeader :title-zh="t('admin.career.jobOverview.index.pageTitle')" title-en="Job Overview">
       <template #actions>
         <a-button :loading="exporting" @click="handleExport">
           <template #icon><ExportOutlined /></template>
-          导出
+          {{ t('admin.career.jobOverview.index.export') }}
         </a-button>
       </template>
     </PageHeader>
@@ -14,7 +14,7 @@
       <!-- 左侧：本月关键指标 -->
       <a-card :bordered="false" style="margin: 0;">
         <template #title>
-          <span style="font-weight: 600; font-size: 13px;"><i class="mdi mdi-chart-box" style="color: var(--primary); margin-right: 6px;"></i>本月关键指标</span>
+          <span style="font-weight: 600; font-size: 13px;"><i class="mdi mdi-chart-box" style="color: var(--primary); margin-right: 6px;"></i>{{ t('admin.career.jobOverview.index.statsTitle') }}</span>
         </template>
         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
           <div v-for="card in statsCards" :key="card.key" :style="{ textAlign: 'center', padding: '12px', background: card.bg, borderRadius: '8px' }">
@@ -23,15 +23,15 @@
           </div>
         </div>
         <div style="display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px;">
-          <span style="color: #22C55E;"><i class="mdi mdi-trending-up"></i> Offer率 {{ stats.offerRate }}% <span style="color: var(--muted);">{{ formatDelta(stats.offerRateYoY) }}</span></span>
-          <span style="color: #3B82F6;"><i class="mdi mdi-trending-up"></i> 面试通过率 {{ stats.interviewPassRate }}% <span style="color: var(--muted);">{{ formatDelta(stats.interviewPassRateYoY) }}</span></span>
+          <span style="color: #22C55E;"><i class="mdi mdi-trending-up"></i> {{ t('admin.career.jobOverview.index.offerRateLabel') }} {{ stats.offerRate }}% <span style="color: var(--muted);">{{ formatDelta(stats.offerRateYoY) }}</span></span>
+          <span style="color: #3B82F6;"><i class="mdi mdi-trending-up"></i> {{ t('admin.career.jobOverview.index.passRateLabel') }} {{ stats.interviewPassRate }}% <span style="color: var(--muted);">{{ formatDelta(stats.interviewPassRateYoY) }}</span></span>
         </div>
       </a-card>
 
       <!-- 右侧：求职转化漏斗 -->
       <a-card :bordered="false" style="margin: 0;">
         <template #title>
-          <span style="font-weight: 600; font-size: 13px;"><i class="mdi mdi-filter-variant" style="color: var(--primary); margin-right: 6px;"></i>求职转化漏斗</span>
+          <span style="font-weight: 600; font-size: 13px;"><i class="mdi mdi-filter-variant" style="color: var(--primary); margin-right: 6px;"></i>{{ t('admin.career.jobOverview.index.funnelTitle') }}</span>
         </template>
         <div style="display: flex; flex-direction: column; gap: 12px;">
           <div v-for="item in funnelRows" :key="item.label" style="display: flex; align-items: center; gap: 12px;">
@@ -43,26 +43,26 @@
             <span style="font-size: 11px; color: var(--muted); width: 40px;">{{ item.rate }}%</span>
           </div>
         </div>
-        <a-empty v-if="!funnelRows.length" description="当前暂无漏斗数据" />
+        <a-empty v-if="!funnelRows.length" :description="t('admin.career.jobOverview.index.funnelEmpty')" />
       </a-card>
     </div>
 
     <!-- 筛选条件 -->
     <a-card :bordered="false">
       <div style="display: flex; gap: var(--osg-space-3); flex-wrap: wrap;">
-        <a-input v-model:value="filters.studentName" placeholder="搜索学员姓名 / 邮箱 / 学号..." allow-clear style="width: 220px;" @press-enter="handleSearch" />
-        <a-select v-model:value="filters.companyName" placeholder="全部公司" allow-clear style="width: 140px;">
+        <a-input v-model:value="filters.studentName" :placeholder="t('admin.career.jobOverview.index.filter.studentPlaceholder')" allow-clear style="width: 220px;" @press-enter="handleSearch" />
+        <a-select v-model:value="filters.companyName" :placeholder="t('admin.career.jobOverview.index.filter.companyPlaceholder')" allow-clear style="width: 140px;">
           <a-select-option v-for="option in companyOptions" :key="option" :value="option">{{ option }}</a-select-option>
         </a-select>
-        <a-select v-model:value="filters.currentStage" placeholder="全部状态" allow-clear style="width: 140px;">
+        <a-select v-model:value="filters.currentStage" :placeholder="t('admin.career.jobOverview.index.filter.stagePlaceholder')" allow-clear style="width: 140px;">
           <a-select-option v-for="option in stageOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
         </a-select>
-        <a-select v-model:value="filters.leadMentorId" placeholder="全部班主任" allow-clear style="width: 140px;">
+        <a-select v-model:value="filters.leadMentorId" :placeholder="t('admin.career.jobOverview.index.filter.leadMentorPlaceholder')" allow-clear style="width: 140px;">
           <a-select-option v-for="option in mentorOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
         </a-select>
         <a-button type="primary" @click="handleSearch">
           <template #icon><SearchOutlined /></template>
-          搜索
+          {{ t('admin.career.jobOverview.index.filter.search') }}
         </a-button>
       </div>
     </a-card>
@@ -72,11 +72,11 @@
       <template #title>
         <div style="display: flex; gap: 4px; background: var(--bg); padding: 3px; border-radius: 6px; width: fit-content;">
           <button :class="['job-tab', activeTab === 'pending' ? 'job-tab-active job-tab-pending' : '']" @click="activeTab = 'pending'">
-            <i class="mdi mdi-account-clock" style="margin-right: 4px;"></i>待分配导师
+            <i class="mdi mdi-account-clock" style="margin-right: 4px;"></i>{{ t('admin.career.jobOverview.index.tab.pending') }}
             <span class="job-tab-badge">{{ unassignedRows.length }}</span>
           </button>
           <button :class="['job-tab', activeTab === 'all' ? 'job-tab-active job-tab-all' : '']" @click="activeTab = 'all'">
-            <i class="mdi mdi-account-group" style="margin-right: 4px;"></i>全部学员
+            <i class="mdi mdi-account-group" style="margin-right: 4px;"></i>{{ t('admin.career.jobOverview.index.tab.all') }}
             <span class="job-tab-badge">{{ allRows.length }}</span>
           </button>
         </div>
@@ -85,9 +85,9 @@
       <!-- 待分配导师表格 -->
       <template v-if="activeTab === 'pending'">
         <a-alert type="warning" show-icon style="margin-bottom: 12px; border-radius: 8px;">
-          <template #message>以下学员申请了辅导，需要分配导师</template>
+          <template #message>{{ t('admin.career.jobOverview.index.pendingAlert') }}</template>
         </a-alert>
-        <a-table :columns="pendingColumns" :data-source="unassignedRows" :row-key="(r: UnassignedCoachingRow) => r.coachingId" :pagination="unassignedPagination" :loading="loading" :locale="{ emptyText: '当前没有待分配导师的岗位申请' }" :scroll="{ x: 'max-content' }">
+        <a-table :columns="pendingColumns" :data-source="unassignedRows" :row-key="(r: UnassignedCoachingRow) => r.coachingId" :pagination="unassignedPagination" :loading="loading" :locale="{ emptyText: t('admin.career.jobOverview.index.pendingEmpty') }" :scroll="{ x: 'max-content' }">
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
               <div class="osg-student-cell">
@@ -108,13 +108,13 @@
               <div><strong>{{ formatDateTime(record.interviewTime) }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ formatInterviewCountdown(record.interviewTime) }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'requestedMentorCount'">
-              <div><strong>{{ record.requestedMentorCount || 0 }} 位</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.companyInterviewer || '暂无意向导师' }}</div></div>
+              <div><strong>{{ t('admin.career.jobOverview.index.mentorCount', { count: record.requestedMentorCount || 0 }) }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.companyInterviewer || t('admin.career.jobOverview.index.noPreferredMentor') }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'submittedAt'">
               {{ formatRelativeDate(record.submittedAt) }}
             </template>
             <template v-else-if="column.dataIndex === 'action'">
-              <a-button type="primary" size="small" @click="handleOpenAssignMentor(record)">分配导师</a-button>
+              <a-button type="primary" size="small" @click="handleOpenAssignMentor(record)">{{ t('admin.career.jobOverview.index.assignMentorBtn') }}</a-button>
             </template>
           </template>
         </a-table>
@@ -123,9 +123,9 @@
       <!-- 全部学员表格 -->
       <template v-else>
         <a-alert type="info" show-icon style="margin-bottom: 12px; border-radius: 8px;">
-          <template #message>查看全部学员的求职进度（只读）</template>
+          <template #message>{{ t('admin.career.jobOverview.index.allAlert') }}</template>
         </a-alert>
-        <a-table :columns="allColumns" :data-source="allRows" :row-key="(r: JobOverviewRow) => r.applicationId" :pagination="allListPagination" :loading="loading" :locale="{ emptyText: '当前筛选条件下暂无学员求职记录' }" :scroll="{ x: 'max-content' }" :row-class-name="(record: JobOverviewRow) => allRowClassName(record)">
+        <a-table :columns="allColumns" :data-source="allRows" :row-key="(r: JobOverviewRow) => r.applicationId" :pagination="allListPagination" :loading="loading" :locale="{ emptyText: t('admin.career.jobOverview.index.allEmpty') }" :scroll="{ x: 'max-content' }" :row-class-name="(record: JobOverviewRow) => allRowClassName(record)">
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'studentName'">
               <div class="osg-student-cell">
@@ -137,7 +137,7 @@
               </div>
             </template>
             <template v-else-if="column.dataIndex === 'companyName'">
-              <div><strong>{{ record.companyName }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.positionName }} · {{ record.city || record.region || '地区待补充' }}</div></div>
+              <div><strong>{{ record.companyName }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.positionName }} · {{ record.city || record.region || t('admin.career.jobOverview.index.regionPending') }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'currentStage'">
               <a-tag :color="stageColor(record.currentStage)">{{ formatStage(record.currentStage) }}</a-tag>
@@ -149,15 +149,15 @@
               <a-tag :color="resolveCoachingTagColor(record.coachingStatus)">{{ resolveCoachingTagLabel(record.coachingStatus) }}</a-tag>
             </template>
             <template v-else-if="column.dataIndex === 'mentorName'">
-              <div><strong>{{ record.mentorName || record.leadMentorName || '待分配' }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.mentorBackground || (record.assignedStatus === 'assigned' ? '导师信息待补充' : '未分配导师') }}</div></div>
+              <div><strong>{{ record.mentorName || record.leadMentorName || t('admin.career.jobOverview.index.mentorPending') }}</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.mentorBackground || (record.assignedStatus === 'assigned' ? t('admin.career.jobOverview.index.mentorInfoPending') : t('admin.career.jobOverview.index.noMentorAssigned')) }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'hoursUsed'">
-              <div><strong>{{ record.hoursUsed || 0 }}h</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.feedbackSummary || '暂无反馈' }}</div></div>
+              <div><strong>{{ record.hoursUsed || 0 }}h</strong><div style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">{{ record.feedbackSummary || t('admin.career.jobOverview.index.noFeedback') }}</div></div>
             </template>
             <template v-else-if="column.dataIndex === 'action'">
               <a-button v-if="record.stageUpdated" type="primary" size="small" :loading="stageUpdatingId === record.applicationId" @click="handleStageConfirm(record)">
                 <template #icon><i class="mdi mdi-check-circle" aria-hidden="true"></i></template>
-                确认
+                {{ t('admin.career.jobOverview.index.confirmBtn') }}
               </a-button>
               <span v-else style="color: var(--text2, #64748b); font-size: var(--osg-font-size-sm)">—</span>
             </template>
@@ -179,6 +179,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
@@ -204,27 +205,29 @@ import { deriveApplicationStatus } from '@osg/shared/composables'
 
 type ActiveTab = 'pending' | 'all'
 
-// §B3: 待分配 Tab 切到 coaching 维度，阶段字段用 interviewStage、提交时间用 coaching.create_time
-const pendingColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 140, fixed: 'left' as const },
-  { title: '公司/岗位', dataIndex: 'companyName', key: 'companyName', width: 200 },
-  { title: '阶段', dataIndex: 'interviewStage', key: 'interviewStage', width: 110 },
-  { title: '面试时间', dataIndex: 'interviewTime', key: 'interviewTime', width: 160 },
-  { title: '需求导师', dataIndex: 'requestedMentorCount', key: 'requestedMentorCount', width: 160 },
-  { title: '申请时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 110 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 100, fixed: 'right' as const },
-]
+const { t } = useI18n()
 
-const allColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 140, fixed: 'left' as const },
-  { title: '公司/岗位', dataIndex: 'companyName', key: 'companyName', width: 220 },
-  { title: '阶段', dataIndex: 'currentStage', key: 'currentStage', width: 150 },
-  { title: '面试时间', dataIndex: 'interviewTime', key: 'interviewTime', width: 160 },
-  { title: '辅导状态', dataIndex: 'coachingStatus', key: 'coachingStatus', width: 110 },
-  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 180 },
-  { title: '课时 / 反馈', dataIndex: 'hoursUsed', key: 'hoursUsed', width: 200 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 110, fixed: 'right' as const },
-]
+// §B3: 待分配 Tab 切到 coaching 维度，阶段字段用 interviewStage、提交时间用 coaching.create_time
+const pendingColumns = computed(() => [
+  { title: t('admin.career.jobOverview.index.columns.student'), dataIndex: 'studentName', key: 'studentName', width: 140, fixed: 'left' as const },
+  { title: t('admin.career.jobOverview.index.columns.companyPosition'), dataIndex: 'companyName', key: 'companyName', width: 200 },
+  { title: t('admin.career.jobOverview.index.columns.stage'), dataIndex: 'interviewStage', key: 'interviewStage', width: 110 },
+  { title: t('admin.career.jobOverview.index.columns.interviewTime'), dataIndex: 'interviewTime', key: 'interviewTime', width: 160 },
+  { title: t('admin.career.jobOverview.index.columns.requestedMentor'), dataIndex: 'requestedMentorCount', key: 'requestedMentorCount', width: 160 },
+  { title: t('admin.career.jobOverview.index.columns.appliedAt'), dataIndex: 'submittedAt', key: 'submittedAt', width: 110 },
+  { title: t('admin.career.jobOverview.index.columns.action'), dataIndex: 'action', key: 'action', width: 100, fixed: 'right' as const },
+])
+
+const allColumns = computed(() => [
+  { title: t('admin.career.jobOverview.index.columns.student'), dataIndex: 'studentName', key: 'studentName', width: 140, fixed: 'left' as const },
+  { title: t('admin.career.jobOverview.index.columns.companyPosition'), dataIndex: 'companyName', key: 'companyName', width: 220 },
+  { title: t('admin.career.jobOverview.index.columns.stage'), dataIndex: 'currentStage', key: 'currentStage', width: 150 },
+  { title: t('admin.career.jobOverview.index.columns.interviewTime'), dataIndex: 'interviewTime', key: 'interviewTime', width: 160 },
+  { title: t('admin.career.jobOverview.index.columns.coachingStatus'), dataIndex: 'coachingStatus', key: 'coachingStatus', width: 110 },
+  { title: t('admin.career.jobOverview.index.columns.mentor'), dataIndex: 'mentorName', key: 'mentorName', width: 180 },
+  { title: t('admin.career.jobOverview.index.columns.hoursAndFeedback'), dataIndex: 'hoursUsed', key: 'hoursUsed', width: 200 },
+  { title: t('admin.career.jobOverview.index.columns.action'), dataIndex: 'action', key: 'action', width: 110, fixed: 'right' as const },
+])
 
 interface AssignMentorOption {
   mentorId: number
@@ -258,17 +261,17 @@ const filters = reactive({
   leadMentorId: undefined
 })
 
-const stageOptions = [
-  { value: 'applied', label: '已投递' },
+const stageOptions = computed(() => [
+  { value: 'applied', label: t('admin.career.jobOverview.index.stage.applied') },
   { value: 'hirevue', label: 'HireVue' },
   { value: 'first_round', label: 'First Round' },
   { value: 'second_round', label: 'Second Round' },
   { value: 'case_study', label: 'Case Study' },
   { value: 'final', label: 'Final' },
   { value: 'offer', label: 'Offer' },
-  { value: 'rejected', label: '已拒绝' },
-  { value: 'withdrawn', label: '主动放弃' }
-]
+  { value: 'rejected', label: t('admin.career.jobOverview.index.stage.rejected') },
+  { value: 'withdrawn', label: t('admin.career.jobOverview.index.stage.withdrawn') },
+])
 
 const loading = ref(false)
 const activeTab = ref<ActiveTab>('pending')
@@ -320,7 +323,7 @@ const assignMentorOptions = computed<AssignMentorOption[]>(() => {
     mentorId: mentor.staffId,
     mentorName: mentor.staffName,
     preferred: preferredMentors.has(mentor.staffName),
-    hint: [mentor.majorDirection, mentor.city].filter(Boolean).join(' / ') || '可分配导师'
+    hint: [mentor.majorDirection, mentor.city].filter(Boolean).join(' / ') || t('admin.career.jobOverview.assignMentor.available')
   }))
 })
 
@@ -335,11 +338,11 @@ async function loadAssignableMentors() {
 }
 
 const statsCards = computed(() => [
-  { key: 'applied', label: '已投递', value: stats.value.appliedCount, meta: `Offer率 ${formatDelta(stats.value.offerRateYoY)}`, bg: '#eff6ff', color: '#2563eb' },
-  { key: 'interviewing', label: '面试中', value: stats.value.interviewingCount, meta: `通过率 ${formatDelta(stats.value.interviewPassRateYoY)}`, bg: '#fffbeb', color: '#d97706' },
-  { key: 'offer', label: '已获 Offer', value: stats.value.offerCount, meta: `${stats.value.offerRate}% Offer rate`, bg: '#f0fdf4', color: '#16a34a' },
-  { key: 'rejected', label: '已拒绝', value: stats.value.rejectedCount, meta: '关注失败复盘', bg: '#fef2f2', color: '#dc2626' },
-  { key: 'withdrawn', label: '已放弃', value: stats.value.withdrawnCount, meta: '追踪后续转化', bg: '#f8fafc', color: '#64748b' }
+  { key: 'applied', label: t('admin.career.jobOverview.index.statsCard.applied'), value: stats.value.appliedCount, bg: '#eff6ff', color: '#2563eb' },
+  { key: 'interviewing', label: t('admin.career.jobOverview.index.statsCard.interviewing'), value: stats.value.interviewingCount, bg: '#fffbeb', color: '#d97706' },
+  { key: 'offer', label: t('admin.career.jobOverview.index.statsCard.offer'), value: stats.value.offerCount, bg: '#f0fdf4', color: '#16a34a' },
+  { key: 'rejected', label: t('admin.career.jobOverview.index.statsCard.rejected'), value: stats.value.rejectedCount, bg: '#fef2f2', color: '#dc2626' },
+  { key: 'withdrawn', label: t('admin.career.jobOverview.index.statsCard.withdrawn'), value: stats.value.withdrawnCount, bg: '#f8fafc', color: '#64748b' },
 ])
 
 async function loadDashboard() {
@@ -388,9 +391,9 @@ async function handleExport() {
       leadMentorId: requestFilters.value.leadMentorId,
       tab: activeTab.value
     })
-    message.success('求职总览导出成功')
+    message.success(t('admin.career.jobOverview.index.exportSuccess'))
   } catch (_error) {
-    message.error('求职总览导出失败')
+    message.error(t('admin.career.jobOverview.index.exportFail'))
   } finally {
     exporting.value = false
   }
@@ -419,7 +422,7 @@ async function handleAssignMentorSubmit(payload: AssignMentorSubmitPayload) {
       mentorNames: payload.mentorNames,
       assignNote: payload.assignNote
     })
-    message.success(`${selectedAssignmentRow.value.studentName || '该学员'} 已完成导师分配`)
+    message.success(t('admin.career.jobOverview.index.assignSuccess', { name: selectedAssignmentRow.value.studentName || t('admin.career.jobOverview.index.defaultStudentName') }))
     assignMentorVisible.value = false
     selectedAssignmentRow.value = null
     await loadDashboard()
@@ -435,7 +438,7 @@ async function handleStageConfirm(row: JobOverviewRow) {
       applicationId: row.applicationId,
       stageUpdated: false
     })
-    message.success(`${row.studentName || '该学员'} 的阶段提醒已确认`)
+    message.success(t('admin.career.jobOverview.index.stageConfirmSuccess', { name: row.studentName || t('admin.career.jobOverview.index.defaultStudentName') }))
     await loadDashboard()
   } finally {
     stageUpdatingId.value = null
@@ -443,8 +446,8 @@ async function handleStageConfirm(row: JobOverviewRow) {
 }
 
 function formatStage(stage?: string) {
-  const matched = stageOptions.find((item) => item.value === stage)
-  return matched?.label || stage || '未更新'
+  const matched = stageOptions.value.find((item) => item.value === stage)
+  return matched?.label || stage || t('admin.career.jobOverview.index.stage.unknown')
 }
 
 function stageColor(stage?: string): string {
@@ -474,9 +477,9 @@ function resolveCoachingTagColor(status?: string): string {
 }
 
 function resolveCoachingTagLabel(status?: string): string {
-  // none / 未填 → '未申请'，其他走 composable 派生
-  if (!status || status === 'none') return '未申请'
-  return deriveApplicationStatus({ coachingStatus: status }).label || '未申请'
+  // none / 未填 → 未申请，其他走 composable 派生
+  if (!status || status === 'none') return t('admin.career.jobOverview.index.coachingNotApplied')
+  return deriveApplicationStatus({ coachingStatus: status }).label || t('admin.career.jobOverview.index.coachingNotApplied')
 }
 
 function allRowClassName(record: JobOverviewRow): string {
@@ -490,39 +493,39 @@ function isEndedStage(stage?: string) {
 }
 
 function formatDateTime(value?: string) {
-  if (!value) return '待安排'
+  if (!value) return t('admin.career.jobOverview.index.interviewTimePending')
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
   return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
 function formatInterviewCountdown(value?: string) {
-  if (!value) return '待确认时间'
+  if (!value) return t('admin.career.jobOverview.index.interviewTimePendingConfirm')
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '时间待解析'
+  if (Number.isNaN(date.getTime())) return t('admin.career.jobOverview.index.interviewTimeParseFailed')
   const diff = date.getTime() - Date.now()
   const day = Math.ceil(diff / (24 * 60 * 60 * 1000))
-  if (day < 0) return '已过面试时间'
-  if (day === 0) return '今天'
-  return `还剩 ${day} 天`
+  if (day < 0) return t('admin.career.jobOverview.index.interviewTimePast')
+  if (day === 0) return t('admin.career.jobOverview.index.interviewTimeToday')
+  return t('admin.career.jobOverview.index.interviewTimeDaysLeft', { days: day })
 }
 
 function formatRelativeDate(value?: string) {
-  if (!value) return '刚刚'
+  if (!value) return t('admin.career.jobOverview.index.relativeJustNow')
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
   const diff = Date.now() - date.getTime()
   const hours = Math.floor(diff / (60 * 60 * 1000))
-  if (hours < 1) return '刚刚'
-  if (hours < 24) return `${hours} 小时前`
+  if (hours < 1) return t('admin.career.jobOverview.index.relativeJustNow')
+  if (hours < 24) return t('admin.career.jobOverview.index.relativeHoursAgo', { hours })
   const days = Math.floor(hours / 24)
-  if (days < 30) return `${days} 天前`
+  if (days < 30) return t('admin.career.jobOverview.index.relativeDaysAgo', { days })
   return `${date.getMonth() + 1}/${date.getDate()}`
 }
 
 function funnelColor(label: string) {
   if (label.includes('Offer') || label.includes('offer')) return '#DCFCE7'
-  if (label.includes('面试')) return '#FEF3C7'
+  if (label.includes('面试')) return '#FEF3C7' // i18n-skip-line: pattern match against API data labels
   return '#E0F2FE'
 }
 
@@ -541,7 +544,7 @@ function studentAvatarColor(id?: number | string) {
 
 function studentInitials(name?: string | null) {
   const value = (name || '').trim()
-  if (!value) return '学员'
+  if (!value) return t('admin.career.jobOverview.index.studentFallback')
   return value.slice(0, 2)
 }
 

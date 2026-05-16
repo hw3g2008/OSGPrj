@@ -117,6 +117,7 @@ for (const filePath of walkFiles(SCAN_DIR)) {
     if (!ZH_RE.test(line)) return
     if (isCommentLike(line)) return
     if (hasTodoMarker(raw)) return
+    if (/i18n-skip-line/.test(raw)) return
 
     const matches = line.match(PHRASE_RE) ?? []
     for (const m of matches) {

@@ -140,8 +140,24 @@ function checkEntry({ keyPath, zhVal, enVal, file }) {
     if (!zhVal.includes(zhTerm)) continue
     const mandatedEn = mandatory[zhTerm]
     const bannedList = banned[zhTerm] || []
+
+    // Build a "stripped" en value that removes mandatory phrases for OTHER zh terms present in this zh string.
+    // This prevents false positives when a banned word appears only as part of a different term's mandatory phrase.
+    // e.g. zh has both "求职中心" (mandate "Job Search Center") and "岗位" (ban "Job"):
+    //      stripping "Job Search Center" from en before checking the "Job" ban avoids the false positive.
+    let enForBanCheck = enVal
+    for (const otherTerm of ZH_TERMS_LONG_FIRST) {
+      if (otherTerm === zhTerm) continue
+      if (!zhVal.includes(otherTerm)) continue
+      const otherMandated = mandatory[otherTerm]
+      if (otherMandated) {
+        const escaped = otherMandated.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        enForBanCheck = enForBanCheck.replace(new RegExp(escaped, 'gi'), '')
+      }
+    }
+
     for (const bad of bannedList) {
-      if (containsWord(enVal, bad)) {
+      if (containsWord(enForBanCheck, bad)) {
         violations.push({
           file,
           keyPath,

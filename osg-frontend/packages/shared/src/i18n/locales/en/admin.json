@@ -84,5 +84,966 @@
     "success": {
       "codeSent": "A verification code will be sent to your registered email, please check"
     }
+  },
+  "dashboard": {
+    "title": "Welcome back, Admin",
+    "refresh": "Refresh",
+    "monthly-stats": {
+      "title": "Monthly Stats",
+      "new-students": "New Students",
+      "new-contracts": "New Contracts",
+      "approved-hours": "Approved Hours",
+      "hours-consumed": "Hours Consumed",
+      "settled-amount": "Settled Amount",
+      "no-data": "No data available"
+    },
+    "quick-actions": {
+      "title": "Quick Actions",
+      "add-student": "Add Student",
+      "add-staff": "Add Mentor",
+      "add-contract": "Add Contract",
+      "send-notice": "Send Notice"
+    },
+    "recent-activity": {
+      "title": "Recent Activity",
+      "view-all": "View all",
+      "no-data": "No activity records"
+    },
+    "stat-cards": {
+      "total-students": "Total Students",
+      "new-this-month": "New This Month",
+      "total-mentors": "Total Mentors",
+      "pending-hours": "Pending Hours",
+      "earliest-days": "Earliest",
+      "pending-settlement": "Pending Settlement",
+      "pending-expense": "Pending Expense",
+      "total-expense": "Total"
+    },
+    "student-status": {
+      "title": "Student Status",
+      "no-data": "No data available"
+    },
+    "todo-reminder": {
+      "title": "Pending Items",
+      "view-all": "View All",
+      "count-label": ""
+    }
+  },
+  "dict": {
+    "title": "Dictionary Management",
+    "search-placeholder": "Search",
+    "add-btn": "Add",
+    "columns": {
+      "id": "ID",
+      "name": "Name",
+      "value": "Key",
+      "company-type": "Company Type",
+      "website": "Website",
+      "calling-code": "Calling Code",
+      "country": "Country/Region",
+      "status": "Status",
+      "sort": "Sort",
+      "update-time": "Updated At",
+      "action": "Actions"
+    },
+    "status": {
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "action": {
+      "edit": "Edit",
+      "disable": "Disable",
+      "enable": "Enable"
+    },
+    "confirm-disable": {
+      "title": "Confirm Disable",
+      "ok": "Confirm",
+      "cancel": "Cancel",
+      "disabled": "Disabled",
+      "enabled": "Enabled"
+    },
+    "message": {
+      "load-category-failed": "Failed to load dictionary categories",
+      "load-data-failed": "Failed to load data",
+      "total": "{total} records in total"
+    },
+    "modal": {
+      "title-edit": "Edit",
+      "title-add": "Add",
+      "dict-value-label": "Dictionary Key",
+      "dict-value-placeholder": "Enter dictionary key (letters/digits/underscores only, must start with a letter)",
+      "website-label": "Website",
+      "website-placeholder": "Enter website URL (optional)",
+      "country-label": "Country/Region",
+      "country-placeholder": "Select country/region",
+      "calling-code-label": "Calling Code",
+      "calling-code-placeholder": "e.g. +86, must start with + followed by 1-4 digits",
+      "sort-label": "Sort",
+      "sort-placeholder": "Higher number = higher priority",
+      "status-label": "Status",
+      "cancel": "Cancel",
+      "save": "Save",
+      "switch-enabled": "Enabled",
+      "switch-disabled": "Disabled",
+      "validation": {
+        "dict-value-required": "Please enter the dictionary key",
+        "dict-value-pattern": "Dictionary key must contain only letters, digits, or underscores, and start with a letter",
+        "calling-code-required": "Please enter the calling code",
+        "calling-code-pattern": "Calling code must start with + followed by 1-4 digits (e.g. +86)"
+      },
+      "success-edit": "Updated successfully",
+      "success-add": "Added successfully"
+    }
+  },
+  "menu": {
+    "title": "Menu Management",
+    "search": {
+      "keyword-label": "Keyword",
+      "keyword-placeholder": "Menu name / Permission key",
+      "status-label": "Status",
+      "status-all": "All",
+      "status-enabled": "Enabled",
+      "status-disabled": "Disabled",
+      "type-label": "Type",
+      "type-all": "All",
+      "type-dir": "Directory M",
+      "type-menu": "Menu C",
+      "type-btn": "Button F",
+      "search-btn": "Search",
+      "reset-btn": "Reset"
+    },
+    "tree-card": {
+      "title": "Menu Tree & Button Permissions",
+      "subtitle": "Three-level structure: directory, menu, button",
+      "no-data": "No menu data"
+    },
+    "columns": {
+      "name": "Menu Name",
+      "type": "Type",
+      "sort": "Sort",
+      "perms": "Permission Key",
+      "component": "Component Path",
+      "status": "Status",
+      "action": "Actions"
+    },
+    "type": {
+      "dir": "Directory M",
+      "menu": "Menu C",
+      "btn": "Button F"
+    },
+    "status": {
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "action": {
+      "edit": "Edit"
+    },
+    "message": {
+      "load-failed": "Failed to load menu list",
+      "save-success": "Menu saved",
+      "save-failed": "Failed to save menu"
+    },
+    "modal": {
+      "title": "Menu Configuration",
+      "alert": "Menu type determines field behavior: Directory maintains display structure only; Menu maintains routing and component; Button maintains permission key only.",
+      "type-label": "Menu Type",
+      "parent-dir-label": "Parent Directory",
+      "parent-dir-placeholder": "Select parent directory",
+      "parent-menu-label": "Parent Menu",
+      "parent-menu-placeholder": "Select parent menu",
+      "name-label": "Menu Name",
+      "name-placeholder": "Enter menu name",
+      "path-label": "Route Path",
+      "path-placeholder": "e.g.: permission/menu",
+      "component-label": "Component Path",
+      "component-placeholder": "e.g.: permission/menu/index",
+      "perms-label": "Permission Key",
+      "perms-placeholder": "e.g.: system:menu:list",
+      "sort-label": "Display Order",
+      "status-label": "Status",
+      "status-enabled": "Enabled",
+      "status-disabled": "Disabled",
+      "cancel": "Cancel",
+      "save": "Save"
+    }
+  },
+  "role": {
+    "title": "Roles & Permissions",
+    "alert": {
+      "title": "Notice",
+      "desc": "Click 'Edit' to modify role name, description and accessible modules. Roles with 0 users can be deleted."
+    },
+    "columns": {
+      "id": "ID",
+      "name": "Role Name",
+      "remark": "Description",
+      "modules": "Permission Modules",
+      "user-count": "Users",
+      "update-time": "Updated At",
+      "action": "Actions"
+    },
+    "all-perms": "All Permissions",
+    "system-role": "System Role",
+    "no-perms": "No Permissions",
+    "perms-load-failed": "Failed to load permissions",
+    "user-count-unit": " users",
+    "action": {
+      "add": "Add Role",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "confirm-delete": {
+      "title": "Confirm Delete",
+      "content": "Are you sure you want to delete this role? This action cannot be undone.",
+      "ok": "Confirm",
+      "cancel": "Cancel"
+    },
+    "message": {
+      "load-failed": "Failed to load role list",
+      "delete-success": "Role deleted",
+      "delete-failed": "Delete failed",
+      "total": "{total} records in total"
+    },
+    "modal": {
+      "title-add": "Add Role",
+      "title-edit": "Edit Role",
+      "name-label": "Role Name",
+      "name-placeholder": "Enter role name, e.g.: Operations Staff",
+      "remark-label": "Description",
+      "remark-placeholder": "Enter description, max 200 characters",
+      "modules-label": "Permission Modules",
+      "modules-tip": "Select modules this role can access. Click group name to select/deselect all in group.",
+      "cancel": "Cancel",
+      "save": "Save",
+      "validation": {
+        "name-required": "Please enter role name",
+        "modules-required": "Please select permission modules"
+      },
+      "success-add": "Role added successfully",
+      "success-edit": "Role updated successfully"
+    }
+  },
+  "user": {
+    "title": "Admin Users",
+    "current-accounts": "Current Managed Accounts",
+    "account-ledger": "Account Ledger",
+    "page-indicator": "Page {current} / {total}",
+    "search": {
+      "keyword-label": "Keyword",
+      "keyword-placeholder": "Search username / name",
+      "role-label": "Role",
+      "role-all": "All Roles",
+      "status-label": "Status",
+      "status-all": "All Statuses",
+      "status-enabled": "Enabled",
+      "status-disabled": "Disabled",
+      "search-btn": "Search"
+    },
+    "columns": {
+      "id": "ID",
+      "identity": "Identity",
+      "contact": "Contact",
+      "roles": "Roles",
+      "status": "Status",
+      "activity": "Activity",
+      "action": "Actions"
+    },
+    "system-account": "System Account",
+    "custom-account": "Custom Account",
+    "no-phone": "No phone number",
+    "no-role": "No role assigned",
+    "last-login": "Last login: ",
+    "last-update": "Last update: ",
+    "never-login": "Never logged in",
+    "no-update": "No updates",
+    "no-data": "No admin users found under current filter",
+    "status": {
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "action": {
+      "add": "Add User",
+      "edit": "Edit",
+      "reset-pwd": "Reset Password",
+      "disable": "Disable",
+      "enable": "Enable"
+    },
+    "confirm-disable": {
+      "title": "Confirm Disable",
+      "content": "Are you sure you want to disable this user? The user will not be able to sign in.",
+      "ok": "Confirm",
+      "cancel": "Cancel"
+    },
+    "message": {
+      "load-failed": "Failed to load user list",
+      "disable-success": "User disabled",
+      "enable-success": "User enabled",
+      "total": "{total} records in total"
+    },
+    "modal": {
+      "title-add": "Add User",
+      "title-edit": "Edit User",
+      "note-add": "Adding a user will generate a default password and write role and profile to the admin ledger.",
+      "note-edit": "In edit mode you can update profile, role and contact. Username is locked.",
+      "username-label": "Username",
+      "username-placeholder": "4-20 characters, letters/digits/underscores only",
+      "username-help-create": "Username cannot be changed after creation",
+      "username-help-edit": "Username cannot be modified",
+      "nickname-label": "Name",
+      "nickname-placeholder": "Enter full name",
+      "email-label": "Email",
+      "email-placeholder": "Used for notifications and password reset",
+      "phone-label": "Phone",
+      "phone-placeholder": "Optional",
+      "role-label": "Role",
+      "role-multi": "(Multiple allowed)",
+      "init-password-label": "Initial Password",
+      "init-password-tag": "System Default",
+      "init-password-help": "User must change password on first login",
+      "remark-label": "Remarks",
+      "remark-placeholder": "Optional, max 200 characters",
+      "cancel": "Cancel",
+      "save": "Save",
+      "validation": {
+        "username-required": "Please enter username",
+        "username-length": "Username must be 4-20 characters",
+        "username-pattern": "Only letters, digits, and underscores are allowed",
+        "nickname-required": "Please enter name",
+        "email-required": "Please enter email",
+        "email-invalid": "Please enter a valid email format",
+        "role-required": "Please select a role"
+      },
+      "success-add": "User added successfully",
+      "success-edit": "User updated successfully"
+    },
+    "reset-pwd-modal": {
+      "title": "Reset Password",
+      "warning": "After reset, the user's password will be restored to the system default. The user must change their password on next login.",
+      "unknown-user": "No user selected",
+      "cancel": "Cancel",
+      "confirm": "Confirm Reset",
+      "success": "Password reset to default"
+    }
+  },
+  "resources": {
+    "questions": {
+      "title": "Interview Question Review",
+      "banner": {
+        "message": "{count} interview questions are pending review. Please handle them promptly.",
+        "description": "Prioritize questions forwarded by lead mentors. Once approved, they will be shared with students matching the same company, department, office location, and interview status."
+      },
+      "filters": {
+        "keyword": "Search student / company / question ID",
+        "company": "Company",
+        "allRounds": "All Rounds",
+        "startDate": "Start Date",
+        "endDate": "End Date"
+      },
+      "actions": {
+        "export": "Export",
+        "viewPending": "View Pending",
+        "search": "Search",
+        "reset": "Reset",
+        "batchApprove": "Batch Approve",
+        "batchReject": "Batch Reject",
+        "review": "Review",
+        "cancel": "Cancel",
+        "reject": "Reject",
+        "approveAndShare": "Approve and Share"
+      },
+      "columns": {
+        "student": "Student",
+        "company": "Company",
+        "department": "Department",
+        "officeLocation": "Office Location",
+        "round": "Round",
+        "questionCount": "Questions",
+        "source": "Source",
+        "submittedAt": "Submitted At",
+        "action": "Action"
+      },
+      "tabs": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "sources": {
+        "interviewApplication": "Interview Application",
+        "selfSubmitted": "Self-submitted"
+      },
+      "messages": {
+        "exported": "Current filtered results exported",
+        "loadFailed": "Failed to load interview question list",
+        "batchApproveSuccess": "Batch approval successful",
+        "batchRejectSuccess": "Batch rejection successful",
+        "approveSuccess": "Approved and shared",
+        "rejectSuccess": "This question has been rejected"
+      },
+      "rules": {
+        "title": "Review Rules",
+        "description": "Once approved, interview questions will be shared with students who match the same company, department, office location, and interview status."
+      },
+      "modal": {
+        "title": "Review Interview Questions",
+        "studentInfo": "Student Information",
+        "submittedBy": "Submitted By",
+        "interviewInfo": "Interview Information",
+        "interviewDate": "Interview Date",
+        "interviewer": "Interviewer",
+        "interviewStatus": "Interview Status",
+        "questions": "Interview Questions",
+        "additionalNotes": "Additional Notes",
+        "noAdditionalNotes": "No additional notes",
+        "scopePreview": "Access Scope Preview",
+        "willShareWith": "Will be shared with applicants from",
+        "sameScope": "same company + same department + same office location + same interview status",
+        "students": "students",
+        "currentlyMatching": "Currently matching",
+        "people": "people",
+        "reviewNotes": "Review Notes",
+        "reviewNotesPlaceholder": "Additional review comments (optional)"
+      },
+      "selectedCount": "{count} selected",
+      "sourceDictionary": "Source dictionary: Interview Application / Self-submitted",
+      "empty": "No interview question records",
+      "questionCount": "{count} questions"
+    }
+  },
+  "students": {
+    "index": {
+      "title": "Student List",
+      "addStudent": "Add Student",
+      "pendingReview": "{count} student(s) have profile changes pending review",
+      "pendingReviewDesc": "Students have submitted changes to academic info, career direction, etc. that need your review. Please handle them promptly.",
+      "viewNow": "View Now",
+      "tabs": {
+        "normal": "Active",
+        "blacklist": "Blacklist"
+      },
+      "blacklistRestrictions": "Blacklist Restrictions",
+      "blacklistDesc": "Blacklisted students can still log in normally, but <strong>cannot access the Job Search Center</strong> (including position listings, interview prep, etc.)",
+      "frozen": "Frozen",
+      "detail": "Details",
+      "edit": "Edit",
+      "renewContract": "Renew Contract",
+      "more": "More",
+      "resetPassword": "Reset Password",
+      "rejoin": "Rejoin",
+      "unfreeze": "Unfreeze",
+      "endContract": "End Contract",
+      "refund": "Refund",
+      "freeze": "Freeze",
+      "addToBlacklist": "Add to Blacklist",
+      "timesCount": "{count} times",
+      "totalRecords": "{total} records in total",
+      "empty": {
+        "normal": "No student data",
+        "blacklist": "No blacklisted students"
+      },
+      "noApplications": "No applications",
+      "leadMentor": "Lead Mentor",
+      "lifecycle": {
+        "normal": "Active",
+        "ended": "Contract Ended",
+        "refunded": "Refunded"
+      },
+      "statusNote": {
+        "active": "In Service",
+        "frozen": "Account Frozen",
+        "ended": "Service Ended",
+        "endedFrozen": "Ended · Frozen",
+        "refunded": "Refunded",
+        "needsFollowUp": "Needs Follow-up"
+      },
+      "reminder": {
+        "pendingReview": "Pending Review",
+        "lowHours": "Low Hours",
+        "expiring": "Contract Expiring",
+        "none": "No Reminders"
+      },
+      "resetPasswordModal": {
+        "title": "Password Reset Successful",
+        "loginAccount": "Login Account",
+        "defaultPassword": "Default Password",
+        "okText": "Got it"
+      },
+      "messages": {
+        "loadFailed": "Failed to load student list",
+        "exportSuccess": "Student list exported successfully",
+        "exportFailed": "Student list export failed: {reason}",
+        "detailLoadFailed": "Failed to load student details. Opened edit modal with list data.",
+        "noRenewableContract": "No renewable contract found for this student",
+        "renewContextFailed": "Failed to load contract renewal context",
+        "noPendingStudent": "No pending review students at the moment",
+        "studentNotFound": "Student not found. Cannot open edit modal.",
+        "createSuccess": "Student created successfully. List refreshed.",
+        "contractUpdateFailed": "Student info updated, but contract update failed: {detail}",
+        "studentAndContractUpdated": "Student info and contract updated",
+        "studentUpdated": "Student info updated",
+        "cannotChangeStatus": "Student not found. Cannot change status.",
+        "statusUpdated": "Student status updated",
+        "cannotBlacklist": "Student not found. Cannot add to blacklist.",
+        "blacklisted": "Added to blacklist",
+        "pleaseRetry": "Please retry"
+      }
+    },
+    "addModal": {
+      "title": "Add Student",
+      "sections": {
+        "basicInfo": "Basic Information",
+        "basicInfoDesc": "Fill in the student's basic information. Fields marked with * are required.",
+        "coreInfo": "Core Information",
+        "mentorConfig": "Mentor Assignment",
+        "optionalMulti": "Multiple selection, optional",
+        "academicInfo": "Academic Information",
+        "careerDirection": "Career Direction",
+        "careerDirectionDesc": "Multiple selection. Sub-directions update based on track selection.",
+        "contact": "Contact Information",
+        "studentAccount": "Student Account",
+        "studentAccountDesc": "A student login account will be automatically generated upon creation",
+        "contractInfo": "Contract Information",
+        "contractInfoDesc": "Fill in the student's first contract details"
+      },
+      "fields": {
+        "englishName": "English Name",
+        "gender": "Gender",
+        "email": "Email",
+        "leadMentor": "Lead Mentor",
+        "assistant": "Assistant",
+        "school": "School",
+        "major": "Major",
+        "graduationMonth": "Graduation Date",
+        "highSchool": "High School",
+        "studyPlan": "Study Plan",
+        "visaStatus": "Visa Status",
+        "targetRegion": "Target Region",
+        "recruitmentCycle": "Recruitment Cycle",
+        "majorDirections": "Track",
+        "subDirections": "Sub-directions",
+        "phone": "Phone",
+        "wechat": "WeChat",
+        "remark": "Remarks",
+        "loginAccount": "Login Account",
+        "initialPassword": "Initial Password",
+        "currency": "Currency",
+        "amountGbp": "GBP Amount",
+        "usdEquivalent": "USD Equivalent",
+        "amountUsd": "USD Amount",
+        "totalHours": "Total Hours",
+        "startDate": "Contract Start Date",
+        "endDate": "Contract End Date",
+        "contractAttachment": "Contract Attachment"
+      },
+      "placeholders": {
+        "englishName": "e.g. Emily Zhang",
+        "gender": "Select gender",
+        "email": "Student email will be used as login account",
+        "searchMentor": "Search by name",
+        "searchAssistant": "Search by name",
+        "school": "Multiple schools allowed (postgraduate/dual degree, etc.)",
+        "major": "e.g. Finance / Economics",
+        "graduationMonth": "Select graduation date",
+        "optional": "Optional",
+        "visaStatus": "Select visa status",
+        "targetRegion": "Multiple regions allowed",
+        "multiSelect": "Multiple selection",
+        "phone": "Enter phone number",
+        "wechat": "Enter WeChat ID",
+        "remark": "Optional. Add supplementary notes about the student.",
+        "loginAccount": "Email will be used as login account automatically",
+        "amountGbp": "£ Enter GBP amount",
+        "usdEquivalent": "$ Enter USD equivalent",
+        "amountUsd": "$ Enter USD amount",
+        "totalHours": "e.g. 40",
+        "startDate": "Select contract start date",
+        "endDate": "Select contract end date",
+        "contractRemark": "Optional. Add special terms, etc."
+      },
+      "studyPlan": {
+        "normal": "Normal Graduation",
+        "postgraduate": "Postgraduate",
+        "deferred": "Deferred"
+      },
+      "currency": {
+        "usd": "USD",
+        "gbp": "GBP"
+      },
+      "gender": {
+        "male": "Male",
+        "female": "Female"
+      },
+      "country": {
+        "usCan": "US/Canada"
+      },
+      "accountTip": "<strong>Note:</strong> After creating the student, a student account will be automatically generated. The default password is <strong>Osg@2026</strong>. Students are advised to change their password after first login.",
+      "upload": {
+        "clickOrDrag": "Click or drag file to upload",
+        "hint": "Only PDF / PNG / JPG / JPEG, max 150MB per file",
+        "unsupportedFormat": "Only PDF / PNG / JPG / JPEG supported",
+        "failed": "Upload failed: {reason}",
+        "backendError": "Backend error",
+        "success": "Upload successful",
+        "checkNetwork": "Check network and file format",
+        "fileTooLarge": "File exceeds {max}MB (actual {actual}MB)"
+      },
+      "validation": {
+        "englishName": "Please enter English name",
+        "gender": "Please select gender",
+        "email": "Please enter email",
+        "emailFormat": "Please enter a valid email format",
+        "targetRegion": "Please select at least one target region",
+        "recruitmentCycle": "Please select at least one recruitment cycle",
+        "currency": "Please select currency",
+        "amountUsd": "Please enter USD amount",
+        "amountGbp": "Please enter GBP amount",
+        "totalHours": "Please enter total hours",
+        "startDate": "Please select start date",
+        "endDate": "Please select end date",
+        "phone": "Please enter phone number",
+        "pleaseFill": "Please fill in: {field}",
+        "missingFields": "{count} required field(s) not filled: {fields}"
+      },
+      "messages": {
+        "loadMentorFailed": "Failed to load lead mentor list",
+        "loadAssistantFailed": "Failed to load assistant list"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "createAccount": "Create Student Account"
+      }
+    }
+  },
+  "layout": {
+    "home": "Home",
+    "comingSoon": "Coming Soon",
+    "personalSettings": "Settings",
+    "clickToExpand": "Click to expand",
+    "logout": "Sign Out",
+    "userMenu": "User Menu",
+    "confirmLogout": "Confirm Sign Out",
+    "confirmLogoutContent": "Are you sure you want to sign out?",
+    "confirm": "OK",
+    "cancel": "Cancel",
+    "loggedOut": "Signed out successfully",
+    "superAdmin": "Super Admin",
+    "sections": {
+      "permission": "Permission",
+      "userCenter": "User Center",
+      "career": "Job Search Center",
+      "teaching": "Teaching Center",
+      "finance": "Financial Center",
+      "resource": "Resource Center",
+      "profile": "Personal Center"
+    },
+    "menus": {
+      "menuManagement": "Menu Management",
+      "permissionConfig": "Permission Config",
+      "adminUserManagement": "Admin Users",
+      "dictManagement": "Dictionary",
+      "studentList": "Students",
+      "contractManagement": "Contracts",
+      "mentorList": "Mentors",
+      "mentorScheduleManagement": "Mentor Schedule",
+      "mentorChangeReview": "Mentor Profile Changes",
+      "positionInfo": "Positions",
+      "studentSelfAddedPositions": "Student-added Positions",
+      "studentJobOverview": "Job Overview",
+      "mockPracticeManagement": "Mock Practice",
+      "classRecords": "Session Record",
+      "communicationRecords": "Communication Records",
+      "hourSettlement": "Session Settlement",
+      "expenseManagement": "Expense Management",
+      "files": "Files",
+      "onlineTestBank": "Online Test Bank",
+      "interviewBank": "Interview Bank",
+      "interviewQuestions": "Interview Questions",
+      "email": "Email",
+      "messageManagement": "Messages",
+      "complaints": "Complaints",
+      "operationLogs": "Operation Logs"
+    }
+  },
+  "career": {
+    "positions": {
+      "formModal": {
+        "titleEdit": "Edit Position",
+        "titleAdd": "Add Position",
+        "sections": {
+          "basicInfo": "Basic Information",
+          "companyInfo": "Company Information",
+          "displayTime": "Display Time",
+          "createdBy": "Created By",
+          "applicationNote": "Application Note"
+        },
+        "fields": {
+          "positionCategory": "Position Category",
+          "positionName": "Position Name",
+          "department": "Department",
+          "projectYear": "Project Year",
+          "recruitmentCycle": "Recruitment Cycle",
+          "targetMajors": "Track",
+          "companyName": "Company Name",
+          "companyType": "Company Type",
+          "region": "Region",
+          "city": "City",
+          "companyWebsite": "Company Website",
+          "positionUrl": "Position URL",
+          "deadline": "Deadline",
+          "deadlineText": "Deadline Text",
+          "displayStartTime": "Start Time",
+          "displayEndTime": "End Time",
+          "attachments": "Attachments",
+          "displayStatus": "Status"
+        },
+        "placeholders": {
+          "select": "Please select",
+          "multiSelect": "Multi-select",
+          "positionName": "e.g. Summer Analyst",
+          "searchCompany": "Search or enter company name",
+          "selectRegionFirst": "Please select region first",
+          "optional": "Optional",
+          "deadline": "Select deadline",
+          "deadlineTextHint": "e.g. \"Rolling\"",
+          "deadlineText": "e.g. Rolling, ASAP, Until Filled",
+          "displayStartTime": "Select start time",
+          "displayEndTime": "Select end time",
+          "createdBy": "Auto-filled with current user",
+          "applicationNote": "Notes for students when applying..."
+        },
+        "upload": {
+          "hint": "PDF / Images / GIF, max 10MB per file, up to 5 files, 30MB total",
+          "button": "Upload Attachment",
+          "unsupportedFormat": "Only PDF / JPG / PNG / GIF files are supported",
+          "fileTooLarge": "File size cannot exceed 10MB",
+          "maxCount": "Maximum {max} attachments allowed",
+          "totalTooLarge": "Total attachment size cannot exceed 30MB",
+          "noUrl": "Upload failed: no URL returned",
+          "success": "Attachment uploaded successfully",
+          "failed": "Attachment upload failed"
+        },
+        "hint": {
+          "autoArchive": "Automatically archived after end time"
+        },
+        "statusNote": {
+          "hidden": "Hidden positions will not be visible to students"
+        },
+        "status": {
+          "visible": "Visible"
+        },
+        "validation": {
+          "required": "Please complete position category, name, company, region, and project year",
+          "recruitmentCycle": "Please select at least one recruitment cycle",
+          "targetMajors": "Please select at least one target major",
+          "displayTime": "Please complete display time"
+        },
+        "actions": {
+          "cancel": "Cancel",
+          "save": "Save Position",
+          "create": "Add Position"
+        }
+      },
+      "batchUpload": {
+        "title": "Batch Upload Positions",
+        "dropzone": "Drag file here or click to select",
+        "hint": "Supports Excel file upload, position list will refresh after import",
+        "selectFile": "Select Excel File",
+        "rule": "Dedup Rule: ",
+        "steps": "Steps: ",
+        "validation": {
+          "invalidFormat": "Please upload an Excel file",
+          "noFile": "Please select an Excel file first"
+        },
+        "actions": {
+          "cancel": "Cancel",
+          "upload": "Upload File"
+        }
+      },
+      "index": {
+        "title": "Position Management",
+        "viewModes": {
+          "list": "List View",
+          "drilldown": "Drill-down View"
+        },
+        "actions": {
+          "export": "Export",
+          "batchUpload": "Batch Upload",
+          "downloadTemplate": "Download Template",
+          "addPosition": "Add Position",
+          "search": "Search",
+          "reset": "Reset",
+          "edit": "Edit",
+          "addPositionToCompany": "Add Position to {company}"
+        },
+        "filters": {
+          "allCategories": "All Categories",
+          "companyType": "Company Type",
+          "allCompanies": "All Companies",
+          "allRegions": "All Regions",
+          "allCities": "All Cities",
+          "allStatuses": "All Statuses",
+          "recruitmentCycle": "Recruitment Cycle",
+          "targetMajors": "Track",
+          "publishPreset": "Publish Preset",
+          "searchKeyword": "Search position name..."
+        },
+        "loading": "Loading position data...",
+        "empty": "No position data for current filters",
+        "units": {
+          "company": "{count} companies",
+          "position": "{count} positions"
+        },
+        "status": {
+          "open": "{count} Open",
+          "notStarted": "{count} Not Started",
+          "closed": "{count} Closed",
+          "hasStudents": "{count} Applicants",
+          "visible": "Visible"
+        },
+        "summary": {
+          "companies": "{count} companies total",
+          "positions": "\u25cf {count} positions",
+          "open": "\u25cf {count} open",
+          "notStarted": "\u25cf {count} not started",
+          "closed": "\u25cf {count} closed"
+        },
+        "stats": {
+          "total": "Total Positions",
+          "open": "Open",
+          "closing": "Closing Soon",
+          "notStarted": "Not Started",
+          "closed": "Closed",
+          "students": "Applicants"
+        },
+        "pagination": {
+          "total": "{count} records total"
+        },
+        "defaults": {
+          "company": "Company",
+          "position": "Position"
+        },
+        "companyWebsite": "Website",
+        "messages": {
+          "loadFailed": "Failed to load position data",
+          "loadStudentsFailed": "Failed to load position applicants",
+          "updated": "Position updated",
+          "created": "Position created",
+          "updateFailed": "Failed to update position",
+          "createFailed": "Failed to create position",
+          "importSuccess": "{count} imported successfully",
+          "importDuplicates": "{count} duplicates skipped",
+          "importFailed": "{count} failed",
+          "importSuccessDetail": "{count} positions imported successfully",
+          "batchUploadFailed": "Batch upload failed",
+          "exportAuthFailed": "Export request not authenticated, please login again",
+          "templateDownloadSuccess": "Template downloaded",
+          "exportSuccess": "Positions exported",
+          "templateDownloadFailed": "Template download failed",
+          "exportFailed": "Position export failed",
+          "failedDetails": "Failure Details"
+        }
+      }
+    },
+    "jobOverview": {
+      "assignMentor": {
+        "title": "Assign Mentor",
+        "unassigned": "Unassigned Student",
+        "suggested": "Suggested",
+        "mentorsUnit": "{count} mentors",
+        "preferredMentor": "Preferred Mentor",
+        "filterMentors": "Filter Mentors",
+        "allScopes": "All Scopes",
+        "allDirections": "All Directions",
+        "searchMentor": "Search mentor name...",
+        "foundMentors": "Found {count} mentors",
+        "selectMentors": "Select Mentors",
+        "multiSelect": "Multi-select",
+        "noMentors": "No mentors available for direct assignment",
+        "available": "Available",
+        "selectedMentors": "{count} mentors selected",
+        "note": "Note",
+        "optional": "Optional",
+        "notePlaceholder": "Special instructions for mentor, e.g. student background, key coaching areas...",
+        "cancel": "Cancel",
+        "submitting": "Submitting...",
+        "confirm": "Confirm Assignment",
+        "recommended": "Homeroom Teacher Recommended",
+        "student": "Student",
+        "noPreferredMentor": "No preferred mentor",
+        "selectAtLeastOne": "Please select at least 1 mentor"
+      },
+      "index": {
+        "export": "Export",
+        "exportSuccess": "Job overview exported successfully",
+        "exportFail": "Failed to export job overview",
+        "statsTitle": "Monthly Key Metrics",
+        "offerRateLabel": "Offer Rate",
+        "passRateLabel": "Interview Pass Rate",
+        "funnelTitle": "Conversion Funnel",
+        "funnelEmpty": "No funnel data available",
+        "filter": {
+          "studentPlaceholder": "Search by name / email / student ID...",
+          "companyPlaceholder": "All companies",
+          "stagePlaceholder": "All stages",
+          "leadMentorPlaceholder": "All lead mentors",
+          "search": "Search"
+        },
+        "tab": {
+          "pending": "Unassigned Mentors",
+          "all": "All Students"
+        },
+        "pendingAlert": "The following students requested coaching and need mentor assignment",
+        "pendingEmpty": "No pending mentor assignment requests",
+        "allAlert": "View all students' job search progress (read-only)",
+        "allEmpty": "No student job records under current filters",
+        "columns": {
+          "student": "Student",
+          "companyPosition": "Company / Position",
+          "stage": "Stage",
+          "interviewTime": "Interview Time",
+          "requestedMentor": "Requested Mentors",
+          "appliedAt": "Applied At",
+          "action": "Action",
+          "coachingStatus": "Coaching Status",
+          "mentor": "Mentor",
+          "hoursAndFeedback": "Hours / Feedback"
+        },
+        "stage": {
+          "applied": "Applied",
+          "rejected": "Rejected",
+          "withdrawn": "Withdrawn",
+          "unknown": "Unknown"
+        },
+        "statsCard": {
+          "applied": "Applied",
+          "interviewing": "Interviewing",
+          "offer": "Offer Received",
+          "rejected": "Rejected",
+          "withdrawn": "Withdrawn"
+        },
+        "noPreferredMentor": "No preferred mentors",
+        "assignMentorBtn": "Assign Mentor",
+        "confirmBtn": "Confirm",
+        "regionPending": "Region TBD",
+        "mentorPending": "Unassigned",
+        "mentorInfoPending": "Mentor info pending",
+        "noMentorAssigned": "No mentor assigned",
+        "noFeedback": "No feedback",
+        "coachingNotApplied": "Not applied",
+        "studentFallback": "Student",
+        "defaultStudentName": "this student",
+        "mentorCount": "{count}",
+        "assignSuccess": "{name} mentor assignment completed",
+        "stageConfirmSuccess": "{name}'s stage reminder confirmed",
+        "interviewTimePending": "TBD",
+        "interviewTimePendingConfirm": "Time pending",
+        "interviewTimeParseFailed": "Time parse failed",
+        "interviewTimePast": "Interview passed",
+        "interviewTimeToday": "Today",
+        "interviewTimeDaysLeft": "{days} days left",
+        "relativeJustNow": "Just now",
+        "relativeHoursAgo": "{hours}h ago",
+        "relativeDaysAgo": "{days} days ago"
+      }
+    }
   }
 }
