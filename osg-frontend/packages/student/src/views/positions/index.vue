@@ -2,76 +2,76 @@
   <div id="page-positions" class="positions-page" :data-action-trigger-count="positionsActionTriggers.length">
     <div class="page-header">
       <div>
-        <h1 class="page-title">岗位信息 <span class="page-title-en">Job Tracker</span></h1>
+        <h1 class="page-title">{{ t('student.positions.k1') }} <span class="page-title-en">Job Tracker</span></h1>
       </div>
       <div class="header-actions">
         <a-radio-group v-model:value="viewMode" button-style="solid" size="small" class="view-toggle">
           <a-radio-button value="list">
             <template #icon><UnorderedListOutlined /></template>
-            列表视图
+            {{ t('student.positions.k2') }}
           </a-radio-button>
           <a-radio-button value="drilldown">
             <template #icon><AppstoreOutlined /></template>
-            下钻视图
+            {{ t('student.positions.k3') }}
           </a-radio-button>
         </a-radio-group>
         <a-button type="primary" @click="openManualAddModal">
           <template #icon><PlusOutlined /></template>
-          手动添加
+          {{ t('student.positions.k4') }}
         </a-button>
       </div>
     </div>
 
     <a-alert v-if="isProfileIncomplete" type="warning" show-icon class="permission-notice">
       <template #message>
-        您的求职意向尚未填写完整，无法为您筛选合适的岗位。请先到"求职意向"中补全
-        <strong>招聘周期 / 求职地区 / 主攻方向</strong> 三项后再返回此页查看岗位列表。
+        {{ t('student.positions.k5') }}
+        <strong>{{ t('student.positions.k6') }}</strong> {{ t('student.positions.k7') }}
       </template>
       <template #action>
         <a-button type="primary" size="small" @click="router.push('/profile')">
-          修改求职意向 <RightOutlined />
+          {{ t('student.positions.k8') }} <RightOutlined />
         </a-button>
       </template>
     </a-alert>
     <a-alert v-else type="info" show-icon class="permission-notice">
       <template #message>
-        根据您的求职意向，当前展示 <strong>{{ intentSummary.recruitmentCycle }}</strong> 招聘周期、
-        <strong>{{ intentSummary.targetRegion }}</strong> 地区、
-        <strong>{{ intentSummary.primaryDirection }}</strong> 主攻方向的岗位信息
+        {{ t('student.positions.k9') }} <strong>{{ intentSummary.recruitmentCycle }}</strong> {{ t('student.positions.k10') }}
+        <strong>{{ intentSummary.targetRegion }}</strong> {{ t('student.positions.k11') }}
+        <strong>{{ intentSummary.primaryDirection }}</strong> {{ t('student.positions.k12') }}
       </template>
       <template #action>
         <a-button type="link" size="small" @click="router.push('/profile')">
-          修改求职意向 <RightOutlined />
+          {{ t('student.positions.k8') }} <RightOutlined />
         </a-button>
       </template>
     </a-alert>
 
     <a-empty
       v-if="isProfileIncomplete"
-      description="求职意向不完整，无法展示岗位"
+      :description="t('student.positions.k37')"
       class="profile-incomplete-empty"
       style="padding: 60px 0"
     >
-      <a-button type="primary" @click="router.push('/profile')">前往修改求职意向</a-button>
+      <a-button type="primary" @click="router.push('/profile')">{{ t('student.positions.k13') }}</a-button>
     </a-empty>
 
     <template v-else>
 
     <a-card :bordered="false" class="filter-card">
       <div class="filter-controls">
-        <a-select v-model:value="filters.category" placeholder="全部分类" class="filter-select filter-select-category" allow-clear>
+        <a-select v-model:value="filters.category" :placeholder="t('student.positions.k38')" class="filter-select filter-select-category" allow-clear>
           <a-select-option v-for="option in filterOptions.categories" :key="option.value" :value="option.value">
             {{ option.label }}
           </a-select-option>
         </a-select>
-        <a-select v-model:value="filters.industry" placeholder="全部行业" class="filter-select filter-select-industry" allow-clear>
+        <a-select v-model:value="filters.industry" :placeholder="t('student.positions.k39')" class="filter-select filter-select-industry" allow-clear>
           <a-select-option v-for="option in filterOptions.industries" :key="option.value" :value="option.value">
             {{ option.label }}
           </a-select-option>
         </a-select>
         <a-select
           v-model:value="filters.company"
-          placeholder="全部公司"
+          :placeholder="t('student.positions.k40')"
           class="filter-select filter-select-company"
           allow-clear
           show-search
@@ -81,14 +81,14 @@
             {{ option.label }}
           </a-select-option>
         </a-select>
-        <a-select v-model:value="filters.location" placeholder="全部地区" class="filter-select filter-select-location" allow-clear>
+        <a-select v-model:value="filters.location" :placeholder="t('student.positions.k41')" class="filter-select filter-select-location" allow-clear>
           <a-select-option v-for="option in filterOptions.locations" :key="option.value" :value="option.value">
             {{ option.label }}
           </a-select-option>
         </a-select>
         <a-input-search
           v-model:value="filters.keyword"
-          placeholder="搜索岗位名称..."
+          :placeholder="t('student.positions.k42')"
           class="filter-search"
           search-button
         />
@@ -105,7 +105,7 @@
         @click="activeTab = 'all'"
       >
         <i class="mdi mdi-briefcase-search" aria-hidden="true"></i>
-        <span>全部岗位</span>
+        <span>{{ t('student.positions.k14') }}</span>
       </button>
       <button
         type="button"
@@ -116,7 +116,7 @@
         @click="activeTab = 'favorites'"
       >
         <i class="mdi mdi-star content-tab-pill-star" aria-hidden="true"></i>
-        <span>我的收藏</span>
+        <span>{{ t('student.positions.k15') }}</span>
         <span v-if="favoritePositions.length > 0" class="content-tab-badge">{{ favoritePositions.length }}</span>
       </button>
     </div>
@@ -139,8 +139,8 @@
                 <RightOutlined :class="['industry-chevron', { 'rotate-icon': activeCategories.includes(industry.key) }]" />
                 <i class="mdi industry-icon" :class="industry.icon" aria-hidden="true" />
                 <span class="industry-name">{{ industry.label }}</span>
-                <a-tag color="blue">{{ industry.companyCount }} 家公司</a-tag>
-                <a-tag color="green">{{ industry.positionCount }} 个岗位</a-tag>
+                <a-tag color="blue">{{ t('student.positions.k149', { n: industry.companyCount }) }}</a-tag>
+                <a-tag color="green">{{ t('student.positions.k150', { n: industry.positionCount }) }}</a-tag>
               </div>
             </div>
 
@@ -159,7 +159,7 @@
                     <span class="company-name">{{ company.companyName }}</span>
                   </div>
                   <div class="company-actions">
-                    <span class="company-count"><strong>{{ company.positions.length }}</strong> 个岗位</span>
+                    <span class="company-count"><strong>{{ company.positions.length }}</strong> {{ t('student.positions.k16') }}</span>
                     <a-button
                       size="small"
                       class="company-career-link"
@@ -169,7 +169,7 @@
                       @click.stop
                     >
                       <template #icon><ExportOutlined /></template>
-                      官网
+                      {{ t('student.positions.k17') }}
                     </a-button>
                   </div>
                 </div>
@@ -211,7 +211,7 @@
                             :options="filterOptions.progressStages"
                             class="progress-stage-select"
                             size="small"
-                            placeholder="求职状态"
+                            :placeholder="t('student.positions.k43')"
                             style="width: 110px"
                             @change="(val: string) => handleActionStageChange(record, val)"
                           />
@@ -225,14 +225,14 @@
           </div>
 
           <div class="positions-summary">
-            <span class="summary-total">共 <strong>{{ filteredPositions.length }}</strong> 个岗位</span>
+            <span class="summary-total">{{ t('student.positions.k18') }} <strong>{{ filteredPositions.length }}</strong> {{ t('student.positions.k16') }}</span>
             <span class="summary-open">
               <i class="mdi mdi-circle-small" aria-hidden="true"></i>
-              开放中 {{ openPositionsCount }}
+              {{ t('student.positions.k151', { n: openPositionsCount }) }}
             </span>
             <span class="summary-closed">
               <i class="mdi mdi-circle-small" aria-hidden="true"></i>
-              已关闭 {{ closedPositionsCount }}
+              {{ t('student.positions.k152', { n: closedPositionsCount }) }}
             </span>
           </div>
       </div>
@@ -294,7 +294,7 @@
 
             <template v-else-if="column.key === 'actions'">
               <div class="action-cell">
-                <a-tooltip :title="record.favorited ? '已收藏点击取消' : '添加到收藏'">
+                <a-tooltip :title="t('student.positions.k44')">
                   <a-button
                     size="small"
                     shape="circle"
@@ -313,7 +313,7 @@
                   :options="filterOptions.progressStages"
                   class="progress-stage-select"
                   size="small"
-                  placeholder="求职状态"
+                  :placeholder="t('student.positions.k43')"
                   style="width: 110px"
                   @change="(val: string) => handleActionStageChange(record, val)"
                 />
@@ -334,7 +334,7 @@
         <template #title>
           <span class="favorites-card-title">
             <i class="mdi mdi-star" aria-hidden="true"></i>
-            收藏的岗位
+            {{ t('student.positions.k19') }}
           </span>
         </template>
         <a-table
@@ -362,7 +362,7 @@
 
             <template v-else-if="column.key === 'actions'">
               <a-space :size="6" class="fav-action-cell">
-                <a-tooltip :title="record.favorited ? '取消收藏' : '收藏'">
+                <a-tooltip :title="t('student.positions.k45')">
                   <a-button
                     type="text"
                     size="small"
@@ -378,7 +378,7 @@
                 </a-tooltip>
                 <a-select
                   :value="record.applied ? record.progressStage : undefined"
-                  placeholder="求职状态"
+                  :placeholder="t('student.positions.k43')"
                   size="small"
                   class="action-stage-select"
                   style="width: 110px"
@@ -403,9 +403,9 @@
     <a-modal
       v-model:open="manualAddOpen"
       wrap-class-name="osg-modal-form"
-      title="手动添加岗位"
-      ok-text="添加岗位"
-      cancel-text="取消"
+      :title="t('student.positions.k46')"
+      :ok-text="t('student.positions.k47')"
+      :cancel-text="t('student.positions.k48')"
       :width="640"
       destroy-on-close
       @ok="submitManualPosition"
@@ -413,53 +413,53 @@
       <a-alert
         type="info"
         show-icon
-        message="找不到想申请的岗位？填写以下信息手动添加到您的求职列表"
+        :message="t('student.positions.k49')"
         class="manual-add-tip"
       />
 
       <a-form layout="vertical" class="manual-form">
         <div class="manual-section">
-          <div class="manual-section-title">公司信息</div>
+          <div class="manual-section-title">{{ t('student.positions.k20') }}</div>
           <div class="manual-section-grid">
-            <a-form-item label="岗位名称" required class="manual-field manual-field--full">
-              <a-input v-model:value="manualForm.title" placeholder="如 Summer Analyst" :maxlength="128" />
+            <a-form-item :label="t('student.positions.k50')" required class="manual-field manual-field--full">
+              <a-input v-model:value="manualForm.title" :placeholder="t('student.positions.k51')" :maxlength="128" />
             </a-form-item>
-            <a-form-item label="公司名称（选填）" class="manual-field">
-              <a-input v-model:value="manualForm.company" placeholder="请输入公司名称" />
+            <a-form-item :label="t('student.positions.k52')" class="manual-field">
+              <a-input v-model:value="manualForm.company" :placeholder="t('student.positions.k53')" />
             </a-form-item>
-            <a-form-item label="公司类别（选填）" class="manual-field">
-              <a-input v-model:value="manualForm.companyType" placeholder="如：投行、基金、咨询" />
+            <a-form-item :label="t('student.positions.k54')" class="manual-field">
+              <a-input v-model:value="manualForm.companyType" :placeholder="t('student.positions.k55')" />
             </a-form-item>
-            <a-form-item label="岗位地区（选填）" class="manual-field">
-              <a-select v-model:value="manualForm.region" placeholder="请选择" @change="onManualRegionChange">
+            <a-form-item :label="t('student.positions.k56')" class="manual-field">
+              <a-select v-model:value="manualForm.region" :placeholder="t('student.positions.k57')" @change="onManualRegionChange">
                 <a-select-option v-for="r in regionDict" :key="r.value" :value="r.value">{{ r.label }}</a-select-option>
               </a-select>
             </a-form-item>
-            <a-form-item label="城市（选填）" class="manual-field">
-              <a-select v-model:value="manualForm.city" placeholder="请先选择岗位地区" :disabled="!manualForm.region">
+            <a-form-item :label="t('student.positions.k58')" class="manual-field">
+              <a-select v-model:value="manualForm.city" :placeholder="t('student.positions.k59')" :disabled="!manualForm.region">
                 <a-select-option v-for="city in manualCityOptions" :key="city.value" :value="city.value">{{ city.label }}</a-select-option>
               </a-select>
             </a-form-item>
-            <a-form-item label="公司官网（选填）" class="manual-field">
+            <a-form-item :label="t('student.positions.k60')" class="manual-field">
               <a-input v-model:value="manualForm.website" placeholder="https://..." />
             </a-form-item>
-            <a-form-item label="岗位链接" required class="manual-field">
+            <a-form-item :label="t('student.positions.k61')" required class="manual-field">
               <a-input v-model:value="manualForm.link" placeholder="https://..." />
             </a-form-item>
           </div>
         </div>
 
         <div class="manual-section">
-          <div class="manual-section-title">辅导需求</div>
+          <div class="manual-section-title">{{ t('student.positions.k21') }}</div>
           <a-radio-group v-model:value="manualForm.needCoaching" class="manual-coaching-options">
-            <a-radio :value="false" class="coaching-radio">暂不需要辅导，仅添加到追踪列表</a-radio>
-            <a-radio :value="true" class="coaching-radio">需要辅导，同时申请导师辅导</a-radio>
+            <a-radio :value="false" class="coaching-radio">{{ t('student.positions.k22') }}</a-radio>
+            <a-radio :value="true" class="coaching-radio">{{ t('student.positions.k23') }}</a-radio>
           </a-radio-group>
 
           <div v-if="manualForm.needCoaching" class="manual-coaching-fields">
-            <a-form-item label="你现在处于什么阶段？" required class="manual-field manual-field--full">
-              <a-select v-model:value="manualForm.coachingStage" placeholder="请选择面试阶段">
-                <a-select-option value="hirevue">HireVue or Online Test（在线测试）</a-select-option>
+            <a-form-item :label="t('student.positions.k62')" required class="manual-field manual-field--full">
+              <a-select v-model:value="manualForm.coachingStage" :placeholder="t('student.positions.k63')">
+                <a-select-option value="hirevue">{{ t('student.positions.k24') }}</a-select-option>
                 <a-select-option value="screening">Screening Call</a-select-option>
                 <a-select-option value="first">First Round</a-select-option>
                 <a-select-option value="second">Second Round</a-select-option>
@@ -470,40 +470,40 @@
             </a-form-item>
 
             <div v-if="manualCoachingIsHirevue" class="manual-hirevue-card">
-              <div class="manual-hirevue-title"><span>HireVue / Online Test 信息</span></div>
-              <a-form-item label="请选择类型" required class="manual-field manual-field--full">
+              <div class="manual-hirevue-title"><span>{{ t('student.positions.k25') }}</span></div>
+              <a-form-item :label="t('student.positions.k64')" required class="manual-field manual-field--full">
                 <a-radio-group v-model:value="manualForm.hirevueType" class="inline-radios">
                   <a-radio value="vi">VI (Video Interview)</a-radio>
                   <a-radio value="ot">OT (Online Test)</a-radio>
                 </a-radio-group>
               </a-form-item>
-              <a-form-item v-if="manualForm.hirevueType === 'vi'" label="VI 链接" required class="manual-field manual-field--full">
-                <a-input v-model:value="manualForm.viLink" placeholder="请输入 Video Interview 链接" />
+              <a-form-item v-if="manualForm.hirevueType === 'vi'" :label="t('student.positions.k65')" required class="manual-field manual-field--full">
+                <a-input v-model:value="manualForm.viLink" :placeholder="t('student.positions.k66')" />
               </a-form-item>
               <template v-if="manualForm.hirevueType === 'ot'">
-                <a-form-item label="OT 链接" required class="manual-field manual-field--full">
-                  <a-input v-model:value="manualForm.otLink" placeholder="请输入 Online Test 链接" />
+                <a-form-item :label="t('student.positions.k67')" required class="manual-field manual-field--full">
+                  <a-input v-model:value="manualForm.otLink" :placeholder="t('student.positions.k68')" />
                 </a-form-item>
                 <div class="manual-section-grid">
-                  <a-form-item label="登录账号" required class="manual-field">
-                    <a-input v-model:value="manualForm.otAccount" placeholder="账号" />
+                  <a-form-item :label="t('student.positions.k69')" required class="manual-field">
+                    <a-input v-model:value="manualForm.otAccount" :placeholder="t('student.positions.k70')" />
                   </a-form-item>
-                  <a-form-item label="登录密码" required class="manual-field">
-                    <a-input-password v-model:value="manualForm.otPassword" placeholder="密码" />
+                  <a-form-item :label="t('student.positions.k71')" required class="manual-field">
+                    <a-input-password v-model:value="manualForm.otPassword" :placeholder="t('student.positions.k72')" />
                   </a-form-item>
                 </div>
               </template>
-              <a-form-item label="截止时间" required class="manual-field manual-field--full" extra="请填写 VI/OT 的截止时间">
+              <a-form-item :label="t('student.positions.k73')" required class="manual-field manual-field--full" :extra="t('student.positions.k74')">
                 <a-date-picker
                   v-model:value="manualForm.hirevueDeadline"
                   show-time
                   format="YYYY-MM-DD HH:mm"
                   value-format="YYYY-MM-DDTHH:mm"
                   style="width:100%"
-                  placeholder="选择截止日期与时间"
+                  :placeholder="t('student.positions.k75')"
                 />
               </a-form-item>
-              <a-form-item label="上传邀请邮件截图" required class="manual-field manual-field--full">
+              <a-form-item :label="t('student.positions.k76')" required class="manual-field manual-field--full">
                 <a-upload
                   :action="uploadAction"
                   :headers="uploadHeaders"
@@ -516,49 +516,49 @@
                   @change="handleManualHirevueUpload"
                 >
                   <CloudUploadOutlined class="upload-dropzone__icon" />
-                  <span class="upload-dropzone__title">点击上传截图</span>
-                  <span class="upload-dropzone__helper">支持 JPG、PNG 格式</span>
+                  <span class="upload-dropzone__title">{{ t('student.positions.k26') }}</span>
+                  <span class="upload-dropzone__helper">{{ t('student.positions.k27') }}</span>
                   <span v-if="manualForm.inviteScreenshotName" class="upload-dropzone__file">{{ manualForm.inviteScreenshotName }}</span>
                 </a-upload>
               </a-form-item>
-              <a-form-item label="是否需要导师协助？" required class="manual-field manual-field--full">
+              <a-form-item :label="t('student.positions.k77')" required class="manual-field manual-field--full">
                 <a-radio-group v-model:value="manualForm.mentorHelp" class="inline-radios">
-                  <a-radio value="yes">是，需要导师协助</a-radio>
-                  <a-radio value="no">否，仅需题库权限</a-radio>
+                  <a-radio value="yes">{{ t('student.positions.k28') }}</a-radio>
+                  <a-radio value="no">{{ t('student.positions.k29') }}</a-radio>
                 </a-radio-group>
               </a-form-item>
             </div>
 
             <template v-if="manualCoachingShowInterview">
-              <a-form-item label="该阶段的面试时间" required class="manual-field manual-field--full" extra="请填写该阶段面试的具体时间，方便导师安排辅导">
+              <a-form-item :label="t('student.positions.k78')" required class="manual-field manual-field--full" :extra="t('student.positions.k79')">
                 <a-date-picker
                   v-model:value="manualForm.interviewTime"
                   show-time
                   format="YYYY-MM-DD HH:mm"
                   value-format="YYYY-MM-DDTHH:mm"
                   style="width:100%"
-                  placeholder="选择面试日期与时间"
+                  :placeholder="t('student.positions.k80')"
                 />
               </a-form-item>
-              <a-form-item label="你期望有几个导师辅导？（选填）" class="manual-field manual-field--full">
-                <a-select v-model:value="manualForm.mentorCount" placeholder="请选择">
+              <a-form-item :label="t('student.positions.k81')" class="manual-field manual-field--full">
+                <a-select v-model:value="manualForm.mentorCount" :placeholder="t('student.positions.k57')">
                   <a-select-option v-for="option in filterOptions.mentorCounts" :key="option.value" :value="option.value">
                     {{ option.label }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
               <div class="manual-section-grid">
-                <a-form-item label="意向导师（选填）" class="manual-field">
-                  <a-input v-model:value="manualForm.preferMentor" placeholder="如有特别想要的导师，请填写导师姓名" />
+                <a-form-item :label="t('student.positions.k82')" class="manual-field">
+                  <a-input v-model:value="manualForm.preferMentor" :placeholder="t('student.positions.k83')" />
                 </a-form-item>
-                <a-form-item label="排除导师（选填）" class="manual-field">
-                  <a-input v-model:value="manualForm.excludeMentor" placeholder="如有不想选择的导师，请填写导师姓名" />
+                <a-form-item :label="t('student.positions.k84')" class="manual-field">
+                  <a-input v-model:value="manualForm.excludeMentor" :placeholder="t('student.positions.k85')" />
                 </a-form-item>
               </div>
             </template>
 
-            <a-form-item label="备注说明（选填）" class="manual-field manual-field--full">
-              <a-textarea v-model:value="manualForm.note" :rows="2" placeholder="如有其他需求或说明，请在此填写..." />
+            <a-form-item :label="t('student.positions.k86')" class="manual-field manual-field--full">
+              <a-textarea v-model:value="manualForm.note" :rows="2" :placeholder="t('student.positions.k87')" />
             </a-form-item>
           </div>
         </div>
@@ -568,15 +568,15 @@
     <a-modal
       v-model:open="progressModalOpen"
       wrap-class-name="osg-modal-form"
-      ok-text="保存进度"
-      cancel-text="取消"
+      :ok-text="t('student.positions.k88')"
+      :cancel-text="t('student.positions.k48')"
       destroy-on-close
       @ok="submitProgressUpdate"
     >
       <template #title>
         <span style="display:inline-flex;align-items:center;gap:8px">
           <FileTextOutlined />
-          <span>记录岗位进度</span>
+          <span>{{ t('student.positions.k30') }}</span>
         </span>
       </template>
       <div v-if="selectedPosition" class="modal-job-card progress-card">
@@ -584,17 +584,17 @@
         <div class="modal-job-sub">{{ selectedPosition.title }} · {{ selectedPosition.location }}</div>
       </div>
       <a-form layout="vertical">
-        <a-form-item label="当前阶段" required>
+        <a-form-item :label="t('student.positions.k89')" required>
           <a-select
             v-model:value="progressForm.stage"
             show-search
             option-filter-prop="label"
-            placeholder="选择阶段"
+            :placeholder="t('student.positions.k90')"
             :options="filterOptions.progressStages"
           />
         </a-form-item>
-        <a-form-item label="备注">
-          <a-textarea v-model:value="progressForm.note" :rows="3" placeholder="记录这一轮的关键进展或提醒" />
+        <a-form-item :label="t('student.positions.k91')">
+          <a-textarea v-model:value="progressForm.note" :rows="3" :placeholder="t('student.positions.k92')" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -602,15 +602,15 @@
     <a-modal
       v-model:open="appliedModalOpen"
       wrap-class-name="osg-modal-form"
-      ok-text="确认投递"
-      cancel-text="取消"
+      :ok-text="t('student.positions.k93')"
+      :cancel-text="t('student.positions.k48')"
       destroy-on-close
       @ok="submitAppliedMark"
     >
       <template #title>
         <span style="display:inline-flex;align-items:center;gap:8px">
           <CheckCircleFilled style="color: #22c55e" />
-          <span>标记已投递</span>
+          <span>{{ t('student.positions.k31') }}</span>
         </span>
       </template>
       <div v-if="selectedPosition" class="modal-job-card applied-card">
@@ -618,20 +618,20 @@
         <div class="modal-job-sub">{{ selectedPosition.title }} · {{ selectedPosition.location }}</div>
       </div>
       <a-form layout="vertical">
-        <a-form-item label="投递日期" required>
-          <a-date-picker v-model:value="appliedForm.date" value-format="YYYY-MM-DD" style="width:100%" placeholder="选择投递日期" />
+        <a-form-item :label="t('student.positions.k94')" required>
+          <a-date-picker v-model:value="appliedForm.date" value-format="YYYY-MM-DD" style="width:100%" :placeholder="t('student.positions.k95')" />
         </a-form-item>
-        <a-form-item label="投递方式" required>
+        <a-form-item :label="t('student.positions.k96')" required>
           <a-select
             v-model:value="appliedForm.method"
             show-search
             option-filter-prop="label"
-            placeholder="选择投递方式"
+            :placeholder="t('student.positions.k97')"
             :options="filterOptions.applyMethods"
           />
         </a-form-item>
-        <a-form-item label="备注">
-          <a-textarea v-model:value="appliedForm.note" :rows="3" placeholder="如：投递了哪个部门或是否有内推" />
+        <a-form-item :label="t('student.positions.k91')">
+          <a-textarea v-model:value="appliedForm.note" :rows="3" :placeholder="t('student.positions.k98')" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -639,8 +639,8 @@
     <a-modal
       v-model:open="coachingModalOpen"
       wrap-class-name="osg-modal-form"
-      ok-text="提交申请"
-      cancel-text="取消"
+      :ok-text="t('student.positions.k99')"
+      :cancel-text="t('student.positions.k48')"
       destroy-on-close
       :width="650"
       class="coaching-apply-modal"
@@ -649,7 +649,7 @@
       <template #title>
         <span style="display:inline-flex;align-items:center;gap:8px">
           <i class="mdi mdi-briefcase-plus" aria-hidden="true" style="color: #1d4ed8; font-size: 16px"></i>
-          <span>岗位申请</span>
+          <span>{{ t('student.positions.k32') }}</span>
         </span>
       </template>
       <div v-if="selectedPosition" class="modal-job-card coaching-card">
@@ -657,9 +657,9 @@
         <div class="modal-job-sub">{{ selectedPosition.title }} · {{ selectedPosition.location }}</div>
       </div>
       <a-form layout="vertical">
-        <a-form-item label="你现在处于什么阶段？" required>
-          <a-select v-model:value="coachingForm.stage" placeholder="请选择面试阶段">
-            <a-select-option value="hirevue">HireVue or Online Test（在线测试）</a-select-option>
+        <a-form-item :label="t('student.positions.k62')" required>
+          <a-select v-model:value="coachingForm.stage" :placeholder="t('student.positions.k63')">
+            <a-select-option value="hirevue">{{ t('student.positions.k24') }}</a-select-option>
             <a-select-option value="screening">Screening Call (Phone Screen / HR Screen / Initial Call / Recruiter Call)</a-select-option>
             <a-select-option value="first">First Round</a-select-option>
             <a-select-option value="second">Second Round</a-select-option>
@@ -670,40 +670,40 @@
         </a-form-item>
 
         <div v-if="coachingIsHirevue" class="manual-hirevue-card">
-          <div class="manual-hirevue-title"><span>HireVue / Online Test 信息</span></div>
-          <a-form-item label="请选择类型" required>
+          <div class="manual-hirevue-title"><span>{{ t('student.positions.k25') }}</span></div>
+          <a-form-item :label="t('student.positions.k64')" required>
             <a-radio-group v-model:value="coachingForm.hirevueType" class="inline-radios">
               <a-radio value="vi">VI (Video Interview)</a-radio>
               <a-radio value="ot">OT (Online Test)</a-radio>
             </a-radio-group>
           </a-form-item>
-          <a-form-item v-if="coachingForm.hirevueType === 'vi'" label="VI 链接" required>
-            <a-input v-model:value="coachingForm.viLink" placeholder="请输入 Video Interview 链接" />
+          <a-form-item v-if="coachingForm.hirevueType === 'vi'" :label="t('student.positions.k65')" required>
+            <a-input v-model:value="coachingForm.viLink" :placeholder="t('student.positions.k66')" />
           </a-form-item>
           <template v-if="coachingForm.hirevueType === 'ot'">
-            <a-form-item label="OT 链接" required>
-              <a-input v-model:value="coachingForm.otLink" placeholder="请输入 Online Test 链接" />
+            <a-form-item :label="t('student.positions.k67')" required>
+              <a-input v-model:value="coachingForm.otLink" :placeholder="t('student.positions.k68')" />
             </a-form-item>
             <div class="manual-section-grid">
-              <a-form-item label="登录账号" required class="manual-field">
-                <a-input v-model:value="coachingForm.otAccount" placeholder="账号" />
+              <a-form-item :label="t('student.positions.k69')" required class="manual-field">
+                <a-input v-model:value="coachingForm.otAccount" :placeholder="t('student.positions.k70')" />
               </a-form-item>
-              <a-form-item label="登录密码" required class="manual-field">
-                <a-input-password v-model:value="coachingForm.otPassword" placeholder="密码" />
+              <a-form-item :label="t('student.positions.k71')" required class="manual-field">
+                <a-input-password v-model:value="coachingForm.otPassword" :placeholder="t('student.positions.k72')" />
               </a-form-item>
             </div>
           </template>
-          <a-form-item label="截止时间" required extra="请填写 VI/OT 的截止时间">
+          <a-form-item :label="t('student.positions.k73')" required :extra="t('student.positions.k74')">
             <a-date-picker
               v-model:value="coachingForm.hirevueDeadline"
               show-time
               format="YYYY-MM-DD HH:mm"
               value-format="YYYY-MM-DDTHH:mm"
               style="width:100%"
-              placeholder="选择截止日期与时间"
+              :placeholder="t('student.positions.k75')"
             />
           </a-form-item>
-          <a-form-item label="上传邀请邮件截图" required>
+          <a-form-item :label="t('student.positions.k76')" required>
             <a-upload
               :action="uploadAction"
               :headers="uploadHeaders"
@@ -716,56 +716,56 @@
               @change="handleCoachingHirevueUpload"
             >
               <CloudUploadOutlined class="upload-dropzone__icon" />
-              <span class="upload-dropzone__title">点击上传截图</span>
-              <span class="upload-dropzone__helper">支持 JPG、PNG 格式</span>
+              <span class="upload-dropzone__title">{{ t('student.positions.k26') }}</span>
+              <span class="upload-dropzone__helper">{{ t('student.positions.k27') }}</span>
               <span v-if="coachingForm.inviteScreenshotName" class="upload-dropzone__file">{{ coachingForm.inviteScreenshotName }}</span>
             </a-upload>
           </a-form-item>
-          <a-form-item label="是否需要导师协助？" required>
+          <a-form-item :label="t('student.positions.k77')" required>
             <a-radio-group v-model:value="coachingForm.mentorHelp" class="inline-radios">
-              <a-radio value="yes">是，需要导师协助</a-radio>
-              <a-radio value="no">否，仅需题库权限</a-radio>
+              <a-radio value="yes">{{ t('student.positions.k28') }}</a-radio>
+              <a-radio value="no">{{ t('student.positions.k29') }}</a-radio>
             </a-radio-group>
           </a-form-item>
         </div>
 
         <template v-if="coachingShowInterview">
-          <a-form-item label="该阶段的面试时间" required extra="请填写该阶段面试的具体时间，方便导师安排辅导">
+          <a-form-item :label="t('student.positions.k78')" required :extra="t('student.positions.k79')">
             <a-date-picker
               v-model:value="coachingForm.interviewTime"
               show-time
               format="YYYY-MM-DD HH:mm"
               value-format="YYYY-MM-DDTHH:mm"
               style="width:100%"
-              placeholder="选择面试日期与时间"
+              :placeholder="t('student.positions.k80')"
             />
           </a-form-item>
-          <a-form-item label="你期望有几个导师辅导？（选填）">
-            <a-select v-model:value="coachingForm.mentorCount" placeholder="请选择" allow-clear>
-              <a-select-option value="0">0 位（不需要导师）</a-select-option>
-              <a-select-option value="1">1 位导师</a-select-option>
-              <a-select-option value="2">2 位导师</a-select-option>
-              <a-select-option value="3">3 位导师</a-select-option>
+          <a-form-item :label="t('student.positions.k81')">
+            <a-select v-model:value="coachingForm.mentorCount" :placeholder="t('student.positions.k57')" allow-clear>
+              <a-select-option value="0">{{ t('student.positions.k33') }}</a-select-option>
+              <a-select-option value="1">{{ t('student.positions.k34') }}</a-select-option>
+              <a-select-option value="2">{{ t('student.positions.k35') }}</a-select-option>
+              <a-select-option value="3">{{ t('student.positions.k36') }}</a-select-option>
             </a-select>
           </a-form-item>
           <div class="manual-section-grid">
-            <a-form-item label="意向导师（选填）" class="manual-field">
-              <a-input v-model:value="coachingForm.preferMentor" placeholder="如有特别想要的导师，请填写导师姓名" />
+            <a-form-item :label="t('student.positions.k82')" class="manual-field">
+              <a-input v-model:value="coachingForm.preferMentor" :placeholder="t('student.positions.k83')" />
             </a-form-item>
-            <a-form-item label="排除导师（选填）" class="manual-field">
-              <a-input v-model:value="coachingForm.excludeMentor" placeholder="如有不想选择的导师，请填写导师姓名" />
+            <a-form-item :label="t('student.positions.k84')" class="manual-field">
+              <a-input v-model:value="coachingForm.excludeMentor" :placeholder="t('student.positions.k85')" />
             </a-form-item>
           </div>
           <a-alert
             type="success"
             show-icon
-            message="申请将流转至班主任和后台管理员，他们都有权限为您分配导师。"
+            :message="t('student.positions.k100')"
             class="coaching-info-alert"
           />
         </template>
 
-        <a-form-item label="备注说明（选填）">
-          <a-textarea v-model:value="coachingForm.note" :rows="2" placeholder="如有其他需求或说明，请在此填写..." />
+        <a-form-item :label="t('student.positions.k86')">
+          <a-textarea v-model:value="coachingForm.note" :rows="2" :placeholder="t('student.positions.k87')" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -774,6 +774,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import type { UploadChangeParam } from 'ant-design-vue'
@@ -805,6 +806,8 @@ import {
   UnorderedListOutlined
 } from '@ant-design/icons-vue'
 
+const { t } = useI18n()
+
 type ViewMode = 'drilldown' | 'list'
 type TabKey = 'all' | 'favorites'
 type IndustryKey = PositionRecord['industry']
@@ -835,7 +838,7 @@ const router = useRouter()
 const FALLBACK_INDUSTRY_META = {
   tone: 'slate',
   icon: 'mdi-briefcase',
-  label: '未归类',
+  label: t('student.positions.k101'),
 } as const
 
 const { meta: industryMeta, load: loadIndustryMeta } = useIndustryMeta()
@@ -873,21 +876,21 @@ function resolveIndustryMeta(industryRaw: string) {
 }
 
 const positionsActionTriggers = [
-  { actionId: 'manual-add', label: '手动添加岗位' },
-  { actionId: 'drilldown-applied-1', label: 'Goldman Sachs / IB Analyst / 已投递' },
-  { actionId: 'drilldown-favorite-1', label: 'Goldman Sachs / IB Analyst / 收藏' },
-  { actionId: 'drilldown-progress-1', label: 'Goldman Sachs / IB Analyst / 进度' },
-  { actionId: 'drilldown-applied-2', label: 'JP Morgan / S&T Analyst / 未投递' },
-  { actionId: 'drilldown-favorite-2', label: 'JP Morgan / S&T Analyst / 收藏' },
-  { actionId: 'drilldown-coaching-2', label: 'JP Morgan / S&T Analyst / 申请辅导' },
-  { actionId: 'drilldown-applied-3', label: 'McKinsey / Business Analyst / 未投递' },
-  { actionId: 'drilldown-favorite-3', label: 'McKinsey / Business Analyst / 收藏' },
-  { actionId: 'drilldown-coaching-3', label: 'McKinsey / Business Analyst / 申请辅导' },
-  { actionId: 'favorite-unfavorite-1', label: 'JP Morgan / 取消收藏' },
-  { actionId: 'favorite-apply-1', label: 'JP Morgan / 投递' },
-  { actionId: 'favorite-coaching-1', label: 'JP Morgan / 申请辅导' },
-  { actionId: 'favorite-unfavorite-2', label: 'McKinsey / 取消收藏' },
-  { actionId: 'favorite-coaching-2', label: 'McKinsey / 申请辅导' }
+  { actionId: 'manual-add', label: t('student.positions.k46') },
+  { actionId: 'drilldown-applied-1', label: t('student.positions.k102') },
+  { actionId: 'drilldown-favorite-1', label: t('student.positions.k103') },
+  { actionId: 'drilldown-progress-1', label: t('student.positions.k104') },
+  { actionId: 'drilldown-applied-2', label: t('student.positions.k105') },
+  { actionId: 'drilldown-favorite-2', label: t('student.positions.k106') },
+  { actionId: 'drilldown-coaching-2', label: t('student.positions.k107') },
+  { actionId: 'drilldown-applied-3', label: t('student.positions.k108') },
+  { actionId: 'drilldown-favorite-3', label: t('student.positions.k109') },
+  { actionId: 'drilldown-coaching-3', label: t('student.positions.k110') },
+  { actionId: 'favorite-unfavorite-1', label: t('student.positions.k111') },
+  { actionId: 'favorite-apply-1', label: t('student.positions.k112') },
+  { actionId: 'favorite-coaching-1', label: t('student.positions.k113') },
+  { actionId: 'favorite-unfavorite-2', label: t('student.positions.k114') },
+  { actionId: 'favorite-coaching-2', label: t('student.positions.k115') }
 ] as const
 
 const viewMode = ref<ViewMode>('list')
@@ -968,7 +971,7 @@ const progressForm = ref({
 
 const appliedForm = ref({
   date: '',
-  method: '官网投递',
+  method: t('student.positions.k116'),
   note: ''
 })
 
@@ -996,36 +999,36 @@ const coachingShowInterview = computed(
 )
 
 const positionColumns = [
-  { title: '岗位名称', key: 'title', width: 240 },
-  { title: '岗位分类', key: 'category', width: 110 },
-  { title: '部门', dataIndex: 'department', width: 100 },
-  { title: '地区', dataIndex: 'location', width: 110 },
-  { title: '招聘周期', dataIndex: 'recruitCycle', width: 130 },
-  { title: '发布时间', dataIndex: 'publishDate', width: 100 },
-  { title: '截止时间', dataIndex: 'deadline', width: 100 },
-  { title: '操作', key: 'actions', width: 260, fixed: 'right' }
+  { title: t('student.positions.k50'), key: 'title', width: 240 },
+  { title: t('student.positions.k117'), key: 'category', width: 110 },
+  { title: t('student.positions.k118'), dataIndex: 'department', width: 100 },
+  { title: t('student.positions.k119'), dataIndex: 'location', width: 110 },
+  { title: t('student.positions.k120'), dataIndex: 'recruitCycle', width: 130 },
+  { title: t('student.positions.k121'), dataIndex: 'publishDate', width: 100 },
+  { title: t('student.positions.k73'), dataIndex: 'deadline', width: 100 },
+  { title: t('student.positions.k122'), key: 'actions', width: 260, fixed: 'right' }
 ]
 
 const listColumns = [
-  { title: '岗位名称', key: 'title', width: 220, fixed: 'left' },
-  { title: '公司', key: 'companyCell', width: 120 },
-  { title: '行业', key: 'industryCell', width: 100 },
-  { title: '岗位分类', key: 'category', width: 100 },
-  { title: '地区', key: 'regionCell', width: 90 },
-  { title: '招聘周期', key: 'recruitCycleCell', width: 100 },
-  { title: '发布时间', dataIndex: 'publishDate', width: 100 },
-  { title: '截止时间', key: 'deadlineCell', width: 100 },
-  { title: '操作', key: 'actions', width: 220 }
+  { title: t('student.positions.k50'), key: 'title', width: 220, fixed: 'left' },
+  { title: t('student.positions.k123'), key: 'companyCell', width: 120 },
+  { title: t('student.positions.k124'), key: 'industryCell', width: 100 },
+  { title: t('student.positions.k117'), key: 'category', width: 100 },
+  { title: t('student.positions.k119'), key: 'regionCell', width: 90 },
+  { title: t('student.positions.k120'), key: 'recruitCycleCell', width: 100 },
+  { title: t('student.positions.k121'), dataIndex: 'publishDate', width: 100 },
+  { title: t('student.positions.k73'), key: 'deadlineCell', width: 100 },
+  { title: t('student.positions.k122'), key: 'actions', width: 220 }
 ]
 
 const favoriteColumns = [
-  { title: '公司/岗位', key: 'job' },
-  { title: '部门', dataIndex: 'department', width: 110 },
-  { title: '地区', dataIndex: 'location', width: 100 },
-  { title: '招聘周期', key: 'recruitCycle', width: 110 },
-  { title: '截止时间', key: 'deadlineCell', width: 100 },
-  { title: '收藏时间', dataIndex: 'favoritedAt', width: 110 },
-  { title: '操作', key: 'actions', width: 160 }
+  { title: t('student.positions.k125'), key: 'job' },
+  { title: t('student.positions.k118'), dataIndex: 'department', width: 110 },
+  { title: t('student.positions.k119'), dataIndex: 'location', width: 100 },
+  { title: t('student.positions.k120'), key: 'recruitCycle', width: 110 },
+  { title: t('student.positions.k73'), key: 'deadlineCell', width: 100 },
+  { title: t('student.positions.k126'), dataIndex: 'favoritedAt', width: 110 },
+  { title: t('student.positions.k122'), key: 'actions', width: 160 }
 ]
 
 const selectedPosition = computed(() =>
@@ -1057,12 +1060,12 @@ function handleManualHirevueUpload(info: UploadChangeParam) {
     if (url) {
       manualForm.value.inviteScreenshotName = info.file.name ?? ''
       manualForm.value.inviteScreenshotUrl = url
-      message.success('邀请邮件截图上传成功')
+      message.success(t('student.positions.k127'))
     } else {
-      message.error('上传响应缺少 url，请重试')
+      message.error(t('student.positions.k128'))
     }
   } else if (info.file.status === 'error') {
-    message.error('上传失败，请重试')
+    message.error(t('student.positions.k129'))
   }
 }
 
@@ -1073,12 +1076,12 @@ function handleCoachingHirevueUpload(info: UploadChangeParam) {
     if (url) {
       coachingForm.value.inviteScreenshotName = info.file.name ?? ''
       coachingForm.value.inviteScreenshotUrl = url
-      message.success('邀请邮件截图上传成功')
+      message.success(t('student.positions.k127'))
     } else {
-      message.error('上传响应缺少 url，请重试')
+      message.error(t('student.positions.k128'))
     }
   } else if (info.file.status === 'error') {
-    message.error('上传失败，请重试')
+    message.error(t('student.positions.k129'))
   }
 }
 
@@ -1326,9 +1329,9 @@ async function loadPositionMeta() {
   }
 
   const methodMap: Record<string, string> = {
-    '官网投递': 'official',
-    '内推': 'referral',
-    '邮件投递': 'campus'
+    '官网投递': 'official', // i18n-skip-line: backend enum value
+    '内推': 'referral', // i18n-skip-line: backend enum value
+    '邮件投递': 'campus', // i18n-skip-line: backend enum value
   }
   filterOptions.value.applyMethods = filterOptions.value.applyMethods.map((m) => ({
     label: m.label,
@@ -1344,7 +1347,7 @@ function openAppliedModal(record: PositionRecord) {
   setSelectedPosition(record)
   appliedForm.value = {
     date: appliedForm.value.date || '',
-    method: '官网投递',
+    method: t('student.positions.k116'),
     note: ''
   }
   appliedModalOpen.value = true
@@ -1361,7 +1364,7 @@ async function toggleFavorite(record: PositionRecord) {
     target.favorited = nextFavorited
     target.favoritedAt = nextFavorited ? formatToday() : '--'
   }
-  message.success(nextFavorited ? '已收藏！可在“我的收藏”中查看。' : '已取消收藏')
+  message.success(nextFavorited ? t('student.positions.k153') : t('student.positions.k130'))
 }
 
 function formatToday() {
@@ -1375,39 +1378,39 @@ function formatToday() {
 async function submitManualPosition() {
   const f = manualForm.value
   if (!f.title || !f.title.trim()) {
-    message.error('请填写岗位名称')
+    message.error(t('student.positions.k131'))
     return
   }
   if (!f.link) {
-    message.error('请填写岗位链接')
+    message.error(t('student.positions.k132'))
     return
   }
 
   if (f.needCoaching) {
     if (!f.coachingStage) {
-      message.error('请选择当前面试阶段')
+      message.error(t('student.positions.k133'))
       return
     }
     if (f.coachingStage === 'hirevue') {
       if (!f.hirevueType) {
-        message.error('请选择 VI 或 OT 类型')
+        message.error(t('student.positions.k134'))
         return
       }
       if (f.hirevueType === 'vi' && !f.viLink) {
-        message.error('请填写 VI 链接')
+        message.error(t('student.positions.k135'))
         return
       }
       if (f.hirevueType === 'ot' && (!f.otLink || !f.otAccount || !f.otPassword)) {
-        message.error('请完整填写 OT 链接、账号和密码')
+        message.error(t('student.positions.k136'))
         return
       }
       if (!f.hirevueDeadline) {
-        message.error('请填写截止时间')
+        message.error(t('student.positions.k137'))
         return
       }
     } else {
       if (!f.interviewTime) {
-        message.error('请填写面试时间')
+        message.error(t('student.positions.k138'))
         return
       }
     }
@@ -1442,7 +1445,7 @@ async function submitManualPosition() {
   })
   await Promise.all([loadPositions(), loadPositionMeta()])
   manualAddOpen.value = false
-  message.success('岗位已添加到您的追踪列表')
+  message.success(t('student.positions.k139'))
 }
 
 async function submitProgressUpdate() {
@@ -1457,7 +1460,7 @@ async function submitProgressUpdate() {
   })
   await loadPositions()
   progressModalOpen.value = false
-  message.success('岗位进度已更新')
+  message.success(t('student.positions.k140'))
 }
 
 async function handleActionStageChange(record: PositionRecord, nextStage: string) {
@@ -1466,7 +1469,7 @@ async function handleActionStageChange(record: PositionRecord, nextStage: string
   // 取消投递：投了又撤，清 applied，投递数 -1，从「我的求职」隐藏
   if (nextStage === 'cancelled') {
     if (!record.applied) {
-      message.info('该岗位尚未投递')
+      message.info(t('student.positions.k141'))
       return
     }
     try {
@@ -1475,7 +1478,7 @@ async function handleActionStageChange(record: PositionRecord, nextStage: string
         applied: false
       })
       await loadPositions()
-      message.success(`已取消 ${record.company} ${record.title} 的投递`)
+      message.success(t('student.positions.k154', { company: record.company, title: record.title }))
     } catch {
       // error handled by http layer
     }
@@ -1492,7 +1495,7 @@ async function handleActionStageChange(record: PositionRecord, nextStage: string
 
   // 未投递岗位不可标记主动放弃 / 面试中 / offer / 被拒绝
   if (nextStage !== 'applied') {
-    message.info('请先投递该岗位后，再切换其他状态')
+    message.info(t('student.positions.k142'))
     return
   }
 
@@ -1512,7 +1515,7 @@ async function updateProgressInline(record: PositionRecord, stage: string) {
     const target = positions.value.find((p) => p.id === record.id)
     if (target) target.progressStage = stage
     const stageLabel = filterOptions.value.progressStages.find((o) => o.value === stage)?.label || stage
-    message.success(`已更新为${stageLabel}`)
+    message.success(t('student.positions.k155', { label: stageLabel }))
   } catch (err) {
     // 失败时重拉恢复反馈
     await loadPositions()
@@ -1525,7 +1528,7 @@ async function submitAppliedMark() {
   }
 
   if (!appliedForm.value.date) {
-    message.error('请选择投递日期')
+    message.error(t('student.positions.k143'))
     return
   }
 
@@ -1538,7 +1541,7 @@ async function submitAppliedMark() {
   })
   await loadPositions()
   appliedModalOpen.value = false
-  message.success('已标记为已投递')
+  message.success(t('student.positions.k144'))
 }
 
 async function submitCoachingApplication() {
@@ -1549,38 +1552,38 @@ async function submitCoachingApplication() {
   const f = coachingForm.value
 
   if (!f.stage) {
-    message.error('请选择当前面试阶段')
+    message.error(t('student.positions.k133'))
     return
   }
 
   if (f.stage === 'hirevue') {
     if (!f.hirevueType) {
-      message.error('请选择 VI 或 OT 类型')
+      message.error(t('student.positions.k134'))
       return
     }
     if (f.hirevueType === 'vi' && !f.viLink) {
-      message.error('请填写 VI 链接')
+      message.error(t('student.positions.k135'))
       return
     }
     if (f.hirevueType === 'ot' && (!f.otLink || !f.otAccount || !f.otPassword)) {
-      message.error('请完整填写 OT 链接、账号和密码')
+      message.error(t('student.positions.k136'))
       return
     }
     if (!f.hirevueDeadline) {
-      message.error('请填写截止时间')
+      message.error(t('student.positions.k137'))
       return
     }
     if (!f.inviteScreenshotUrl) {
-      message.error('请上传邀请邮件截图')
+      message.error(t('student.positions.k145'))
       return
     }
     if (!f.mentorHelp) {
-      message.error('请选择是否需要导师协助')
+      message.error(t('student.positions.k146'))
       return
     }
   } else {
     if (!f.interviewTime) {
-      message.error('请填写该阶段的面试时间')
+      message.error(t('student.positions.k147'))
       return
     }
   }
@@ -1605,7 +1608,7 @@ async function submitCoachingApplication() {
   })
   await loadPositions()
   coachingModalOpen.value = false
-  message.success('辅导申请已提交')
+  message.success(t('student.positions.k148'))
 }
 
 onMounted(async () => {

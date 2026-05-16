@@ -4,55 +4,55 @@
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">AI简历分析 <span>AI Resume Analysis</span></h1>
+            <h1 class="page-title">{{ t('student.aiResume.k1') }} <span>AI Resume Analysis</span></h1>
           </div>
-          <a-button type="primary" size="large" @click="uploadOpen = true">上传分析</a-button>
+          <a-button type="primary" size="large" @click="uploadOpen = true">{{ t('student.aiResume.k2') }}</a-button>
         </div>
       </template>
 
       <section class="result-card">
-        <div class="result-head">最新分析结果</div>
+        <div class="result-head">{{ t('student.aiResume.k3') }}</div>
         <div class="result-grid">
           <div class="left-column">
             <div class="file-row">
-              <span class="label">分析文件：</span>
+              <span class="label">{{ t('student.aiResume.k4') }}</span>
               <strong>Resume_TestStudent_v1.pdf</strong>
-              <a-tag color="success">已分析</a-tag>
+              <a-tag color="success">{{ t('student.aiResume.k5') }}</a-tag>
             </div>
             <div class="score-panel">
               <div class="score-value">82</div>
-              <div class="score-text">综合评分 Overall Score</div>
+              <div class="score-text">{{ t('student.aiResume.k6') }}</div>
             </div>
             <div class="metric-list">
-              <div class="metric-row"><span>格式规范 Format</span><strong>95/100</strong></div>
-              <div class="metric-row"><span>内容完整度 Completeness</span><strong>85/100</strong></div>
-              <div class="metric-row"><span>关键词匹配 Keywords</span><strong>78/100</strong></div>
-              <div class="metric-row"><span>量化成就 Quantification</span><strong>68/100</strong></div>
+              <div class="metric-row"><span>{{ t('student.aiResume.k7') }}</span><strong>95/100</strong></div>
+              <div class="metric-row"><span>{{ t('student.aiResume.k8') }}</span><strong>85/100</strong></div>
+              <div class="metric-row"><span>{{ t('student.aiResume.k9') }}</span><strong>78/100</strong></div>
+              <div class="metric-row"><span>{{ t('student.aiResume.k10') }}</span><strong>68/100</strong></div>
             </div>
           </div>
           <div class="right-column">
             <div class="suggestion-card success">
-              <div class="suggestion-title">AI改进建议</div>
+              <div class="suggestion-title">{{ t('student.aiResume.k11') }}</div>
               <ul>
-                <li>格式清晰，排版专业</li>
-                <li>教育背景和实习经历完整</li>
-                <li>技能部分涵盖关键能力</li>
+                <li>{{ t('student.aiResume.k12') }}</li>
+                <li>{{ t('student.aiResume.k13') }}</li>
+                <li>{{ t('student.aiResume.k14') }}</li>
               </ul>
             </div>
             <div class="suggestion-card warning">
-              <div class="suggestion-title">待改进 Areas to Improve</div>
+              <div class="suggestion-title">{{ t('student.aiResume.k15') }}</div>
               <ul>
-                <li>实习经历缺少量化数据（如：提升 XX%）</li>
-                <li>建议添加更多行业关键词（DCF, M&A 等）</li>
-                <li>Leadership 经历描述可更具体</li>
+                <li>{{ t('student.aiResume.k16') }}</li>
+                <li>{{ t('student.aiResume.k17') }}</li>
+                <li>{{ t('student.aiResume.k18') }}</li>
               </ul>
             </div>
             <div class="suggestion-card info">
-              <div class="suggestion-title">推荐修改</div>
+              <div class="suggestion-title">{{ t('student.aiResume.k19') }}</div>
               <ul>
-                <li>将“参与项目”改为“主导完成 XX 项目”</li>
-                <li>添加 GPA/排名信息（如适用）</li>
-                <li>增加与目标岗位相关的课程项目</li>
+                <li>{{ t('student.aiResume.k20') }}</li>
+                <li>{{ t('student.aiResume.k21') }}</li>
+                <li>{{ t('student.aiResume.k22') }}</li>
               </ul>
             </div>
           </div>
@@ -61,8 +61,8 @@
 
       <section class="history-card">
         <div class="history-head">
-          <span>分析历史 Analysis History</span>
-          <span class="history-count">共 2 条记录</span>
+          <span>{{ t('student.aiResume.k23') }}</span>
+          <span class="history-count">{{ t('student.aiResume.k24') }}</span>
         </div>
         <div class="table-shell">
           <a-table
@@ -74,7 +74,7 @@
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'action'">
-                <a-button type="link" size="small" @click="openReport(record)">查看报告</a-button>
+                <a-button type="link" size="small" @click="openReport(record)">{{ t('student.aiResume.k25') }}</a-button>
               </template>
             </template>
           </a-table>
@@ -82,47 +82,47 @@
       </section>
     </OsgPageContainer>
 
-    <a-modal v-model:open="uploadOpen" title="上传简历分析" :footer="null" width="560px" wrap-class-name="osg-modal-form">
+    <a-modal v-model:open="uploadOpen" :title="t('student.aiResume.k36')" :footer="null" width="560px" wrap-class-name="osg-modal-form">
       <div class="upload-stack">
-        <p>上传简历文件，生成 AI 简历分析结果。</p>
+        <p>{{ t('student.aiResume.k26') }}</p>
         <a-upload-dragger :show-upload-list="false" accept=".pdf,.doc,.docx">
-          <p class="upload-title">拖拽简历到这里，或点击选择文件</p>
-          <p class="upload-hint">支持 PDF / Word 格式</p>
+          <p class="upload-title">{{ t('student.aiResume.k27') }}</p>
+          <p class="upload-hint">{{ t('student.aiResume.k28') }}</p>
         </a-upload-dragger>
       </div>
       <div class="dialog-actions">
-        <a-button @click="uploadOpen = false">取消</a-button>
-        <a-button type="primary" @click="uploadOpen = false">开始分析</a-button>
+        <a-button @click="uploadOpen = false">{{ t('student.aiResume.k29') }}</a-button>
+        <a-button type="primary" @click="uploadOpen = false">{{ t('student.aiResume.k30') }}</a-button>
       </div>
     </a-modal>
 
-    <a-modal v-model:open="reportOpen" title="AI简历分析报告" :footer="null" width="760px" wrap-class-name="osg-modal-form">
+    <a-modal v-model:open="reportOpen" :title="t('student.aiResume.k37')" :footer="null" width="760px" wrap-class-name="osg-modal-form">
       <div v-if="activeReport" class="report-grid">
         <div class="report-summary">
           <div class="report-title">{{ activeReport.fileName }}</div>
-          <div class="report-meta">分析时间：{{ activeReport.analyzedAt }}</div>
+          <div class="report-meta">{{ t('student.aiResume.k44', { time: activeReport.analyzedAt }) }}</div>
           <div class="report-score">{{ activeReport.score }}</div>
         </div>
         <div class="report-panel">
-          <h4>优势</h4>
+          <h4>{{ t('student.aiResume.k31') }}</h4>
           <ul>
-            <li>格式清晰，排版专业</li>
-            <li>教育背景和实习经历完整</li>
-            <li>技能部分涵盖关键能力</li>
+            <li>{{ t('student.aiResume.k12') }}</li>
+            <li>{{ t('student.aiResume.k13') }}</li>
+            <li>{{ t('student.aiResume.k14') }}</li>
           </ul>
         </div>
         <div class="report-panel">
-          <h4>待改进</h4>
+          <h4>{{ t('student.aiResume.k32') }}</h4>
           <ul>
-            <li>实习经历缺少量化数据</li>
-            <li>建议添加更多行业关键词</li>
-            <li>Leadership 经历描述可更具体</li>
+            <li>{{ t('student.aiResume.k33') }}</li>
+            <li>{{ t('student.aiResume.k34') }}</li>
+            <li>{{ t('student.aiResume.k18') }}</li>
           </ul>
         </div>
       </div>
 
       <div class="dialog-actions">
-        <a-button @click="reportOpen = false">关闭</a-button>
+        <a-button @click="reportOpen = false">{{ t('student.aiResume.k35') }}</a-button>
       </div>
     </a-modal>
   </div>
@@ -130,7 +130,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OsgPageContainer } from '@osg/shared/components'
+
+const { t } = useI18n()
 
 type AiResumeHistoryItem = {
   fileName: string
@@ -140,11 +143,11 @@ type AiResumeHistoryItem = {
 }
 
 const historyColumns = [
-  { title: '分析时间', dataIndex: 'analyzedAt', key: 'analyzedAt' },
-  { title: '文件名', dataIndex: 'fileName', key: 'fileName' },
-  { title: 'AI评分', dataIndex: 'score', key: 'score' },
-  { title: '状态', dataIndex: 'status', key: 'status' },
-  { title: '操作', key: 'action' },
+  { title: t('student.aiResume.k38'), dataIndex: 'analyzedAt', key: 'analyzedAt' },
+  { title: t('student.aiResume.k39'), dataIndex: 'fileName', key: 'fileName' },
+  { title: t('student.aiResume.k40'), dataIndex: 'score', key: 'score' },
+  { title: t('student.aiResume.k41'), dataIndex: 'status', key: 'status' },
+  { title: t('student.aiResume.k42'), key: 'action' },
 ]
 
 const aiResumeHistory: AiResumeHistoryItem[] = [
@@ -152,13 +155,13 @@ const aiResumeHistory: AiResumeHistoryItem[] = [
     fileName: 'Resume_TestStudent_v1.pdf',
     analyzedAt: '12/01/2025 14:35',
     score: '82',
-    status: '已完成'
+    status: t('student.aiResume.k43')
   },
   {
     fileName: 'Resume_TestStudent_v1_original.pdf',
     analyzedAt: '11/20/2025 09:15',
     score: '68',
-    status: '已完成'
+    status: t('student.aiResume.k43')
   }
 ]
 

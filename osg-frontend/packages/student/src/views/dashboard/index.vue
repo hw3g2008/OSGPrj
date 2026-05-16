@@ -2,7 +2,7 @@
   <div id="page-home" class="page active dashboard-page">
     <div class="card student-profile-card">
       <div class="card-header">
-        <span class="card-title">学员信息 Student Profile</span>
+        <span class="card-title">{{ t('student.dashboard.k1') }}</span>
       </div>
       <div class="card-body">
         <div class="profile-grid">
@@ -14,24 +14,24 @@
             </h2>
             <div class="student-meta-grid">
               <div><i class="mdi mdi-school" aria-hidden="true"></i>{{ profile.school }} · {{ profile.major }}</div>
-              <div><i class="mdi mdi-calendar" aria-hidden="true"></i>{{ profile.graduationYear }}届毕业</div>
-              <div><i class="mdi mdi-target" aria-hidden="true"></i><strong>主攻方向：</strong>{{ profile.primaryDirection }}</div>
+              <div><i class="mdi mdi-calendar" aria-hidden="true"></i>{{ t('student.dashboard.k75', { year: profile.graduationYear }) }}</div>
+              <div><i class="mdi mdi-target" aria-hidden="true"></i><strong>{{ t('student.dashboard.k2') }}</strong>{{ profile.primaryDirection }}</div>
               <div><i class="mdi mdi-email" aria-hidden="true"></i>{{ profile.email }}</div>
             </div>
           </div>
           <div class="mentor-section">
             <div class="mentor-label">
               <i class="mdi mdi-account-tie" aria-hidden="true"></i>
-              我的导师团队 My Mentors
+              {{ t('student.dashboard.k3') }}
             </div>
             <div class="mentor-stack">
               <div>
-                <div class="mentor-role">班主任 Lead Mentor</div>
+                <div class="mentor-role">{{ t('student.dashboard.k4') }}</div>
                 <div class="mentor-primary-card">
                   <div class="mentor-avatar">{{ leadMentorInitials }}</div>
                   <div>
-                    <div class="mentor-name">{{ profile.leadMentor || '待分配' }}</div>
-                    <div class="mentor-area">{{ profile.primaryDirection || '方向待更新' }}</div>
+                    <div class="mentor-name">{{ profile.leadMentor || t('student.dashboard.k76') }}</div>
+                    <div class="mentor-area">{{ profile.primaryDirection || t('student.dashboard.k77') }}</div>
                   </div>
                 </div>
               </div>
@@ -58,7 +58,7 @@
         <div class="analysis-header">
           <div>
             <div class="analysis-eyebrow">Learning Analysis Report</div>
-            <h2>学情分析报告</h2>
+            <h2>{{ t('student.dashboard.k5') }}</h2>
           </div>
           <div class="analysis-updated">
             <i class="mdi mdi-clock-outline" aria-hidden="true"></i>
@@ -80,10 +80,7 @@
 
           <div class="analysis-copy">
             <p>
-              当前共有 <strong>{{ applicationsMeta.tabCounts.ongoing }}</strong> 条进行中的求职记录，
-              已完成 <strong>{{ summaryCards[0].value }}</strong> 条模拟应聘记录，
-              待评价课程 <strong>{{ pendingClassCount }}</strong> 条，
-              岗位池可见 <strong>{{ summaryCards[4].value }}</strong> 个岗位。
+              {{ t('student.dashboard.k6') }} <strong>{{ applicationsMeta.tabCounts.ongoing }}</strong> {{ t('student.dashboard.k7') }} <strong>{{ summaryCards[0].value }}</strong> {{ t('student.dashboard.k8') }} <strong>{{ pendingClassCount }}</strong> {{ t('student.dashboard.k9') }} <strong>{{ summaryCards[4].value }}</strong> {{ t('student.dashboard.k10') }}
             </p>
             <div class="analysis-tags">
               <div class="focus-tag warning-tag">
@@ -158,11 +155,11 @@
 
     <div class="card">
       <div class="card-header">
-        <span class="card-title">面试测试得分 Mock Interview Scores</span>
+        <span class="card-title">{{ t('student.dashboard.k11') }}</span>
         <span class="card-inline-hint">
-          记录 <strong>{{ practiceRecords.length }}</strong>
+          {{ t('student.dashboard.k12') }} <strong>{{ practiceRecords.length }}</strong>
         </span>
-        <a-button type="link" class="header-link" @click="$router.push('/feedback')">查看全部 →</a-button>
+        <a-button type="link" class="header-link" @click="$router.push('/feedback')">{{ t('student.dashboard.k13') }}</a-button>
       </div>
       <div class="card-body card-body-no-padding">
         <a-table
@@ -172,7 +169,7 @@
           :row-key="(record: any) => `${record.date}-${record.mentor}-${record.type}`"
           class="dashboard-table"
         >
-          <template #emptyText><div class="empty-cell">暂无模拟应聘记录</div></template>
+          <template #emptyText><div class="empty-cell">{{ t('student.dashboard.k14') }}</div></template>
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'score'">
               <span class="score-cell" :class="record.scoreTone">{{ record.score }}</span>
@@ -187,7 +184,7 @@
 
     <div class="card">
       <div class="card-header">
-        <span class="card-title">基础课进度 Foundation Progress</span>
+        <span class="card-title">{{ t('student.dashboard.k15') }}</span>
       </div>
       <div class="card-body">
         <div class="progress-grid">
@@ -209,11 +206,11 @@
 
     <div class="card">
       <div class="card-header">
-        <span class="card-title">简历详情 Resume Details</span>
+        <span class="card-title">{{ t('student.dashboard.k16') }}</span>
         <span class="card-inline-hint">
-          实时摘要 <strong>{{ resumeRows.length }}</strong>
+          {{ t('student.dashboard.k17') }} <strong>{{ resumeRows.length }}</strong>
         </span>
-        <a-button type="link" class="header-link" @click="$router.push('/resume')">管理简历 →</a-button>
+        <a-button type="link" class="header-link" @click="$router.push('/resume')">{{ t('student.dashboard.k18') }}</a-button>
       </div>
       <div class="card-body card-body-no-padding">
         <a-table
@@ -231,7 +228,7 @@
               <span v-else>{{ record.version }}</span>
             </template>
             <template v-else-if="column.key === 'action'">
-              <a-button type="text" size="small" class="btn btn-text btn-sm" @click="$router.push('/resume')">查看</a-button>
+              <a-button type="text" size="small" class="btn btn-text btn-sm" @click="$router.push('/resume')">{{ t('student.dashboard.k19') }}</a-button>
             </template>
           </template>
         </a-table>
@@ -240,11 +237,11 @@
 
     <div class="card">
       <div class="card-header">
-        <span class="card-title">真实面试记录 Real Interviews</span>
+        <span class="card-title">{{ t('student.dashboard.k20') }}</span>
         <span class="card-inline-hint">
-          累计 <strong>{{ applicationsPreview.length }}</strong> 次
+          {{ t('student.dashboard.k21') }} <strong>{{ applicationsPreview.length }}</strong> {{ t('student.dashboard.k22') }}
         </span>
-        <a-button type="link" class="header-link" @click="$router.push('/questions')">查看全部 →</a-button>
+        <a-button type="link" class="header-link" @click="$router.push('/questions')">{{ t('student.dashboard.k13') }}</a-button>
       </div>
       <div class="card-body card-body-no-padding">
         <a-table
@@ -254,13 +251,13 @@
           :row-key="(record: any) => `${record.company}-${record.role}`"
           class="dashboard-table"
         >
-          <template #emptyText><div class="empty-cell">暂无真实面试记录</div></template>
+          <template #emptyText><div class="empty-cell">{{ t('student.dashboard.k23') }}</div></template>
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'company'">
               <span class="company-cell">{{ record.company }}</span>
             </template>
             <template v-else-if="column.key === 'action'">
-              <a-button type="text" size="small" class="btn btn-text btn-sm" @click="$router.push('/job-tracking')">详情</a-button>
+              <a-button type="text" size="small" class="btn btn-text btn-sm" @click="$router.push('/job-tracking')">{{ t('student.dashboard.k24') }}</a-button>
             </template>
           </template>
         </a-table>
@@ -287,25 +284,25 @@
 
     <div class="card">
       <div class="card-header">
-        <span class="card-title">快捷操作 Quick Actions</span>
+        <span class="card-title">{{ t('student.dashboard.k25') }}</span>
       </div>
       <div class="card-body">
         <a-space :size="12" wrap class="quick-actions">
           <a-button type="primary" size="large" class="btn btn-primary" @click="$router.push('/courses')">
             <template #icon><BookOutlined /></template>
-            我的课程
+            {{ t('student.dashboard.k26') }}
           </a-button>
           <a-button size="large" class="btn btn-outline" @click="$router.push('/questions')">
             <template #icon><FileTextOutlined /></template>
-            填写面试真题
+            {{ t('student.dashboard.k27') }}
           </a-button>
           <a-button size="large" class="btn btn-outline" @click="$router.push('/netlog')">
             <template #icon><TeamOutlined /></template>
-            填写沟通记录
+            {{ t('student.dashboard.k28') }}
           </a-button>
           <a-button size="large" class="btn btn-outline" @click="$router.push('/positions')">
             <template #icon><SearchOutlined /></template>
-            岗位信息
+            {{ t('student.dashboard.k29') }}
           </a-button>
         </a-space>
       </div>
@@ -315,6 +312,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   BookOutlined,
   FileTextOutlined,
@@ -342,30 +340,32 @@ import {
 // §D.3 dashboard 卡片接入 SSOT composable，停止依赖后端 coachingStatusLabel 固化字段
 import { deriveApplicationStatus } from '@osg/shared/composables'
 
+const { t } = useI18n()
+
 const mockScoreColumns = [
-  { title: '日期', dataIndex: 'date', key: 'date' },
+  { title: t('student.dashboard.k30'), dataIndex: 'date', key: 'date' },
   { title: 'Mentor', dataIndex: 'mentor', key: 'mentor' },
-  { title: '类型', dataIndex: 'type', key: 'type' },
-  { title: '状态', key: 'score' },
+  { title: t('student.dashboard.k31'), dataIndex: 'type', key: 'type' },
+  { title: t('student.dashboard.k32'), key: 'score' },
   { title: 'Performance', key: 'tag' },
 ]
 
 const resumeColumns = [
-  { title: '版本', key: 'version' },
-  { title: '文件名', dataIndex: 'fileName', key: 'fileName' },
-  { title: '指导导师', dataIndex: 'mentor', key: 'mentor' },
-  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt' },
-  { title: '操作', key: 'action' },
+  { title: t('student.dashboard.k33'), key: 'version' },
+  { title: t('student.dashboard.k34'), dataIndex: 'fileName', key: 'fileName' },
+  { title: t('student.dashboard.k35'), dataIndex: 'mentor', key: 'mentor' },
+  { title: t('student.dashboard.k36'), dataIndex: 'updatedAt', key: 'updatedAt' },
+  { title: t('student.dashboard.k37'), key: 'action' },
 ]
 
 const interviewColumns = [
-  { title: '日期', dataIndex: 'date', key: 'date' },
-  { title: '公司', key: 'company' },
-  { title: '办公室', dataIndex: 'office', key: 'office' },
-  { title: '岗位', dataIndex: 'role', key: 'role' },
-  { title: '项目', dataIndex: 'program', key: 'program' },
-  { title: '轮次', dataIndex: 'round', key: 'round' },
-  { title: '操作', key: 'action' },
+  { title: t('student.dashboard.k30'), dataIndex: 'date', key: 'date' },
+  { title: t('student.dashboard.k38'), key: 'company' },
+  { title: t('student.dashboard.k39'), dataIndex: 'office', key: 'office' },
+  { title: t('student.dashboard.k40'), dataIndex: 'role', key: 'role' },
+  { title: t('student.dashboard.k41'), dataIndex: 'program', key: 'program' },
+  { title: t('student.dashboard.k42'), dataIndex: 'round', key: 'round' },
+  { title: t('student.dashboard.k37'), key: 'action' },
 ]
 
 const profile = reactive<StudentProfileRecord>({
@@ -374,14 +374,14 @@ const profile = reactive<StudentProfileRecord>({
   englishName: '-',
   email: '-',
   sexLabel: '-',
-  statusLabel: '正常',
+  statusLabel: t('student.dashboard.k43'),
   leadMentor: '-',
   assistantName: '-',
   school: '-',
   major: '-',
   graduationYear: '-',
   highSchool: '-',
-  postgraduatePlan: '否',
+  postgraduatePlan: t('student.dashboard.k44'),
   visaStatus: '-',
   targetRegion: '-',
   recruitmentCycle: '-',
@@ -393,9 +393,9 @@ const profile = reactive<StudentProfileRecord>({
 
 const applicationsMeta = reactive<StudentApplicationsMeta>({
   pageSummary: {
-    titleZh: '我的求职',
+    titleZh: t('student.dashboard.k45'),
     titleEn: 'My Applications',
-    subtitle: '查看您的岗位申请和面试安排',
+    subtitle: t('student.dashboard.k46'),
   },
   tabCounts: {
     all: 0,
@@ -416,17 +416,17 @@ const applicationsMeta = reactive<StudentApplicationsMeta>({
 
 const classRecordsMeta = reactive<StudentClassRecordsMeta>({
   pageSummary: {
-    titleZh: '课程记录',
+    titleZh: t('student.dashboard.k47'),
     titleEn: 'Class Records',
-    subtitle: '查看我的上课记录和导师反馈',
+    subtitle: t('student.dashboard.k48'),
   },
   reminderBanner: {
     iconLabel: 'CR',
-    title: '新增课程记录',
-    leadText: '导师',
-    middleText: '为您填报了',
-    suffixText: '条新的上课记录，请及时评价',
-    ctaLabel: '去评价',
+    title: t('student.dashboard.k49'),
+    leadText: t('student.dashboard.k50'),
+    middleText: t('student.dashboard.k51'),
+    suffixText: t('student.dashboard.k52'),
+    ctaLabel: t('student.dashboard.k53'),
   },
   tabDefinitions: [],
   filters: {
@@ -440,37 +440,37 @@ const classRecordsMeta = reactive<StudentClassRecordsMeta>({
     timeRangeOptions: [],
   },
   tableHeaders: {
-    recordId: '记录ID',
-    coachingDetail: '辅导内容',
-    courseContent: '课程内容',
-    mentor: '导师',
-    classDate: '上课日期',
-    duration: '时长',
-    rating: '我的评价',
-    action: '操作',
+    recordId: t('student.dashboard.k54'),
+    coachingDetail: t('student.dashboard.k55'),
+    courseContent: t('student.dashboard.k56'),
+    mentor: t('student.dashboard.k50'),
+    classDate: t('student.dashboard.k57'),
+    duration: t('student.dashboard.k58'),
+    rating: t('student.dashboard.k59'),
+    action: t('student.dashboard.k37'),
   },
   detailDialog: {
-    closeLabel: '关闭',
-    confirmLabel: '修改评价',
+    closeLabel: t('student.dashboard.k60'),
+    confirmLabel: t('student.dashboard.k61'),
     fields: {
-      recordId: '记录ID',
-      coachingDetail: '辅导内容',
-      courseContent: '课程内容',
-      mentor: '导师',
-      classDate: '上课日期',
-      duration: '时长',
+      recordId: t('student.dashboard.k54'),
+      coachingDetail: t('student.dashboard.k55'),
+      courseContent: t('student.dashboard.k56'),
+      mentor: t('student.dashboard.k50'),
+      classDate: t('student.dashboard.k57'),
+      duration: t('student.dashboard.k58'),
     },
   },
   ratingDialog: {
-    title: '课程评价',
-    scoreLabel: '整体评分',
-    tagLabel: '评价标签',
-    feedbackLabel: '详细反馈',
+    title: t('student.dashboard.k62'),
+    scoreLabel: t('student.dashboard.k63'),
+    tagLabel: t('student.dashboard.k64'),
+    feedbackLabel: t('student.dashboard.k65'),
     tagPlaceholder: '',
     feedbackPlaceholder: '',
-    cancelLabel: '取消',
-    submitLabel: '提交评价',
-    successMessage: '评价提交成功',
+    cancelLabel: t('student.dashboard.k66'),
+    submitLabel: t('student.dashboard.k67'),
+    successMessage: t('student.dashboard.k68'),
     tagOptions: [],
   },
 })
@@ -554,22 +554,22 @@ const analysisUpdatedText = computed(() => {
 
 const analysisNeedsWork = computed(() => {
   if (pendingClassCount.value > 0) {
-    return `待评价课程 ${pendingClassCount.value} 条`
+    return t('student.dashboard.k78', { count: pendingClassCount.value })
   }
   if (applicationsMeta.tabCounts.applied > 0) {
-    return `已投递待推进 ${applicationsMeta.tabCounts.applied} 条`
+    return t('student.dashboard.k79', { count: applicationsMeta.tabCounts.applied })
   }
-  return '继续补充更多真实反馈'
+  return t('student.dashboard.k69')
 })
 
 const analysisStrengths = computed(() => {
   if (applicationsMeta.tabCounts.ongoing > 0) {
-    return `${applicationsMeta.tabCounts.ongoing} 条求职流程持续推进`
+    return t('student.dashboard.k80', { count: applicationsMeta.tabCounts.ongoing })
   }
   if (practiceRecords.value.length > 0) {
-    return `${practiceRecords.value.length} 条模拟应聘已进入记录`
+    return t('student.dashboard.k81', { count: practiceRecords.value.length })
   }
-  return '基础资料与求职意向已同步'
+  return t('student.dashboard.k70')
 })
 
 const applicationsPreview = computed(() =>
@@ -603,21 +603,21 @@ const foundationProgress = computed(() => {
 
   return [
     {
-      label: '岗位追踪 Position Tracking',
+      label: t('student.dashboard.k71'),
       iconClass: 'mdi-briefcase-search',
       progressText: `${appliedCount}/${totalPositions}`,
       width: `${Math.min(100, Math.round((appliedCount / totalPositions) * 100))}%`,
     },
     {
-      label: '求职准备 Career Readiness',
+      label: t('student.dashboard.k72'),
       iconClass: 'mdi-account-voice',
-      progressText: `${practiceRecords.value.length + pendingClassCount.value} 条`,
+      progressText: `${practiceRecords.value.length + pendingClassCount.value} 条`, // TODO(i18n-complex)
       width: `${Math.min(100, (practiceRecords.value.length + pendingClassCount.value) * 20)}%`,
     },
     {
-      label: '岗位收藏 Saved Targets',
+      label: t('student.dashboard.k73'),
       iconClass: 'mdi-star-outline',
-      progressText: `${favoritesCount} 个`,
+      progressText: `${favoritesCount} 个`, // TODO(i18n-complex)
       width: `${Math.min(100, favoritesCount * 15)}%`,
     },
   ]
@@ -625,7 +625,7 @@ const foundationProgress = computed(() => {
 
 const resumeRows = computed(() => {
   const resumeLikeRecords = classRecords.value
-    .filter((item) => /简历|resume/i.test(item.courseContent || item.coachingDetail || ''))
+    .filter((item) => /简历|resume/i.test(item.courseContent || item.coachingDetail || '')) // i18n-skip-line: regex pattern matching API content
     .slice(0, 3)
 
   if (resumeLikeRecords.length > 0) {
@@ -657,8 +657,8 @@ const mentorNotes = computed(() => [
     date: analysisUpdatedText.value.replace('Updated ', '') || '-',
     copy:
       applicationsMeta.tabCounts.ongoing > 0
-        ? `当前共有 ${applicationsMeta.tabCounts.ongoing} 条进行中的求职记录，建议优先推进 ${applications.value[0]?.company || '重点岗位'} 的下一轮准备。`
-        : '当前暂无进行中的求职记录，建议先完善岗位收藏与申请动作。',
+        ? t('student.dashboard.k82', { count: applicationsMeta.tabCounts.ongoing, company: applications.value[0]?.company || t('student.dashboard.k85') })
+        : t('student.dashboard.k74'),
   },
   {
     title: 'RA Session',
@@ -667,8 +667,8 @@ const mentorNotes = computed(() => [
     date: analysisUpdatedText.value.replace('Updated ', '') || '-',
     copy:
       pendingClassCount.value > 0
-        ? `有 ${pendingClassCount.value} 条课程记录待评价，完成评价后可以帮助团队更快跟进后续辅导安排。`
-        : `当前模拟应聘记录 ${practiceRecords.value.length} 条，岗位池可见 ${positions.value.length} 个岗位，建议继续保持节奏。`,
+        ? t('student.dashboard.k83', { count: pendingClassCount.value })
+        : t('student.dashboard.k84', { records: practiceRecords.value.length, positions: positions.value.length }),
   },
 ])
 

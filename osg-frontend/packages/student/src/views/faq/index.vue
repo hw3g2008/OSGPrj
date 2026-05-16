@@ -4,7 +4,7 @@
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">常见问题 <span>FAQ</span></h1>
+            <h1 class="page-title">{{ t('student.faq.k1') }} <span>FAQ</span></h1>
           </div>
         </div>
       </template>
@@ -25,40 +25,43 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OsgPageContainer } from '@osg/shared/components'
+
+const { t } = useI18n()
 
 const faqItems = [
   {
-    question: '如何申请课程/Staffing Request？',
-    answer: '点击左侧菜单中的相关入口，选择对应学生类型并填写信息，提交后 Lead Mentor 会安排课程。'
+    question: t('student.faq.k2'),
+    answer: t('student.faq.k3')
   },
   {
-    question: '如何更新我的简历？',
-    answer: '进入“我的简历 Resume”页面，点击右上角“上传新简历”按钮，选择 PDF 或 Word 文件上传。'
+    question: t('student.faq.k4'),
+    answer: t('student.faq.k5')
   },
   {
-    question: 'Mock Interview后多久能收到反馈？',
-    answer: '通常在 Mock Interview 结束后 24-48 小时内，Mentor 会在课程反馈页面提交反馈。'
+    question: t('student.faq.k6'),
+    answer: t('student.faq.k7')
   },
   {
-    question: '如何填写面试真题？',
-    answer: '完成真实面试后，请进入“面试真题 Questions”页面，点击“填写真题”按钮提交公司、岗位和问题信息。'
+    question: t('student.faq.k8'),
+    answer: t('student.faq.k9')
   },
   {
-    question: 'Networking Log有什么用？',
-    answer: '记录 Networking 沟通可以帮助 Lead Mentor 了解您的求职进度，并提供更有针对性的指导。'
+    question: t('student.faq.k10'),
+    answer: t('student.faq.k11')
   },
   {
-    question: '如何联系我的Lead Mentor？',
-    answer: '您可以通过微信群、邮件或在课程申请备注中提出问题，紧急情况也可以联系 RA 助教协助处理。'
+    question: t('student.faq.k12'),
+    answer: t('student.faq.k13')
   },
   {
-    question: '题库资料可以下载吗？',
-    answer: '可以。请优先使用最新资料，部分过期材料仅作为参考。'
+    question: t('student.faq.k14'),
+    answer: t('student.faq.k15')
   }
 ]
 
-const openQuestion = ref<string | undefined>('如何申请课程/Staffing Request？')
+const openQuestion = ref<string | undefined>(t('student.faq.k2'))
 </script>
 
 <style scoped lang="scss">

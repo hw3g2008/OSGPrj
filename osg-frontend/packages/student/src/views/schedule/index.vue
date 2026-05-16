@@ -1,6 +1,6 @@
 <template>
   <div class="schedule-page">
-    <OsgPageContainer title="课程排期">
+    <OsgPageContainer :title="t('student.schedule.k1')">
       <a-calendar v-model:value="selectedDate" @select="onSelectDate">
         <template #dateCellRender="{ current }">
           <ul class="events">
@@ -16,9 +16,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import dayjs, { type Dayjs } from 'dayjs'
 import { OsgPageContainer } from '@osg/shared/components'
 import type { CourseSchedule, ScheduleStatus } from '@osg/shared/types'
+
+const { t } = useI18n()
 
 const selectedDate = ref<Dayjs>(dayjs())
 
@@ -26,7 +29,7 @@ const schedules = ref<CourseSchedule[]>([
   {
     scheduleId: 1,
     courseId: 1,
-    courseName: 'Java 基础',
+    courseName: t('student.schedule.k2'),
     studentId: 1,
     mentorId: 1,
     scheduledTime: dayjs().format('YYYY-MM-DD') + ' 14:00',
@@ -52,7 +55,7 @@ const getBadgeStatus = (status: ScheduleStatus) => {
 }
 
 const onSelectDate = (date: Dayjs) => {
-  console.log('选择日期:', date.format('YYYY-MM-DD'))
+  console.log(t('student.schedule.k3'), date.format('YYYY-MM-DD'))
 }
 </script>
 

@@ -6,7 +6,7 @@ import { PHASE1_DEFAULT_PATH } from '@/navigation/phase1'
 import { getToken, getUser } from '@osg/shared/utils'
 
 const STUDENT_COMING_SOON_ROUTE_NAME = 'StudentComingSoon'
-const STUDENT_COMING_SOON_SUBTITLE = '当前页面不在本次学生端交付范围内。'
+const STUDENT_COMING_SOON_SUBTITLE = t('student.router.k1')
 
 function readSingleQueryValue(value: unknown): string | undefined {
   if (typeof value === 'string' && value.trim()) {
@@ -36,20 +36,20 @@ const routes: RouteRecordRaw[] = [
     path: '/login',
     name: 'Login',
     component: () => import('@/views/login/index.vue'),
-    meta: { title: '登录', public: true }
+    meta: { title: t('student.router.k2'), public: true }
   },
   {
     path: '/forgot-password',
     name: 'ForgotPassword',
     component: () => import('@/views/forgot-password/index.vue'),
-    meta: { title: '找回密码', public: true }
+    meta: { title: t('student.router.k3'), public: true }
   },
   {
     path: '/account-locked',
     name: 'AccountLocked',
     component: () => import('@/views/account-locked/index.vue'),
     // public 让未登录也能直达；rolloutBypass 跳过 isStudentPathAvailable 灰度过滤
-    meta: { title: '账号已锁定', public: true, rolloutBypass: true }
+    meta: { title: t('student.router.k4'), public: true, rolloutBypass: true }
   },
   {
     path: '/',
@@ -60,127 +60,127 @@ const routes: RouteRecordRaw[] = [
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('@/views/dashboard/index.vue'),
-        meta: { title: '首页' }
+        meta: { title: t('student.router.k5') }
       },
       {
         path: 'home',
         name: 'Home',
         component: () => import('@/views/dashboard/index.vue'),
-        meta: { title: '首页' }
+        meta: { title: t('student.router.k5') }
       },
       {
         path: 'courses',
         name: 'Courses',
         component: () => import('@/views/courses/index.vue'),
-        meta: { title: '课程记录' }
+        meta: { title: t('student.router.k6') }
       },
       {
         path: 'myclass',
         name: 'MyClass',
         component: () => import('@/views/courses/index.vue'),
-        meta: { title: '课程记录' }
+        meta: { title: t('student.router.k6') }
       },
       {
         path: 'communication',
         name: 'Communication',
         component: () => import('@/views/communication/index.vue'),
-        meta: { title: '人际关系沟通记录' }
+        meta: { title: t('student.router.k7') }
       },
       {
         path: 'feedback',
         name: 'Feedback',
         component: () => import('@/views/feedback/index.vue'),
-        meta: { title: '课程反馈' }
+        meta: { title: t('student.router.k8') }
       },
       {
         path: 'report',
         name: 'Report',
         component: () => import('@/views/report/index.vue'),
-        meta: { title: '上课记录' }
+        meta: { title: t('student.router.k9') }
       },
       {
         path: 'ai-interview',
         name: 'AiInterview',
         component: () => import('@/views/ai-interview/index.vue'),
-        meta: { title: 'AI面试分析' }
+        meta: { title: t('student.router.k10') }
       },
       {
         path: 'resume',
         name: 'Resume',
         component: () => import('@/views/resume/index.vue'),
-        meta: { title: '简历管理' }
+        meta: { title: t('student.router.k11') }
       },
       {
         path: 'ai-resume',
         name: 'AiResume',
         component: () => import('@/views/ai-resume/index.vue'),
-        meta: { title: 'AI简历分析' }
+        meta: { title: t('student.router.k12') }
       },
       {
         path: 'career',
         name: 'Career',
         component: () => import('@/views/career/index.vue'),
-        meta: { title: '求职中心' }
+        meta: { title: t('student.router.k13') }
       },
       {
         path: 'positions',
         name: 'Positions',
         component: () => import('@/views/positions/index.vue'),
-        meta: { title: '岗位信息' }
+        meta: { title: t('student.router.k14') }
       },
       {
         path: 'applications',
         name: 'Applications',
         component: () => import('@/views/applications/index.vue'),
-        meta: { title: '我的求职' }
+        meta: { title: t('student.router.k15') }
       },
       {
         path: 'job-tracking',
         name: 'JobTracking',
         component: () => import('@/views/applications/index.vue'),
-        meta: { title: '我的求职' }
+        meta: { title: t('student.router.k15') }
       },
       {
         path: 'mock-practice',
         name: 'MockPractice',
         component: () => import('@/views/mock-practice/index.vue'),
-        meta: { title: '面试测试' }
+        meta: { title: t('student.router.k16') }
       },
       {
         path: 'request',
         name: 'Request',
         component: () => import('@/views/mock-practice/index.vue'),
-        meta: { title: '课程申请' }
+        meta: { title: t('student.router.k17') }
       },
       {
         path: 'files',
         name: 'Files',
         component: () => import('@/views/files/index.vue'),
-        meta: { title: '文件' }
+        meta: { title: t('student.router.k18') }
       },
       {
         path: 'online-test-bank',
         name: 'OnlineTestBank',
         component: () => import('@/views/online-test-bank/index.vue'),
-        meta: { title: '在线测试题库' }
+        meta: { title: t('student.router.k19') }
       },
       {
         path: 'interview-bank',
         name: 'InterviewBank',
         component: () => import('@/views/interview-bank/index.vue'),
-        meta: { title: '真人面试题库' }
+        meta: { title: t('student.router.k20') }
       },
       {
         path: 'questions',
         name: 'Questions',
         component: () => import('@/views/questions/index.vue'),
-        meta: { title: '面试真题' }
+        meta: { title: t('student.router.k21') }
       },
       {
         path: 'profile',
         name: 'Profile',
         component: () => import('@/views/profile/index.vue'),
-        meta: { title: '个人中心' }
+        meta: { title: t('student.router.k22') }
       },
       {
         path: 'coming-soon',
@@ -193,43 +193,43 @@ const routes: RouteRecordRaw[] = [
         path: 'notice',
         name: 'Notice',
         component: () => import('@/views/notice/index.vue'),
-        meta: { title: '消息中心' }
+        meta: { title: t('student.router.k23') }
       },
       {
         path: 'faq',
         name: 'Faq',
         component: () => import('@/views/faq/index.vue'),
-        meta: { title: '常见问题' }
+        meta: { title: t('student.router.k24') }
       },
       {
         path: 'complaint',
         name: 'Complaint',
         component: () => import('@/views/complaint/index.vue'),
-        meta: { title: '投诉与建议' }
+        meta: { title: t('student.router.k25') }
       },
       {
         path: 'netlog',
         name: 'Netlog',
         component: () => import('@/views/netlog/index.vue'),
-        meta: { title: '沟通记录' }
+        meta: { title: t('student.router.k26') }
       },
       {
         path: 'restricted',
         name: 'Restricted',
         component: () => import('@/views/restricted/index.vue'),
-        meta: { title: '受限模式', rolloutBypass: true }
+        meta: { title: t('student.router.k27'), rolloutBypass: true }
       },
       {
         path: 'schedule',
         name: 'Schedule',
         component: () => import('@/views/schedule/index.vue'),
-        meta: { title: '课程排期' }
+        meta: { title: t('student.router.k28') }
       },
       {
         path: 'resources',
         name: 'Resources',
         component: () => import('@/views/resources/index.vue'),
-        meta: { title: '学习资源' }
+        meta: { title: t('student.router.k29') }
       }
     ]
   }

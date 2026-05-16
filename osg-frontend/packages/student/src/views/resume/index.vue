@@ -4,9 +4,9 @@
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">我的简历 <span>My Resume</span></h1>
+            <h1 class="page-title">{{ t('student.resume.k1') }} <span>My Resume</span></h1>
           </div>
-          <a-button type="primary" size="large" @click="triggerUpload">上传新简历</a-button>
+          <a-button type="primary" size="large" @click="triggerUpload">{{ t('student.resume.k2') }}</a-button>
           <input
             ref="uploadInput"
             type="file"
@@ -19,44 +19,44 @@
 
       <div class="summary-grid">
         <section class="summary-card student-card">
-          <div class="summary-head">我上传的简历</div>
+          <div class="summary-head">{{ t('student.resume.k3') }}</div>
           <div class="summary-body">
             <div class="file-item current">
               <div class="file-meta">
                 <strong>Resume_TestStudent_v1.pdf</strong>
-                <span>12/01/2025 · 2.1MB · 当前版本</span>
+                <span>{{ t('student.resume.k4') }}</span>
               </div>
               <div class="file-actions">
-                <a-button size="small" @click="openPreview(studentResume)">预览</a-button>
-                <a-button size="small">下载</a-button>
+                <a-button size="small" @click="openPreview(studentResume)">{{ t('student.resume.k5') }}</a-button>
+                <a-button size="small">{{ t('student.resume.k6') }}</a-button>
               </div>
             </div>
-            <a-button block class="dashed-button" @click="triggerUpload">点击上传新版本</a-button>
+            <a-button block class="dashed-button" @click="triggerUpload">{{ t('student.resume.k7') }}</a-button>
           </div>
         </section>
 
         <section class="summary-card mentor-card">
-          <div class="summary-head">导师修改版本</div>
+          <div class="summary-head">{{ t('student.resume.k8') }}</div>
           <div class="summary-body">
             <div class="file-item mentor">
               <div class="file-meta">
                 <strong>Resume_TestStudent_v3_final.pdf</strong>
-                <span>12/10/2025 · 2.3MB · 由 Mentor Jess 修改</span>
+                <span>{{ t('student.resume.k9') }}</span>
               </div>
               <div class="file-actions">
-                <a-button size="small" @click="openPreview(mentorResume)">预览</a-button>
-                <a-button size="small">下载</a-button>
+                <a-button size="small" @click="openPreview(mentorResume)">{{ t('student.resume.k5') }}</a-button>
+                <a-button size="small">{{ t('student.resume.k6') }}</a-button>
               </div>
             </div>
-            <div class="mentor-tip">建议使用导师修改后的版本投递简历</div>
+            <div class="mentor-tip">{{ t('student.resume.k10') }}</div>
           </div>
         </section>
       </div>
 
       <section class="version-card">
         <div class="version-head">
-          <span>简历版本 Resume Versions</span>
-          <span class="version-count">共 4 个版本</span>
+          <span>{{ t('student.resume.k11') }}</span>
+          <span class="version-count">{{ t('student.resume.k12') }}</span>
         </div>
         <div class="table-shell">
           <a-table
@@ -68,8 +68,8 @@
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'action'">
-                <a-button type="link" size="small" @click="openPreview(record)">预览</a-button>
-                <a-button type="link" size="small">下载</a-button>
+                <a-button type="link" size="small" @click="openPreview(record)">{{ t('student.resume.k5') }}</a-button>
+                <a-button type="link" size="small">{{ t('student.resume.k6') }}</a-button>
               </template>
             </template>
           </a-table>
@@ -77,7 +77,7 @@
       </section>
     </OsgPageContainer>
 
-    <a-modal v-model:open="previewOpen" title="简历预览" :footer="null" width="760px" wrap-class-name="osg-modal-form">
+    <a-modal v-model:open="previewOpen" :title="t('student.resume.k15')" :footer="null" width="760px" wrap-class-name="osg-modal-form">
       <div v-if="activePreview" class="preview-shell">
         <div class="preview-title">{{ activePreview.fileName }}</div>
         <div class="preview-meta">{{ activePreview.updatedAt }} · {{ activePreview.size }} · {{ activePreview.source }}</div>
@@ -85,12 +85,12 @@
           <h3>Resume Preview</h3>
           <p>Emily Zhang</p>
           <p>Finance · NYU · 2025</p>
-          <p>本页为静态原型还原，用于展示 student 端简历预览壳层。</p>
+          <p>{{ t('student.resume.k13') }}</p>
         </div>
       </div>
 
       <div class="dialog-actions">
-        <a-button @click="previewOpen = false">关闭</a-button>
+        <a-button @click="previewOpen = false">{{ t('student.resume.k14') }}</a-button>
       </div>
     </a-modal>
   </div>
@@ -98,16 +98,19 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { OsgPageContainer } from '@osg/shared/components'
 
+const { t } = useI18n()
+
 const versionColumns = [
-  { title: '版本', dataIndex: 'version', key: 'version' },
-  { title: '文件名', dataIndex: 'fileName', key: 'fileName' },
-  { title: '来源', dataIndex: 'source', key: 'source' },
-  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt' },
-  { title: '大小', dataIndex: 'size', key: 'size' },
-  { title: '操作', key: 'action' },
+  { title: t('student.resume.k16'), dataIndex: 'version', key: 'version' },
+  { title: t('student.resume.k17'), dataIndex: 'fileName', key: 'fileName' },
+  { title: t('student.resume.k18'), dataIndex: 'source', key: 'source' },
+  { title: t('student.resume.k19'), dataIndex: 'updatedAt', key: 'updatedAt' },
+  { title: t('student.resume.k20'), dataIndex: 'size', key: 'size' },
+  { title: t('student.resume.k21'), key: 'action' },
 ]
 
 type ResumeVersion = {
@@ -119,15 +122,15 @@ type ResumeVersion = {
 }
 
 const studentResume: ResumeVersion = {
-  version: '当前',
+  version: t('student.resume.k22'),
   fileName: 'Resume_TestStudent_v1.pdf',
-  source: '学生上传',
+  source: t('student.resume.k23'),
   updatedAt: '12/01/2025 14:30',
   size: '2.1MB'
 }
 
 const mentorResume: ResumeVersion = {
-  version: '导师版',
+  version: t('student.resume.k24'),
   fileName: 'Resume_TestStudent_v3_final.pdf',
   source: 'Mentor Jess',
   updatedAt: '12/10/2025 16:20',
@@ -140,14 +143,14 @@ const resumeVersions: ResumeVersion[] = [
   {
     version: 'v2',
     fileName: 'Resume_TestStudent_v2.pdf',
-    source: '学生上传',
+    source: t('student.resume.k23'),
     updatedAt: '11/25/2025 10:15',
     size: '2.0MB'
   },
   {
     version: 'v1',
     fileName: 'Resume_TestStudent_v1_original.pdf',
-    source: '学生上传',
+    source: t('student.resume.k23'),
     updatedAt: '11/20/2025 09:00',
     size: '1.8MB'
   }
@@ -162,7 +165,7 @@ const triggerUpload = () => {
 }
 
 const handleUpload = () => {
-  message.success('简历上传成功！新版本将显示在列表中。')
+  message.success(t('student.resume.k25'))
   if (uploadInput.value) {
     uploadInput.value.value = ''
   }

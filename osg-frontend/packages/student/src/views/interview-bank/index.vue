@@ -4,17 +4,17 @@
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">真人面试题库 <span>Interview Question Bank</span></h1>
+            <h1 class="page-title">{{ t('student.interviewBank.k1') }} <span>Interview Question Bank</span></h1>
           </div>
         </div>
       </template>
 
       <div class="toolbar">
-        <a-input placeholder="搜索题库..." class="toolbar-input" />
-        <a-select class="toolbar-select" placeholder="面试阶段" :options="stageOptions" />
-        <a-select class="toolbar-select" placeholder="类型" :options="typeOptions" />
-        <a-select class="toolbar-select" placeholder="行业" :options="industryOptions" />
-        <a-button>搜索</a-button>
+        <a-input :placeholder="t('student.interviewBank.k4')" class="toolbar-input" />
+        <a-select class="toolbar-select" :placeholder="t('student.interviewBank.k5')" :options="stageOptions" />
+        <a-select class="toolbar-select" :placeholder="t('student.interviewBank.k6')" :options="typeOptions" />
+        <a-select class="toolbar-select" :placeholder="t('student.interviewBank.k7')" :options="industryOptions" />
+        <a-button>{{ t('student.interviewBank.k2') }}</a-button>
       </div>
 
       <div class="table-shell">
@@ -27,7 +27,7 @@
         >
           <template #bodyCell="{ column }">
             <template v-if="column.key === 'action'">
-              <a-button type="link" size="small">查看</a-button>
+              <a-button type="link" size="small">{{ t('student.interviewBank.k3') }}</a-button>
             </template>
           </template>
         </a-table>
@@ -38,6 +38,8 @@
 
 <script setup lang="ts">
 import { OsgPageContainer } from '@osg/shared/components'
+
+const { t } = useI18n()
 
 const stageOptions = [
   { value: 'screening', label: 'Screening Call' },
@@ -59,13 +61,13 @@ const industryOptions = [
 ]
 
 const bankColumns = [
-  { title: '题库名称', dataIndex: 'name', key: 'name' },
-  { title: '面试阶段', dataIndex: 'stage', key: 'stage' },
-  { title: '类型', dataIndex: 'type', key: 'type' },
-  { title: '行业', dataIndex: 'industry', key: 'industry' },
-  { title: '题目数', dataIndex: 'count', key: 'count' },
-  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt' },
-  { title: '操作', key: 'action' },
+  { title: t('student.interviewBank.k8'), dataIndex: 'name', key: 'name' },
+  { title: t('student.interviewBank.k5'), dataIndex: 'stage', key: 'stage' },
+  { title: t('student.interviewBank.k6'), dataIndex: 'type', key: 'type' },
+  { title: t('student.interviewBank.k7'), dataIndex: 'industry', key: 'industry' },
+  { title: t('student.interviewBank.k9'), dataIndex: 'count', key: 'count' },
+  { title: t('student.interviewBank.k10'), dataIndex: 'updatedAt', key: 'updatedAt' },
+  { title: t('student.interviewBank.k11'), key: 'action' },
 ]
 
 const interviewQuestionBanks = [

@@ -3,13 +3,13 @@
     <OsgPageContainer>
       <template #header>
         <div class="page-header">
-          <h1 class="page-title">文件 <span>Files</span></h1>
+          <h1 class="page-title">{{ t('student.files.k1') }} <span>Files</span></h1>
         </div>
       </template>
 
       <div class="toolbar">
-        <a-input placeholder="搜索文件名..." class="toolbar-input" />
-        <a-select class="toolbar-select" placeholder="类型" :options="fileTypeOptions" />
+        <a-input :placeholder="t('student.files.k2')" class="toolbar-input" />
+        <a-select class="toolbar-select" :placeholder="t('student.files.k3')" :options="fileTypeOptions" />
       </div>
 
       <div class="table-shell">
@@ -28,6 +28,8 @@
 <script setup lang="ts">
 import { OsgPageContainer } from '@osg/shared/components'
 
+const { t } = useI18n()
+
 const fileColumns = [
   { title: 'NAME', dataIndex: 'name', key: 'name' },
   { title: 'TYPE', dataIndex: 'type', key: 'type' },
@@ -38,12 +40,12 @@ const fileColumns = [
 const fileTypeOptions = [
   { value: 'pdf', label: 'PDF' },
   { value: 'word', label: 'Word' },
-  { value: 'folder', label: '文件夹' }
+  { value: 'folder', label: t('student.files.k4') }
 ]
 
 const fileItems = [
-  { name: 'Case Interview', type: '文件夹', size: '8项', uploadedAt: '12/01/2025' },
-  { name: '咨询行业概览.pdf', type: 'PDF', size: '2.5MB', uploadedAt: '12/05/2025' }
+  { name: 'Case Interview', type: t('student.files.k4'), size: t('student.files.k5'), uploadedAt: '12/01/2025' },
+  { name: t('student.files.k6'), type: 'PDF', size: '2.5MB', uploadedAt: '12/05/2025' }
 ]
 </script>
 

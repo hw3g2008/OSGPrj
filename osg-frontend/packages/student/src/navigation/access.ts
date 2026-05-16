@@ -1,4 +1,4 @@
-export const COMING_SOON_TOAST = '敬请期待'
+export const COMING_SOON_TOAST = t('student.access.k1')
 
 export const STUDENT_AVAILABLE_PATHS = [
   '/dashboard',

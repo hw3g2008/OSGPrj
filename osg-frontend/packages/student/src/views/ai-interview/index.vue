@@ -4,50 +4,50 @@
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">AI面试分析 <span>AI Interview Analysis</span></h1>
+            <h1 class="page-title">{{ t('student.aiInterview.k1') }} <span>AI Interview Analysis</span></h1>
           </div>
-          <a-button type="primary" size="large" @click="uploadOpen = true">上传面试</a-button>
+          <a-button type="primary" size="large" @click="uploadOpen = true">{{ t('student.aiInterview.k2') }}</a-button>
         </div>
       </template>
 
       <section class="highlight-card">
-        <div class="highlight-head">最新分析结果</div>
+        <div class="highlight-head">{{ t('student.aiInterview.k3') }}</div>
         <div class="highlight-grid">
           <div class="score-column">
             <div class="score-item">
-              <span class="score-label">分析文件</span>
+              <span class="score-label">{{ t('student.aiInterview.k4') }}</span>
               <strong>Goldman_Sachs_Interview_Round2.mp4</strong>
             </div>
             <div class="score-item">
-              <span class="score-label">综合评分</span>
+              <span class="score-label">{{ t('student.aiInterview.k5') }}</span>
               <div class="score-bar">
                 <strong>85</strong>
                 <div class="bar-track"><span class="bar-fill" /></div>
               </div>
             </div>
             <div class="metric-grid">
-              <div class="metric-card"><span>表达清晰度</span><strong>90分</strong></div>
-              <div class="metric-card"><span>逻辑结构</span><strong>88分</strong></div>
-              <div class="metric-card"><span>专业知识</span><strong>82分</strong></div>
-              <div class="metric-card"><span>自信程度</span><strong>80分</strong></div>
+              <div class="metric-card"><span>{{ t('student.aiInterview.k6') }}</span><strong>{{ t('student.aiInterview.k7') }}</strong></div>
+              <div class="metric-card"><span>{{ t('student.aiInterview.k8') }}</span><strong>{{ t('student.aiInterview.k9') }}</strong></div>
+              <div class="metric-card"><span>{{ t('student.aiInterview.k10') }}</span><strong>{{ t('student.aiInterview.k11') }}</strong></div>
+              <div class="metric-card"><span>{{ t('student.aiInterview.k12') }}</span><strong>{{ t('student.aiInterview.k13') }}</strong></div>
             </div>
           </div>
           <div class="suggestion-column">
-            <div class="suggestion-heading">AI改进建议</div>
+            <div class="suggestion-heading">{{ t('student.aiInterview.k14') }}</div>
             <div class="suggestion-card success">
-              <div class="suggestion-title">优势</div>
-              <p>回答结构清晰，使用 STAR 方法得当，专业术语运用准确。</p>
+              <div class="suggestion-title">{{ t('student.aiInterview.k15') }}</div>
+              <p>{{ t('student.aiInterview.k16') }}</p>
             </div>
             <div class="suggestion-card warning">
-              <div class="suggestion-title">改进建议</div>
-              <p>建议在回答技术问题时增加更多具体数据支撑，语速可以稍微放慢。</p>
+              <div class="suggestion-title">{{ t('student.aiInterview.k17') }}</div>
+              <p>{{ t('student.aiInterview.k18') }}</p>
             </div>
           </div>
         </div>
       </section>
 
       <section class="history-card">
-        <div class="history-head">分析历史</div>
+        <div class="history-head">{{ t('student.aiInterview.k19') }}</div>
         <div class="table-shell">
           <a-table
             :columns="historyColumns"
@@ -58,7 +58,7 @@
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'action'">
-                <a-button type="link" size="small" @click="openDetail(record)">查看详情</a-button>
+                <a-button type="link" size="small" @click="openDetail(record)">{{ t('student.aiInterview.k20') }}</a-button>
               </template>
             </template>
           </a-table>
@@ -66,42 +66,42 @@
       </section>
     </OsgPageContainer>
 
-    <a-modal v-model:open="uploadOpen" title="上传面试素材" :footer="null" width="560px" wrap-class-name="osg-modal-form">
+    <a-modal v-model:open="uploadOpen" :title="t('student.aiInterview.k30')" :footer="null" width="560px" wrap-class-name="osg-modal-form">
       <div class="upload-stack">
-        <p>支持上传录音或视频文件，用于生成 AI 面试分析结果。</p>
+        <p>{{ t('student.aiInterview.k21') }}</p>
         <a-upload-dragger :show-upload-list="false" accept=".mp3,.mp4,.wav,.m4a">
-          <p class="upload-title">拖拽文件到这里，或点击选择文件</p>
-          <p class="upload-hint">支持 mp3 / mp4 / wav / m4a</p>
+          <p class="upload-title">{{ t('student.aiInterview.k22') }}</p>
+          <p class="upload-hint">{{ t('student.aiInterview.k23') }}</p>
         </a-upload-dragger>
       </div>
 
       <div class="dialog-actions">
-        <a-button @click="uploadOpen = false">取消</a-button>
-        <a-button type="primary" @click="uploadOpen = false">开始分析</a-button>
+        <a-button @click="uploadOpen = false">{{ t('student.aiInterview.k24') }}</a-button>
+        <a-button type="primary" @click="uploadOpen = false">{{ t('student.aiInterview.k25') }}</a-button>
       </div>
     </a-modal>
 
-    <a-modal v-model:open="detailOpen" title="AI面试分析详情" :footer="null" width="680px" wrap-class-name="osg-modal-form">
+    <a-modal v-model:open="detailOpen" :title="t('student.aiInterview.k31')" :footer="null" width="680px" wrap-class-name="osg-modal-form">
       <div v-if="activeDetail" class="detail-stack">
         <div class="detail-summary">
           <div>
-            <div class="score-label">文件名</div>
+            <div class="score-label">{{ t('student.aiInterview.k26') }}</div>
             <strong>{{ activeDetail.fileName }}</strong>
           </div>
           <a-tag color="success">{{ activeDetail.score }}</a-tag>
         </div>
         <div class="detail-box">
-          <strong>公司 / 轮次</strong>
+          <strong>{{ t('student.aiInterview.k27') }}</strong>
           <p>{{ activeDetail.company }} · {{ activeDetail.round }}</p>
         </div>
         <div class="detail-box">
-          <strong>AI 分析报告</strong>
+          <strong>{{ t('student.aiInterview.k28') }}</strong>
           <p>{{ activeDetail.report }}</p>
         </div>
       </div>
 
       <div class="dialog-actions">
-        <a-button @click="detailOpen = false">关闭</a-button>
+        <a-button @click="detailOpen = false">{{ t('student.aiInterview.k29') }}</a-button>
       </div>
     </a-modal>
   </div>
@@ -109,7 +109,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OsgPageContainer } from '@osg/shared/components'
+
+const { t } = useI18n()
 
 type InterviewHistoryItem = {
   fileName: string
@@ -121,12 +124,12 @@ type InterviewHistoryItem = {
 }
 
 const historyColumns = [
-  { title: '文件名', dataIndex: 'fileName', key: 'fileName' },
-  { title: '公司', dataIndex: 'company', key: 'company' },
-  { title: '面试轮次', dataIndex: 'round', key: 'round' },
-  { title: '综合评分', dataIndex: 'score', key: 'score' },
-  { title: '分析时间', dataIndex: 'analyzedAt', key: 'analyzedAt' },
-  { title: '操作', key: 'action' },
+  { title: t('student.aiInterview.k26'), dataIndex: 'fileName', key: 'fileName' },
+  { title: t('student.aiInterview.k32'), dataIndex: 'company', key: 'company' },
+  { title: t('student.aiInterview.k33'), dataIndex: 'round', key: 'round' },
+  { title: t('student.aiInterview.k5'), dataIndex: 'score', key: 'score' },
+  { title: t('student.aiInterview.k34'), dataIndex: 'analyzedAt', key: 'analyzedAt' },
+  { title: t('student.aiInterview.k35'), key: 'action' },
 ]
 
 const interviewHistory: InterviewHistoryItem[] = [
@@ -134,25 +137,25 @@ const interviewHistory: InterviewHistoryItem[] = [
     fileName: 'Goldman_Sachs_Interview_Round2.mp4',
     company: 'Goldman Sachs',
     round: 'Second Round',
-    score: '85分',
+    score: t('student.aiInterview.k36'),
     analyzedAt: '12/15/2025',
-    report: '表达稳定、结构清晰，建议补充更多定量结果支撑核心观点。'
+    report: t('student.aiInterview.k37')
   },
   {
     fileName: 'McKinsey_Case_Practice.mp3',
     company: 'McKinsey',
     round: 'Case Interview',
-    score: '82分',
+    score: t('student.aiInterview.k11'),
     analyzedAt: '12/10/2025',
-    report: 'Case 框架完整，建议在假设验证阶段更积极地主动澄清信息。'
+    report: t('student.aiInterview.k38')
   },
   {
     fileName: 'Morgan_Stanley_Behavioral.mp4',
     company: 'Morgan Stanley',
     round: 'First Round',
-    score: '75分',
+    score: t('student.aiInterview.k39'),
     analyzedAt: '12/05/2025',
-    report: '回答素材足够，但语言节奏偏快，可以增加 pause 和总结句。'
+    report: t('student.aiInterview.k40')
   }
 ]
 

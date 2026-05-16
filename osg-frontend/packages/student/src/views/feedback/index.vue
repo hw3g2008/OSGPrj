@@ -4,7 +4,7 @@
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">课程反馈 <span>Feedback</span></h1>
+            <h1 class="page-title">{{ t('student.feedback.k1') }} <span>Feedback</span></h1>
           </div>
         </div>
       </template>
@@ -16,7 +16,7 @@
       </a-tabs>
 
       <div class="toolbar">
-        <a-input placeholder="搜索 Mentor..." class="toolbar-input" />
+        <a-input :placeholder="t('student.feedback.k2')" class="toolbar-input" />
         <a-select class="toolbar-select" placeholder="Performance" :options="performanceOptions" />
         <a-date-picker class="toolbar-date" />
       </div>
@@ -59,7 +59,10 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OsgPageContainer } from '@osg/shared/components'
+
+const { t } = useI18n()
 
 type FeedbackRow = {
   actionId: string
@@ -87,7 +90,7 @@ const tabRows: Record<string, FeedbackRow[]> = {
       actionId: 'fb-prep-1',
       headline: 'Prep Feedback #11099',
       meta: '03/05/2025 15:31:41 · Great',
-      body: '回答结构清晰，对行业问题的理解扎实，建议继续强化 behavioral examples 的数据表达。',
+      body: t('student.feedback.k3'),
       ID: '11099',
       Student: '1Test Student<br><span style="color:#64748b;font-size:12px">12766</span>',
       Mentor: 'Test Lead Mentor',
@@ -99,7 +102,7 @@ const tabRows: Record<string, FeedbackRow[]> = {
       actionId: 'fb-prep-2',
       headline: 'Prep Feedback #10743',
       meta: '03/02/2025 14:51:27 · Disappointing',
-      body: '材料准备不足，建议先补齐公司研究和基础 technical 框架后再安排下一轮练习。',
+      body: t('student.feedback.k4'),
       ID: '10743',
       Student: '1Test Student<br><span style="color:#64748b;font-size:12px">12766</span>',
       Mentor: 'Test Lead Mentor',
@@ -111,7 +114,7 @@ const tabRows: Record<string, FeedbackRow[]> = {
       actionId: 'fb-prep-3',
       headline: 'Prep Feedback #3505',
       meta: '10/30/2024 00:53:34 · Okay',
-      body: '知识点覆盖基本完整，但缺少高质量 follow-up 回答，建议继续增加 mock 次数。',
+      body: t('student.feedback.k5'),
       ID: '3505',
       Student: '1Test Student<br><span style="color:#64748b;font-size:12px">12766</span>',
       Mentor: 'Test Lead Mentor',
@@ -125,7 +128,7 @@ const tabRows: Record<string, FeedbackRow[]> = {
       actionId: 'fb-networking-1',
       headline: 'Networking Feedback #1001',
       meta: '12/28/2025 14:30 · Recommend Yes',
-      body: 'Email outreach 比较成熟，电话沟通节奏稳定，对方愿意继续保持联系。',
+      body: t('student.feedback.k6'),
       ID: '1001',
       Mentor: 'Jerry Li',
       'Lead Mentor': 'Test Lead Mentor',
@@ -139,7 +142,7 @@ const tabRows: Record<string, FeedbackRow[]> = {
       actionId: 'fb-networking-2',
       headline: 'Networking Feedback #1002',
       meta: '12/25/2025 10:15 · Recommend Maybe',
-      body: '脚本痕迹偏重，建议补充更个性化的 follow-up 和针对性提问。',
+      body: t('student.feedback.k7'),
       ID: '1002',
       Mentor: 'Test Lead Mentor',
       'Lead Mentor': 'Test Lead Mentor',
@@ -153,7 +156,7 @@ const tabRows: Record<string, FeedbackRow[]> = {
       actionId: 'fb-networking-3',
       headline: 'Networking Feedback #1003',
       meta: '12/20/2025 16:45 · Recommend Yes',
-      body: '对方反馈积极，后续可围绕香港 office 的团队差异继续深挖。',
+      body: t('student.feedback.k8'),
       ID: '1003',
       Mentor: 'Michael Wang',
       'Lead Mentor': 'Test Lead Mentor',
@@ -169,7 +172,7 @@ const tabRows: Record<string, FeedbackRow[]> = {
       actionId: 'fb-mock-1',
       headline: 'Mock Feedback #501',
       meta: '12/27/2025 10:30 · 85',
-      body: 'DCF Analysis 表现稳定，case 结构完整，建议继续提升对 market assumptions 的灵活应对。',
+      body: t('student.feedback.k9'),
       ID: '501',
       Mentor: 'Test Lead Mentor',
       Score: '85',
@@ -182,7 +185,7 @@ const tabRows: Record<string, FeedbackRow[]> = {
       actionId: 'fb-mock-2',
       headline: 'Mock Feedback #502',
       meta: '12/22/2025 14:00 · 72',
-      body: 'LBO Model 部分还不够熟练，建议加强 debt schedule 和 returns bridge 讲解。',
+      body: t('student.feedback.k10'),
       ID: '502',
       Mentor: 'Jerry Li',
       Score: '72',
@@ -195,7 +198,7 @@ const tabRows: Record<string, FeedbackRow[]> = {
       actionId: 'fb-mock-3',
       headline: 'Mock Feedback #503',
       meta: '12/18/2025 11:20 · 91',
-      body: 'M&A Valuation 回答优秀，框架清楚且表达自信，是当前最稳定的一次演练。',
+      body: t('student.feedback.k11'),
       ID: '503',
       Mentor: 'Michael Wang',
       Score: '91',
@@ -208,7 +211,7 @@ const tabRows: Record<string, FeedbackRow[]> = {
       actionId: 'fb-mock-4',
       headline: 'Mock Feedback #504',
       meta: '12/15/2025 09:45 · 58',
-      body: 'Financial Modeling 框架不稳，需要回到基础重练并补齐公式解释。',
+      body: t('student.feedback.k12'),
       ID: '504',
       Mentor: 'Test Lead Mentor',
       Score: '58',

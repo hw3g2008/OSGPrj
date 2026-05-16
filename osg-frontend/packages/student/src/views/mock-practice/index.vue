@@ -93,7 +93,7 @@
           <a-button
             type="text"
             class="records-toolbar__refresh"
-            aria-label="刷新"
+            :aria-label="t('student.mockPractice.k56')"
             @click="resetPracticeFilters"
           >
             <i class="mdi mdi-refresh" aria-hidden="true"></i>
@@ -141,7 +141,7 @@
                 size="small"
                 @click="openFeedbackDetail(record)"
               >
-                <i class="mdi mdi-comment-check" style="margin-right: 4px"></i>查看反馈
+                <i class="mdi mdi-comment-check" style="margin-right: 4px"></i>{{ t('student.mockPractice.k1') }}
               </a-button>
               <a-button
                 v-else
@@ -149,7 +149,7 @@
                 size="small"
                 @click="openApplicationDetail(record)"
               >
-                <i class="mdi mdi-eye" style="margin-right: 4px"></i>查看申请
+                <i class="mdi mdi-eye" style="margin-right: 4px"></i>{{ t('student.mockPractice.k2') }}
               </a-button>
             </template>
           </template>
@@ -180,7 +180,7 @@
         <button
           class="coach-modal__close"
           type="button"
-          aria-label="关闭"
+          :aria-label="t('student.mockPractice.k57')"
           @click="closePracticeModal"
         >
           <i class="mdi mdi-close" aria-hidden="true"></i>
@@ -194,19 +194,19 @@
             <template #label>
               <span class="coach-form__label">
                 <span class="coach-form__num">01</span>
-                <span class="coach-form__label-text">你为什么要做面试测试？</span>
+                <span class="coach-form__label-text">{{ t('student.mockPractice.k3') }}</span>
               </span>
             </template>
             <a-textarea
               v-model:value="practiceForm.reason"
               :rows="3"
-              placeholder="即将参加某公司的面试 / 希望提升某类问题的应对..."
+              :placeholder="t('student.mockPractice.k22')"
               :maxlength="300"
               show-count
             />
             <p class="coach-form__hint">
               <i class="mdi mdi-lightbulb-outline" aria-hidden="true"></i>
-              说明公司、岗位与紧迫程度，导师能更精准地为你准备。
+              {{ t('student.mockPractice.k4') }}
             </p>
           </a-form-item>
 
@@ -214,12 +214,12 @@
             <template #label>
               <span class="coach-form__label">
                 <span class="coach-form__num">02</span>
-                <span class="coach-form__label-text">需要几位导师？</span>
+                <span class="coach-form__label-text">{{ t('student.mockPractice.k5') }}</span>
               </span>
             </template>
             <a-select
               v-model:value="practiceForm.mentorCount"
-              placeholder="选择参与面试的导师人数"
+              :placeholder="t('student.mockPractice.k23')"
               size="large"
               class="coach-form__select"
             >
@@ -234,7 +234,7 @@
           </a-form-item>
 
           <div class="coach-form__divider">
-            <span class="coach-form__divider-text">Optional · 偏好</span>
+            <span class="coach-form__divider-text">{{ t('student.mockPractice.k6') }}</span>
           </div>
 
           <div class="coach-form__row">
@@ -242,12 +242,12 @@
               <template #label>
                 <span class="coach-form__label">
                   <span class="coach-form__num">03</span>
-                  <span class="coach-form__label-text">意向导师</span>
+                  <span class="coach-form__label-text">{{ t('student.mockPractice.k7') }}</span>
                 </span>
               </template>
               <a-input
                 v-model:value="practiceForm.preferredMentor"
-                placeholder="导师姓名"
+                :placeholder="t('student.mockPractice.k24')"
                 size="large"
               />
             </a-form-item>
@@ -256,12 +256,12 @@
               <template #label>
                 <span class="coach-form__label">
                   <span class="coach-form__num">04</span>
-                  <span class="coach-form__label-text">排除导师</span>
+                  <span class="coach-form__label-text">{{ t('student.mockPractice.k8') }}</span>
                 </span>
               </template>
               <a-input
                 v-model:value="practiceForm.excludedMentor"
-                placeholder="导师姓名"
+                :placeholder="t('student.mockPractice.k24')"
                 size="large"
               />
             </a-form-item>
@@ -284,14 +284,14 @@
             <template #label>
               <span class="coach-form__label">
                 <span class="coach-form__num">01</span>
-                <span class="coach-form__label-text">备注说明</span>
+                <span class="coach-form__label-text">{{ t('student.mockPractice.k9') }}</span>
                 <span class="coach-form__optional">Optional</span>
               </span>
             </template>
             <a-textarea
               v-model:value="practiceForm.remark"
               :rows="4"
-              placeholder="如有特殊需求或时间偏好，写在这里..."
+              :placeholder="t('student.mockPractice.k25')"
               :maxlength="300"
               show-count
             />
@@ -307,7 +307,7 @@
         </p>
         <div class="coach-modal__footer-actions">
           <a-button class="coach-btn coach-btn--ghost" @click="closePracticeModal">
-            取消
+            {{ t('student.mockPractice.k10') }}
           </a-button>
           <a-button
             type="primary"
@@ -315,7 +315,7 @@
             :loading="practiceSubmitting"
             @click="submitPracticeRequest"
           >
-            <span>提交申请</span>
+            <span>{{ t('student.mockPractice.k11') }}</span>
             <i class="mdi mdi-arrow-right coach-btn__arrow" aria-hidden="true"></i>
           </a-button>
         </div>
@@ -339,13 +339,13 @@
           </div>
           <h2 class="coach-modal__title">{{ selectedRecord.type }}</h2>
           <p class="coach-modal__subtitle">
-            提交于 {{ selectedRecord.appliedAt || '—' }}
+            {{ t('student.mockPractice.k58', { time: selectedRecord.appliedAt || '—' }) }}
             <span class="coach-modal__status-pill" :data-status="selectedRecord.statusValue">
               {{ selectedRecord.status }}
             </span>
           </p>
         </div>
-        <button class="coach-modal__close" type="button" aria-label="关闭" @click="closeApplicationDetail">
+        <button class="coach-modal__close" type="button" :aria-label="t('student.mockPractice.k57')" @click="closeApplicationDetail">
           <i class="mdi mdi-close" aria-hidden="true"></i>
         </button>
       </header>
@@ -353,42 +353,42 @@
       <section v-if="selectedRecord" class="coach-modal__body">
         <div class="coach-meta">
           <div class="coach-meta__cell">
-            <div class="coach-meta__label">申请时间</div>
+            <div class="coach-meta__label">{{ t('student.mockPractice.k12') }}</div>
             <div class="coach-meta__value">{{ selectedRecord.appliedAt || '—' }}</div>
           </div>
           <div class="coach-meta__cell">
-            <div class="coach-meta__label">预约时间</div>
+            <div class="coach-meta__label">{{ t('student.mockPractice.k13') }}</div>
             <div class="coach-meta__value coach-meta__value--muted">
-              {{ selectedRecord.scheduledAt || '待安排' }}
+              {{ selectedRecord.scheduledAt || t('student.mockPractice.k59') }}
             </div>
           </div>
           <div class="coach-meta__cell">
-            <div class="coach-meta__label">分配导师</div>
+            <div class="coach-meta__label">{{ t('student.mockPractice.k14') }}</div>
             <div class="coach-meta__value">
-              {{ selectedRecord.assignedMentors || selectedRecord.mentor || '待分配' }}
+              {{ selectedRecord.assignedMentors || selectedRecord.mentor || t('student.mockPractice.k60') }}
             </div>
           </div>
           <div class="coach-meta__cell">
-            <div class="coach-meta__label">导师数量</div>
+            <div class="coach-meta__label">{{ t('student.mockPractice.k15') }}</div>
             <div class="coach-meta__value">
               <strong>{{ selectedRecord.mentorCount || '—' }}</strong>
-              <span v-if="selectedRecord.mentorCount" class="coach-meta__unit">位</span>
+              <span v-if="selectedRecord.mentorCount" class="coach-meta__unit">{{ t('student.mockPractice.k16') }}</span>
             </div>
           </div>
         </div>
 
         <article class="coach-quote">
-          <div class="coach-quote__label">申请内容</div>
+          <div class="coach-quote__label">{{ t('student.mockPractice.k17') }}</div>
           <div class="coach-quote__rule" aria-hidden="true"></div>
           <p class="coach-quote__text">
-            {{ selectedRecord.requestReason || selectedRecord.content || '暂无补充说明。' }}
+            {{ selectedRecord.requestReason || selectedRecord.content || t('student.mockPractice.k61') }}
           </p>
         </article>
       </section>
 
       <footer class="coach-modal__footer coach-modal__footer--single">
         <div class="coach-modal__footer-actions">
-          <a-button class="coach-btn coach-btn--ghost" @click="closeApplicationDetail">关闭</a-button>
+          <a-button class="coach-btn coach-btn--ghost" @click="closeApplicationDetail">{{ t('student.mockPractice.k18') }}</a-button>
         </div>
       </footer>
     </a-modal>
@@ -411,15 +411,15 @@
             </span>
           </div>
           <h2 class="coach-modal__title">
-            <template v-if="selectedRecord.mentor">{{ selectedRecord.mentor }} 的反馈</template>
-            <template v-else>导师反馈</template>
+            <template v-if="selectedRecord.mentor">{{ t('student.mockPractice.k62', { mentor: selectedRecord.mentor }) }}</template>
+            <template v-else>{{ t('student.mockPractice.k19') }}</template>
           </h2>
           <p class="coach-modal__subtitle">
             {{ selectedRecord.type }}
-            <template v-if="selectedRecord.appliedAt"> · 完成于 {{ selectedRecord.appliedAt }}</template>
+            <template v-if="selectedRecord.appliedAt">{{ t('student.mockPractice.k63', { time: selectedRecord.appliedAt }) }}</template>
           </p>
         </div>
-        <button class="coach-modal__close" type="button" aria-label="关闭" @click="closeFeedbackDetail">
+        <button class="coach-modal__close" type="button" :aria-label="t('student.mockPractice.k57')" @click="closeFeedbackDetail">
           <i class="mdi mdi-close" aria-hidden="true"></i>
         </button>
       </header>
@@ -436,7 +436,7 @@
           </div>
           <div class="coach-rating__divider" aria-hidden="true"></div>
           <div class="coach-rating__copy">
-            <div class="coach-rating__label">{{ selectedRecord.feedbackRatingLabel || '已评分' }}</div>
+            <div class="coach-rating__label">{{ selectedRecord.feedbackRatingLabel || t('student.mockPractice.k64') }}</div>
             <div v-if="selectedRecord.feedbackHint" class="coach-rating__hint">
               {{ selectedRecord.feedbackHint }}
             </div>
@@ -450,7 +450,7 @@
         >
           <div class="coach-section__head">
             <i class="mdi mdi-message-text-outline coach-section__icon" aria-hidden="true"></i>
-            <span class="coach-section__title">详细反馈</span>
+            <span class="coach-section__title">{{ t('student.mockPractice.k20') }}</span>
           </div>
           <p class="coach-section__body">
             {{ selectedRecord.feedbackDetail || selectedRecord.feedback }}
@@ -464,7 +464,7 @@
         >
           <div class="coach-section__head">
             <i class="mdi mdi-lightbulb-on-outline coach-section__icon" aria-hidden="true"></i>
-            <span class="coach-section__title">改进建议</span>
+            <span class="coach-section__title">{{ t('student.mockPractice.k21') }}</span>
           </div>
           <p class="coach-section__body coach-section__body--preline">
             {{ selectedRecord.feedbackImprovements }}
@@ -483,7 +483,7 @@
 
       <footer class="coach-modal__footer coach-modal__footer--single">
         <div class="coach-modal__footer-actions">
-          <a-button class="coach-btn coach-btn--ghost" @click="closeFeedbackDetail">关闭</a-button>
+          <a-button class="coach-btn coach-btn--ghost" @click="closeFeedbackDetail">{{ t('student.mockPractice.k18') }}</a-button>
         </div>
       </footer>
     </a-modal>
@@ -493,6 +493,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { OsgPageContainer } from '@osg/shared/components'
 import {
@@ -503,16 +504,18 @@ import {
   type StudentPracticeRecord
 } from '@osg/shared/api'
 
+const { t } = useI18n()
+
 type PracticeModalKey = string
 
 const practiceColumns = [
-  { title: '类型', dataIndex: 'type', key: 'type', width: 120 },
-  { title: '申请内容', dataIndex: 'content', key: 'content', width: 180 },
-  { title: '申请时间', dataIndex: 'appliedAt', key: 'appliedAt', width: 140 },
-  { title: '导师', dataIndex: 'mentor', key: 'mentor', width: 180 },
-  { title: '已上课时', dataIndex: 'hours', key: 'hours', width: 110 },
-  { title: '课程反馈', dataIndex: 'feedback', key: 'feedback', width: 220 },
-  { title: '操作', key: 'action', width: 140, fixed: 'right' as const }
+  { title: t('student.mockPractice.k26'), dataIndex: 'type', key: 'type', width: 120 },
+  { title: t('student.mockPractice.k17'), dataIndex: 'content', key: 'content', width: 180 },
+  { title: t('student.mockPractice.k12'), dataIndex: 'appliedAt', key: 'appliedAt', width: 140 },
+  { title: t('student.mockPractice.k27'), dataIndex: 'mentor', key: 'mentor', width: 180 },
+  { title: t('student.mockPractice.k28'), dataIndex: 'hours', key: 'hours', width: 110 },
+  { title: t('student.mockPractice.k29'), dataIndex: 'feedback', key: 'feedback', width: 220 },
+  { title: t('student.mockPractice.k30'), key: 'action', width: 140, fixed: 'right' as const }
 ]
 
 const practiceFilters = ref({
@@ -608,10 +611,10 @@ const practiceDialogConfig = computed(() => {
   if (currentPracticeModal.value === 'networking') {
     return {
       icon: 'mdi-account-group',
-      subtitle: '由班主任统一分配导师并安排软技能考核',
+      subtitle: t('student.mockPractice.k31'),
       noteTone: 'amber',
-      noteTitle: '测试说明',
-      noteText: '人际关系测试将由班主任直接分配导师，测试内容包括邮件沟通、电话礼仪、自我介绍等职场软技能。',
+      noteTitle: t('student.mockPractice.k32'),
+      noteText: t('student.mockPractice.k33'),
       actionClass: 'practice-dialog__submit practice-dialog__submit--amber'
     }
   }
@@ -619,20 +622,20 @@ const practiceDialogConfig = computed(() => {
   if (currentPracticeModal.value === 'midterm') {
     return {
       icon: 'mdi-school',
-      subtitle: '阶段性知识检测将结合当前学习进度安排考核',
+      subtitle: t('student.mockPractice.k34'),
       noteTone: 'violet',
-      noteTitle: '考试说明',
-      noteText: '期中考试是阶段性知识检测，由班主任直接分配导师进行考核，考核内容根据您的学习进度而定。',
+      noteTitle: t('student.mockPractice.k35'),
+      noteText: t('student.mockPractice.k36'),
       actionClass: 'practice-dialog__submit practice-dialog__submit--violet'
     }
   }
 
   return {
     icon: 'mdi-account-voice',
-    subtitle: '提交申请后，班主任会尽快协助安排合适导师',
+    subtitle: t('student.mockPractice.k37'),
     noteTone: 'blue',
-    noteTitle: '安排说明',
-    noteText: '面试测试会根据您的目标公司、轮次和准备状态安排导师，请尽量补充完整背景信息以便更精准地分配。',
+    noteTitle: t('student.mockPractice.k38'),
+    noteText: t('student.mockPractice.k39'),
     actionClass: 'practice-dialog__submit practice-dialog__submit--blue'
   }
 })
@@ -646,22 +649,22 @@ const COACH_HEADER_MAP: Record<string, {
   microcopy: string
 }> = {
   mock: {
-    eyebrow: 'MENTOR SESSION · 面试测试',
-    title: '准备好直面面试官了吗？',
-    subtitle: '与资深导师 1 对 1 演练，把每一次模拟都变成真实战场的预演。',
-    microcopy: '提交后班主任通常 24 小时内回复并安排导师'
+    eyebrow: t('student.mockPractice.k40'),
+    title: t('student.mockPractice.k41'),
+    subtitle: t('student.mockPractice.k42'),
+    microcopy: t('student.mockPractice.k43')
   },
   networking: {
-    eyebrow: 'SOFT SKILL CHECK · 人际测试',
-    title: '检验你的职场沟通力',
-    subtitle: '邮件礼仪、电话表达、自我介绍 —— 软技能决定第一印象。',
-    microcopy: '班主任将根据排期为你直接分配测试导师'
+    eyebrow: t('student.mockPractice.k44'),
+    title: t('student.mockPractice.k45'),
+    subtitle: t('student.mockPractice.k46'),
+    microcopy: t('student.mockPractice.k47')
   },
   midterm: {
-    eyebrow: 'PROGRESS REVIEW · 期中考核',
-    title: '阶段性知识盘点',
-    subtitle: '基于你当前的学习进度，导师会出一份贴合你节奏的检测题。',
-    microcopy: '考核安排会与学习节奏匹配，无需提前准备'
+    eyebrow: t('student.mockPractice.k48'),
+    title: t('student.mockPractice.k49'),
+    subtitle: t('student.mockPractice.k50'),
+    microcopy: t('student.mockPractice.k51')
   }
 }
 
@@ -739,12 +742,12 @@ const submitPracticeRequest = async () => {
 
   if (practiceType === 'mock') {
     if (!practiceForm.value.reason.trim()) {
-      message.error('请填写面试测试申请原因')
+      message.error(t('student.mockPractice.k52'))
       return
     }
 
     if (!practiceForm.value.mentorCount) {
-      message.error('请选择导师数量')
+      message.error(t('student.mockPractice.k53'))
       return
     }
   }
@@ -764,11 +767,11 @@ const submitPracticeRequest = async () => {
     resetPracticeForm()
     await loadPageData()
     if (practiceType === 'mock') {
-      message.success('面试测试申请已提交！班主任将尽快为您安排导师。')
+      message.success(t('student.mockPractice.k54'))
       return
     }
 
-    message.success('申请已提交！班主任将为您分配导师。')
+    message.success(t('student.mockPractice.k55'))
   } catch {
     return
   } finally {
@@ -1654,7 +1657,7 @@ onMounted(() => {
     border: 1px solid var(--coach-rule);
     border-radius: 14px;
     overflow: hidden;
-    background: var(--coach-rule); // 缝隙线
+    background: var(--coach-rule); // hairline divider
   }
 
   .coach-meta__cell {

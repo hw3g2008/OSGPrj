@@ -4,9 +4,9 @@
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">基本信息 <span>My Profile</span></h1>
+            <h1 class="page-title">{{ t('student.profile.k1') }} <span>My Profile</span></h1>
           </div>
-          <a-button type="primary" size="large" @click="openEdit">编辑信息</a-button>
+          <a-button type="primary" size="large" @click="openEdit">{{ t('student.profile.k2') }}</a-button>
         </div>
       </template>
 
@@ -22,23 +22,23 @@
           </div>
         </div>
 
-        <a-card title="核心信息" :bordered="false" size="small" class="info-block">
+        <a-card :title="t('student.profile.k5')" :bordered="false" size="small" class="info-block">
           <a-descriptions :column="{ xs: 1, sm: 2, md: 3 }" :colon="false">
-            <a-descriptions-item label="英文姓名">{{ profile.englishName }}</a-descriptions-item>
-            <a-descriptions-item label="性别">{{ profile.sexLabel }}</a-descriptions-item>
-            <a-descriptions-item label="邮箱">{{ profile.email }}</a-descriptions-item>
+            <a-descriptions-item :label="t('student.profile.k6')">{{ profile.englishName }}</a-descriptions-item>
+            <a-descriptions-item :label="t('student.profile.k7')">{{ profile.sexLabel }}</a-descriptions-item>
+            <a-descriptions-item :label="t('student.profile.k8')">{{ profile.email }}</a-descriptions-item>
           </a-descriptions>
         </a-card>
 
-        <a-card title="导师配置" :bordered="false" size="small" class="info-block">
+        <a-card :title="t('student.profile.k9')" :bordered="false" size="small" class="info-block">
           <a-descriptions :column="{ xs: 1, sm: 2 }" :colon="false">
-            <a-descriptions-item label="班主任">
+            <a-descriptions-item :label="t('student.profile.k10')">
               <template v-if="profile.leadMentorNames?.length">
                 <a-tag v-for="name in profile.leadMentorNames" :key="name" color="blue">{{ name }}</a-tag>
               </template>
               <template v-else>{{ profile.leadMentor }}</template>
             </a-descriptions-item>
-            <a-descriptions-item label="助教">
+            <a-descriptions-item :label="t('student.profile.k11')">
               <template v-if="profile.assistantNames?.length">
                 <a-tag v-for="name in profile.assistantNames" :key="name" color="cyan">{{ name }}</a-tag>
               </template>
@@ -47,50 +47,50 @@
           </a-descriptions>
         </a-card>
 
-        <a-card title="学业信息" :bordered="false" size="small" class="info-block">
+        <a-card :title="t('student.profile.k12')" :bordered="false" size="small" class="info-block">
           <a-descriptions :column="{ xs: 1, sm: 2, md: 3 }" :colon="false">
-            <a-descriptions-item label="学校">
+            <a-descriptions-item :label="t('student.profile.k13')">
               <span class="field-value">{{ profile.school }}</span>
             </a-descriptions-item>
-            <a-descriptions-item label="专业">
+            <a-descriptions-item :label="t('student.profile.k14')">
               <span class="field-value">{{ profile.major }}</span>
             </a-descriptions-item>
-            <a-descriptions-item label="毕业年份">
+            <a-descriptions-item :label="t('student.profile.k15')">
               <span class="field-value">{{ profile.graduationYear }}</span>
             </a-descriptions-item>
-            <a-descriptions-item label="高中">
+            <a-descriptions-item :label="t('student.profile.k16')">
               <span class="field-value">{{ profile.highSchool }}</span>
             </a-descriptions-item>
-            <a-descriptions-item label="是否读研或延毕">
+            <a-descriptions-item :label="t('student.profile.k17')">
               <span class="field-value">{{ profile.postgraduatePlan }}</span>
             </a-descriptions-item>
-            <a-descriptions-item label="签证">
+            <a-descriptions-item :label="t('student.profile.k18')">
               <span class="field-value">{{ profile.visaStatus }}</span>
             </a-descriptions-item>
           </a-descriptions>
         </a-card>
 
-        <a-card title="求职方向" :bordered="false" size="small" class="info-block">
+        <a-card :title="t('student.profile.k19')" :bordered="false" size="small" class="info-block">
           <a-descriptions :column="{ xs: 1, sm: 2 }" :colon="false">
-            <a-descriptions-item label="求职地区">
+            <a-descriptions-item :label="t('student.profile.k20')">
               <span class="field-value">{{ profile.targetRegion }}</span>
             </a-descriptions-item>
-            <a-descriptions-item label="招聘周期">
+            <a-descriptions-item :label="t('student.profile.k21')">
               <span class="field-value">{{ profile.recruitmentCycle }}</span>
             </a-descriptions-item>
-            <a-descriptions-item label="主攻方向">
+            <a-descriptions-item :label="t('student.profile.k22')">
               <span class="field-value">{{ profile.primaryDirection }}</span>
             </a-descriptions-item>
-            <a-descriptions-item label="子方向">
+            <a-descriptions-item :label="t('student.profile.k23')">
               <span class="field-value">{{ profile.secondaryDirection }}</span>
             </a-descriptions-item>
           </a-descriptions>
         </a-card>
 
-        <a-card title="联系方式" :bordered="false" size="small" class="info-block">
+        <a-card :title="t('student.profile.k24')" :bordered="false" size="small" class="info-block">
           <a-descriptions :column="{ xs: 1, sm: 2 }" :colon="false">
-            <a-descriptions-item label="电话">{{ profile.phone }}</a-descriptions-item>
-            <a-descriptions-item label="微信ID">{{ profile.wechatId }}</a-descriptions-item>
+            <a-descriptions-item :label="t('student.profile.k25')">{{ profile.phone }}</a-descriptions-item>
+            <a-descriptions-item :label="t('student.profile.k26')">{{ profile.wechatId }}</a-descriptions-item>
           </a-descriptions>
         </a-card>
       </a-card>
@@ -99,55 +99,55 @@
     <a-modal
       v-model:open="editOpen"
       wrap-class-name="osg-modal-form"
-      title="编辑基本信息"
+      :title="t('student.profile.k27')"
       :width="620"
       :footer="null"
       @cancel="editOpen = false"
     >
       <section class="profile-modal-section">
         <div class="form-grid">
-          <a-form-item label="学校" class="form-item">
+          <a-form-item :label="t('student.profile.k13')" class="form-item">
             <a-select
               v-model:value="editForm.school"
               show-search
               mode="combobox"
               :options="schoolOptions"
-              placeholder="请选择或输入学校"
+              :placeholder="t('student.profile.k28')"
             />
           </a-form-item>
-          <a-form-item label="专业" class="form-item"><a-input v-model:value="editForm.major" /></a-form-item>
-          <a-form-item label="毕业年份" class="form-item"><a-input v-model:value="editForm.graduationYear" /></a-form-item>
-          <a-form-item label="高中" class="form-item"><a-input v-model:value="editForm.highSchool" placeholder="选填" /></a-form-item>
-          <a-form-item label="是否读研或延毕" class="form-item"><a-select v-model:value="editForm.postgraduatePlan" :options="yesNoOptions" /></a-form-item>
-          <a-form-item label="签证" class="form-item"><a-input v-model:value="editForm.visaStatus" /></a-form-item>
-          <a-form-item label="招聘周期" class="form-item">
+          <a-form-item :label="t('student.profile.k14')" class="form-item"><a-input v-model:value="editForm.major" /></a-form-item>
+          <a-form-item :label="t('student.profile.k15')" class="form-item"><a-input v-model:value="editForm.graduationYear" /></a-form-item>
+          <a-form-item :label="t('student.profile.k16')" class="form-item"><a-input v-model:value="editForm.highSchool" :placeholder="t('student.profile.k29')" /></a-form-item>
+          <a-form-item :label="t('student.profile.k17')" class="form-item"><a-select v-model:value="editForm.postgraduatePlan" :options="yesNoOptions" /></a-form-item>
+          <a-form-item :label="t('student.profile.k18')" class="form-item"><a-input v-model:value="editForm.visaStatus" /></a-form-item>
+          <a-form-item :label="t('student.profile.k21')" class="form-item">
             <MultiSelect
               v-model:value="recruitmentCycles"
               :options="recruitCycleOptions"
-              placeholder="请选择招聘周期（可多选）"
+              :placeholder="t('student.profile.k30')"
             />
           </a-form-item>
-          <a-form-item label="求职地区" class="form-item">
+          <a-form-item :label="t('student.profile.k20')" class="form-item">
             <MultiSelect
               v-model:value="targetRegions"
               :options="regionOptions"
-              placeholder="请选择求职地区（可多选）"
+              :placeholder="t('student.profile.k31')"
             />
           </a-form-item>
-          <a-form-item label="主攻方向" class="form-item">
+          <a-form-item :label="t('student.profile.k22')" class="form-item">
             <MultiSelect
               v-model:value="primaryDirections"
               :options="majorDirectionOptions"
-              placeholder="请选择主攻方向（可多选）"
+              :placeholder="t('student.profile.k32')"
             />
           </a-form-item>
-          <a-form-item label="子方向" class="form-item">
+          <a-form-item :label="t('student.profile.k23')" class="form-item">
             <a-select
               v-model:value="editForm.secondaryDirection"
               show-search
               mode="combobox"
               :options="subDirectionOptions"
-              placeholder="请选择或输入子方向"
+              :placeholder="t('student.profile.k33')"
             />
           </a-form-item>
         </div>
@@ -155,14 +155,14 @@
 
       <section class="profile-modal-section">
         <div class="form-grid form-grid--compact">
-          <a-form-item label="电话" class="form-item"><a-input v-model:value="editForm.phone" /></a-form-item>
-          <a-form-item label="微信ID" class="form-item"><a-input v-model:value="editForm.wechatId" /></a-form-item>
+          <a-form-item :label="t('student.profile.k25')" class="form-item"><a-input v-model:value="editForm.phone" /></a-form-item>
+          <a-form-item :label="t('student.profile.k26')" class="form-item"><a-input v-model:value="editForm.wechatId" /></a-form-item>
         </div>
       </section>
 
       <div class="profile-modal__footer" style="margin-top: 16px">
-        <a-button @click="editOpen = false">取消</a-button>
-        <a-button type="primary" @click="saveProfile">保存修改</a-button>
+        <a-button @click="editOpen = false">{{ t('student.profile.k3') }}</a-button>
+        <a-button type="primary" @click="saveProfile">{{ t('student.profile.k4') }}</a-button>
       </div>
     </a-modal>
 
@@ -171,6 +171,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import { OsgPageContainer, MultiSelect } from '@osg/shared/components'
 import { useDictFacade } from '@osg/shared'
@@ -182,6 +183,8 @@ import {
   type StudentPendingProfileChange
 } from '@osg/shared/api'
 
+const { t } = useI18n()
+
 // 字典单源：本表单中与 Admin osg_* 字典语义对齐的字段统一走 useDictFacade，免重复维护
 const { items: schoolOptions, load: loadSchools } = useDictFacade('osg_school')
 const { items: recruitCycleOptions, load: loadRecruitCycles } = useDictFacade('osg_recruit_cycle')
@@ -190,8 +193,8 @@ const { items: majorDirectionOptions, load: loadMajorDirections } = useDictFacad
 const { items: subDirectionOptions, load: loadSubDirections } = useDictFacade('osg_sub_direction')
 
 const yesNoOptions = [
-  { value: '是', label: '是' },
-  { value: '否', label: '否' }
+  { value: t('student.profile.k34'), label: t('student.profile.k34') },
+  { value: t('student.profile.k35'), label: t('student.profile.k35') }
 ]
 
 const editOpen = ref(false)
@@ -201,7 +204,7 @@ const profile = reactive<StudentProfileRecord>({
   englishName: '-',
   email: '-',
   sexLabel: '-',
-  statusLabel: '正常',
+  statusLabel: t('student.profile.k36'),
   leadMentor: '-',
   leadMentorNames: [],
   assistantName: '-',
@@ -210,7 +213,7 @@ const profile = reactive<StudentProfileRecord>({
   major: '-',
   graduationYear: '-',
   highSchool: '-',
-  postgraduatePlan: '否',
+  postgraduatePlan: t('student.profile.k35'),
   visaStatus: '-',
   targetRegion: '-',
   recruitmentCycle: '-',
@@ -235,7 +238,7 @@ const editForm = reactive<StudentProfileUpdatePayload>({
   major: '-',
   graduationYear: '-',
   highSchool: '-',
-  postgraduatePlan: '否',
+  postgraduatePlan: t('student.profile.k35'),
   visaStatus: '-',
   recruitmentCycle: '-',
   targetRegion: '-',
@@ -300,9 +303,9 @@ async function loadProfile() {
 
 async function saveProfile() {
   Modal.confirm({
-    title: '确认保存修改？',
-    okText: '确认',
-    cancelText: '取消',
+    title: t('student.profile.k37'),
+    okText: t('student.profile.k38'),
+    cancelText: t('student.profile.k3'),
     okType: 'primary',
     async onOk() {
       try {
@@ -314,7 +317,7 @@ async function saveProfile() {
         })
         applyProfileView(payload)
         editOpen.value = false
-        message.success('保存成功')
+        message.success(t('student.profile.k39'))
       } catch {
         // error handled
       }

@@ -4,7 +4,7 @@
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">投诉与建议 <span>OSG Feedback Form</span></h1>
+            <h1 class="page-title">{{ t('student.complaint.k1') }} <span>OSG Feedback Form</span></h1>
           </div>
         </div>
       </template>
@@ -17,7 +17,7 @@
           <a-input value="Test Student" disabled />
         </a-form-item>
         <a-form-item label="School & Grad Year" class="form-item">
-          <a-input value="北京大学 2025" disabled />
+          <a-input :value="t('student.complaint.k5')" disabled />
         </a-form-item>
         <a-form-item label="You are...?" class="form-item">
           <a-radio-group>
@@ -33,7 +33,7 @@
           </a-radio-group>
         </a-form-item>
         <a-form-item label="Who are you providing feedback on?" class="form-item full-span">
-          <a-input placeholder="请输入对方姓名" />
+          <a-input :placeholder="t('student.complaint.k3')" />
         </a-form-item>
         <a-form-item label="How would you describe this person?" class="form-item full-span">
           <a-radio-group class="vertical-group">
@@ -44,12 +44,12 @@
           </a-radio-group>
         </a-form-item>
         <a-form-item label="Please describe your experience with this person." class="form-item full-span">
-          <a-textarea :rows="5" placeholder="请详细描述您的体验和反馈" />
+          <a-textarea :rows="5" :placeholder="t('student.complaint.k4')" />
         </a-form-item>
       </div>
 
       <div class="submit-row">
-        <a-button type="primary" size="large">提交反馈 Submit</a-button>
+        <a-button type="primary" size="large">{{ t('student.complaint.k2') }}</a-button>
       </div>
     </OsgPageContainer>
   </div>
@@ -57,6 +57,8 @@
 
 <script setup lang="ts">
 import { OsgPageContainer } from '@osg/shared/components'
+
+const { t } = useI18n()
 </script>
 
 <style scoped lang="scss">

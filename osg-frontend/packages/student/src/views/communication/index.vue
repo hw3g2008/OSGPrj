@@ -4,15 +4,15 @@
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">人际关系沟通记录 <span>Communication Records</span></h1>
+            <h1 class="page-title">{{ t('student.communication.k1') }} <span>Communication Records</span></h1>
           </div>
         </div>
       </template>
 
       <div class="toolbar">
-        <a-input placeholder="搜索记录..." class="toolbar-input" />
-        <a-select class="toolbar-select" placeholder="沟通方式" :options="communicationMethodOptions" />
-        <a-button>搜索</a-button>
+        <a-input :placeholder="t('student.communication.k10')" class="toolbar-input" />
+        <a-select class="toolbar-select" :placeholder="t('student.communication.k5')" :options="communicationMethodOptions" />
+        <a-button>{{ t('student.communication.k2') }}</a-button>
       </div>
 
       <div class="table-shell">
@@ -37,7 +37,7 @@
               <a-tag :color="record.followUpColor">{{ record.followUp }}</a-tag>
             </template>
             <template v-else-if="column.key === 'action'">
-              <a-button type="link" size="small" @click="openDetail(record)">详情</a-button>
+              <a-button type="link" size="small" @click="openDetail(record)">{{ t('student.communication.k3') }}</a-button>
             </template>
           </template>
         </a-table>
@@ -47,34 +47,34 @@
     <a-modal
       v-model:open="detailOpen"
       wrap-class-name="osg-modal-form"
-      title="沟通记录详情"
+      :title="t('student.communication.k11')"
       :footer="null"
       width="620px"
     >
       <div v-if="activeRecord" class="detail-grid">
         <div class="detail-row">
-          <span class="detail-label">记录人</span>
+          <span class="detail-label">{{ t('student.communication.k4') }}</span>
           <span>{{ activeRecord.owner }}</span>
         </div>
         <div class="detail-row">
-          <span class="detail-label">沟通方式</span>
+          <span class="detail-label">{{ t('student.communication.k5') }}</span>
           <span>{{ activeRecord.method }}</span>
         </div>
         <div class="detail-row">
-          <span class="detail-label">沟通时间</span>
+          <span class="detail-label">{{ t('student.communication.k6') }}</span>
           <span>{{ activeRecord.time }}</span>
         </div>
         <div class="detail-block">
-          <div class="detail-label">沟通内容</div>
+          <div class="detail-label">{{ t('student.communication.k7') }}</div>
           <div class="detail-box">{{ activeRecord.summary }}</div>
         </div>
         <div class="detail-block">
-          <div class="detail-label">跟进事项</div>
+          <div class="detail-label">{{ t('student.communication.k8') }}</div>
           <div class="detail-box">{{ activeRecord.followUpDetail }}</div>
         </div>
       </div>
       <div class="dialog-actions">
-        <a-button @click="detailOpen = false">关闭</a-button>
+        <a-button @click="detailOpen = false">{{ t('student.communication.k9') }}</a-button>
       </div>
     </a-modal>
   </div>
@@ -82,15 +82,18 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OsgPageContainer } from '@osg/shared/components'
 
+const { t } = useI18n()
+
 const recordColumns = [
-  { title: '记录人', key: 'owner' },
-  { title: '沟通方式', key: 'method' },
-  { title: '沟通时间', dataIndex: 'time', key: 'time' },
-  { title: '沟通内容', key: 'summary' },
-  { title: '跟进事项', key: 'followUp' },
-  { title: '操作', key: 'action' },
+  { title: t('student.communication.k4'), key: 'owner' },
+  { title: t('student.communication.k5'), key: 'method' },
+  { title: t('student.communication.k6'), dataIndex: 'time', key: 'time' },
+  { title: t('student.communication.k7'), key: 'summary' },
+  { title: t('student.communication.k8'), key: 'followUp' },
+  { title: t('student.communication.k12'), key: 'action' },
 ]
 
 type CommunicationRecord = {
@@ -106,45 +109,45 @@ type CommunicationRecord = {
 }
 
 const communicationMethodOptions = [
-  { value: 'wechat', label: '微信' },
-  { value: 'phone', label: '电话' },
-  { value: 'email', label: '邮件' },
-  { value: 'meeting', label: '面谈' }
+  { value: 'wechat', label: t('student.communication.k13') },
+  { value: 'phone', label: t('student.communication.k14') },
+  { value: 'email', label: t('student.communication.k15') },
+  { value: 'meeting', label: t('student.communication.k16') }
 ]
 
 const communicationRecords: CommunicationRecord[] = [
   {
     id: 'COMM-001',
-    owner: 'Jess (班主任)',
-    method: '微信',
+    owner: t('student.communication.k17'),
+    method: t('student.communication.k13'),
     methodColor: 'processing',
     time: '01/18/2026 10:30',
-    summary: '讨论面试准备进度，建议增加面试测试次数并提前整理近期 networking 收获。',
-    followUp: '待跟进',
+    summary: t('student.communication.k18'),
+    followUp: t('student.communication.k19'),
     followUpColor: 'gold',
-    followUpDetail: '本周补充 2 次面试测试，并在下次辅导前回传最新岗位进展。'
+    followUpDetail: t('student.communication.k20')
   },
   {
     id: 'COMM-002',
-    owner: 'Jerry Li (导师)',
-    method: '电话',
+    owner: t('student.communication.k21'),
+    method: t('student.communication.k14'),
     methodColor: 'default',
     time: '01/17/2026 14:00',
-    summary: '确认下周课程安排，调整上课时间，并同步技术面试的准备重点。',
-    followUp: '已完成',
+    summary: t('student.communication.k22'),
+    followUp: t('student.communication.k23'),
     followUpColor: 'success',
-    followUpDetail: '课程时间已经改到周三 19:00，准备材料已同步到资源中心。'
+    followUpDetail: t('student.communication.k24')
   },
   {
     id: 'COMM-003',
-    owner: 'Jess (班主任)',
-    method: '邮件',
+    owner: t('student.communication.k17'),
+    method: t('student.communication.k15'),
     methodColor: 'processing',
     time: '01/15/2026 09:00',
-    summary: '发送简历修改建议和面试资料，提醒同步更新个人中心中的求职方向。',
-    followUp: '已完成',
+    summary: t('student.communication.k25'),
+    followUp: t('student.communication.k23'),
     followUpColor: 'success',
-    followUpDetail: '简历新版本已上传，求职方向变更进入待审核队列。'
+    followUpDetail: t('student.communication.k26')
   }
 ]
 

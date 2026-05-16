@@ -7,8 +7,8 @@
       <h1 class="account-locked__title">{{ titleText }}</h1>
       <p class="account-locked__desc">{{ descText }}</p>
       <div class="account-locked__actions">
-        <a-button type="primary" @click="handleContact">联系班主任</a-button>
-        <a-button @click="handleLogout">退出登录</a-button>
+        <a-button type="primary" @click="handleContact">{{ t('student.accountLocked.k1') }}</a-button>
+        <a-button @click="handleLogout">{{ t('student.accountLocked.k2') }}</a-button>
       </div>
     </div>
   </div>
@@ -16,9 +16,12 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { Modal } from 'ant-design-vue'
 import { clearAuth } from '@osg/shared/utils'
+
+const { t } = useI18n()
 
 type LockReason = 'contract_ended' | 'blacklisted'
 
@@ -31,13 +34,13 @@ const reason = computed<LockReason>(() => {
 })
 
 const titleText = computed(() =>
-  reason.value === 'blacklisted' ? '账号已加入黑名单' : '合同已结束',
+  reason.value === 'blacklisted' ? t('student.accountLocked.k7') : t('student.accountLocked.k3'),
 )
 
 const descText = computed(() =>
   reason.value === 'blacklisted'
-    ? '账号已加入黑名单，无法查看求职信息。如有疑问，请联系您的班主任。'
-    : '合同已结束，无法查看求职信息。续签合同后将自动恢复正常状态。',
+    ? t('student.accountLocked.k4')
+    : t('student.accountLocked.k5'),
 )
 
 const iconToneClass = computed(() =>
@@ -48,8 +51,8 @@ const iconToneClass = computed(() =>
 
 function handleContact() {
   Modal.info({
-    title: '联系班主任',
-    content: '请通过站内信或邮件联系您的班主任处理后续事宜。',
+    title: t('student.accountLocked.k1'),
+    content: t('student.accountLocked.k6'),
   })
 }
 

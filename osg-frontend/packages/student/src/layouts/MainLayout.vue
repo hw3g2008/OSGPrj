@@ -33,7 +33,7 @@
           <div class="user-avatar">{{ userInitials }}</div>
           <div class="user-info">
             <h4>{{ displayName }}</h4>
-            <p>点击退出登录</p>
+            <p>{{ t('student.mainLayout.k1') }}</p>
           </div>
         </button>
       </div>
@@ -47,6 +47,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { Modal, message } from 'ant-design-vue'
 import { normalizeStudentPath } from '@/navigation/access'
@@ -54,6 +55,8 @@ import { PHASE1_VISIBLE_PATHS } from '@/navigation/phase1'
 import { logout } from '@osg/shared/api'
 import { useIdleLogout } from '@osg/shared/composables'
 import { clearAuth, getUser } from '@osg/shared/utils'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -102,122 +105,122 @@ const userInitials = computed(() => {
 
 const menuGroups: MenuGroup[] = [
   {
-    title: '求职中心 Career',
+    title: t('student.mainLayout.k2'),
     items: [
       {
         path: '/positions',
-        label: '岗位信息 Positions',
+        label: t('student.mainLayout.k3'),
         iconClass: 'mdi-briefcase-search',
         activePaths: ['/positions', '/career']
       },
       {
         path: '/job-tracking',
-        label: '我的求职 My Applications',
+        label: t('student.mainLayout.k4'),
         iconClass: 'mdi-briefcase-clock',
         activePaths: ['/applications', '/job-tracking']
       },
       {
         path: '/mock-practice',
-        label: '模拟应聘 Mock Practice',
+        label: t('student.mainLayout.k5'),
         iconClass: 'mdi-account-voice',
         activePaths: ['/mock-practice', '/request']
       }
     ]
   },
   {
-    title: '学习中心 Learning',
+    title: t('student.mainLayout.k6'),
     items: [
       {
         path: '/myclass',
-        label: '课程记录 Class Records',
+        label: t('student.mainLayout.k7'),
         iconClass: 'mdi-book-open-variant',
         activePaths: ['/courses', '/myclass']
       },
       {
         path: '/communication',
-        label: '人际关系沟通记录 Records',
+        label: t('student.mainLayout.k8'),
         iconClass: 'mdi-message-text-clock',
         activePaths: ['/communication']
       },
       {
         path: '/ai-interview',
-        label: 'AI面试分析 AI Interview',
+        label: t('student.mainLayout.k9'),
         iconClass: 'mdi-robot-outline',
         activePaths: ['/ai-interview']
       }
     ]
   },
   {
-    title: '简历中心 Resume',
+    title: t('student.mainLayout.k10'),
     items: [
       {
         path: '/resume',
-        label: '我的简历 My Resume',
+        label: t('student.mainLayout.k11'),
         iconClass: 'mdi-file-account',
         activePaths: ['/resume']
       },
       {
         path: '/ai-resume',
-        label: 'AI简历分析 AI Analysis',
+        label: t('student.mainLayout.k12'),
         iconClass: 'mdi-robot',
         activePaths: ['/ai-resume']
       }
     ]
   },
   {
-    title: '资源中心 Resources',
+    title: t('student.mainLayout.k13'),
     items: [
       {
         path: '/files',
-        label: '文件 Files',
+        label: t('student.mainLayout.k14'),
         iconClass: 'mdi-folder-open',
         activePaths: ['/files']
       },
       {
         path: '/online-test-bank',
-        label: '在线测试题库 Online Test',
+        label: t('student.mainLayout.k15'),
         iconClass: 'mdi-monitor-cellphone',
         activePaths: ['/online-test-bank']
       },
       {
         path: '/interview-bank',
-        label: '真人面试题库 Interview Bank',
+        label: t('student.mainLayout.k16'),
         iconClass: 'mdi-account-tie-voice',
         activePaths: ['/interview-bank']
       },
       {
         path: '/questions',
-        label: '面试真题 Questions',
+        label: t('student.mainLayout.k17'),
         iconClass: 'mdi-file-document-edit',
         activePaths: ['/questions']
       }
     ]
   },
   {
-    title: '个人中心 Profile',
+    title: t('student.mainLayout.k18'),
     items: [
       {
         path: '/profile',
-        label: '基本信息 Profile',
+        label: t('student.mainLayout.k19'),
         iconClass: 'mdi-account',
         activePaths: ['/profile']
       },
       {
         path: '/notice',
-        label: '消息 Notice',
+        label: t('student.mainLayout.k20'),
         iconClass: 'mdi-bell',
         activePaths: ['/notice'],
         badge: 5
       },
       {
         path: '/faq',
-        label: '常见问题 FAQ',
+        label: t('student.mainLayout.k21'),
         iconClass: 'mdi-help-circle',
         activePaths: ['/faq']
       },
       {
         path: '/complaint',
-        label: '投诉建议 Complaints',
+        label: t('student.mainLayout.k22'),
         iconClass: 'mdi-message-alert',
         activePaths: ['/complaint']
       }
@@ -266,10 +269,10 @@ const navigate = (path: string) => {
 
 const handleLogout = () => {
   Modal.confirm({
-    title: '确认退出',
-    content: '确定要退出登录吗？',
-    okText: '确定',
-    cancelText: '取消',
+    title: t('student.mainLayout.k23'),
+    content: t('student.mainLayout.k24'),
+    okText: t('student.mainLayout.k25'),
+    cancelText: t('student.mainLayout.k26'),
     async onOk() {
       try {
         await logout()
@@ -277,7 +280,7 @@ const handleLogout = () => {
         // Ignore API failures and always clear local auth state.
       }
       clearAuth()
-      message.success('已退出登录')
+      message.success(t('student.mainLayout.k27'))
       router.push('/login')
     },
   })

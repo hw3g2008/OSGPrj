@@ -4,28 +4,28 @@
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">沟通记录 <span>Networking Log</span></h1>
+            <h1 class="page-title">{{ t('student.netlog.k1') }} <span>Networking Log</span></h1>
           </div>
         </div>
       </template>
 
       <section class="action-hero">
         <div>
-          <h2>完成了一次沟通？</h2>
-          <p>记录你的Networking成果</p>
+          <h2>{{ t('student.netlog.k2') }}</h2>
+          <p>{{ t('student.netlog.k3') }}</p>
         </div>
         <a-button type="primary" size="large" @click="openCreate">
-          填写记录
+          {{ t('student.netlog.k4') }}
         </a-button>
       </section>
 
       <div class="card-shell">
         <div class="card-header">
-          <span>沟通记录 My Logs</span>
+          <span>{{ t('student.netlog.k5') }}</span>
         </div>
         <div class="toolbar">
-          <a-input placeholder="搜索公司/对方..." class="toolbar-input" />
-          <a-select class="toolbar-select" placeholder="级别" :options="levelOptions" />
+          <a-input :placeholder="t('student.netlog.k21')" class="toolbar-input" />
+          <a-select class="toolbar-select" :placeholder="t('student.netlog.k8')" :options="levelOptions" />
           <a-date-picker class="toolbar-date" />
         </div>
 
@@ -34,11 +34,11 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>公司</th>
-                <th>对方</th>
-                <th>级别</th>
-                <th>时间</th>
-                <th>操作</th>
+                <th>{{ t('student.netlog.k6') }}</th>
+                <th>{{ t('student.netlog.k7') }}</th>
+                <th>{{ t('student.netlog.k8') }}</th>
+                <th>{{ t('student.netlog.k9') }}</th>
+                <th>{{ t('student.netlog.k10') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -49,7 +49,7 @@
                 <td>{{ item.level }}</td>
                 <td>{{ item.time }}</td>
                 <td>
-                  <a-button type="link" size="small" @click="openDetail(item)">查看</a-button>
+                  <a-button type="link" size="small" @click="openDetail(item)">{{ t('student.netlog.k11') }}</a-button>
                 </td>
               </tr>
             </tbody>
@@ -58,57 +58,57 @@
       </div>
     </OsgPageContainer>
 
-    <a-modal v-model:open="detailOpen" title="沟通记录详情" :footer="null" width="620px" wrap-class-name="osg-modal-form">
+    <a-modal v-model:open="detailOpen" :title="t('student.netlog.k22')" :footer="null" width="620px" wrap-class-name="osg-modal-form">
       <div v-if="activeLog" class="detail-grid">
-        <div class="detail-row"><span class="detail-label">公司</span><span>{{ activeLog.company }}</span></div>
-        <div class="detail-row"><span class="detail-label">对方姓名</span><span>{{ activeLog.person }}</span></div>
-        <div class="detail-row"><span class="detail-label">级别</span><span>{{ activeLog.level }}</span></div>
-        <div class="detail-row"><span class="detail-label">沟通时间</span><span>{{ activeLog.time }}</span></div>
-        <div class="detail-row"><span class="detail-label">沟通方式</span><span>{{ activeLog.channel }}</span></div>
+        <div class="detail-row"><span class="detail-label">{{ t('student.netlog.k6') }}</span><span>{{ activeLog.company }}</span></div>
+        <div class="detail-row"><span class="detail-label">{{ t('student.netlog.k12') }}</span><span>{{ activeLog.person }}</span></div>
+        <div class="detail-row"><span class="detail-label">{{ t('student.netlog.k8') }}</span><span>{{ activeLog.level }}</span></div>
+        <div class="detail-row"><span class="detail-label">{{ t('student.netlog.k13') }}</span><span>{{ activeLog.time }}</span></div>
+        <div class="detail-row"><span class="detail-label">{{ t('student.netlog.k14') }}</span><span>{{ activeLog.channel }}</span></div>
         <div class="detail-block">
-          <div class="detail-label">沟通内容</div>
+          <div class="detail-label">{{ t('student.netlog.k15') }}</div>
           <div class="detail-box">{{ activeLog.notes }}</div>
         </div>
         <div class="detail-block">
-          <div class="detail-label">收获与总结</div>
+          <div class="detail-label">{{ t('student.netlog.k16') }}</div>
           <div class="detail-box detail-success">{{ activeLog.summary }}</div>
         </div>
       </div>
 
       <div class="dialog-actions">
-        <a-button @click="detailOpen = false">关闭</a-button>
-        <a-button type="primary" @click="editFromDetail">编辑</a-button>
+        <a-button @click="detailOpen = false">{{ t('student.netlog.k17') }}</a-button>
+        <a-button type="primary" @click="editFromDetail">{{ t('student.netlog.k18') }}</a-button>
       </div>
     </a-modal>
 
-    <a-modal v-model:open="createOpen" title="填写沟通记录" :footer="null" width="640px" wrap-class-name="osg-modal-form">
+    <a-modal v-model:open="createOpen" :title="t('student.netlog.k23')" :footer="null" width="640px" wrap-class-name="osg-modal-form">
       <div class="form-grid">
-        <a-form-item label="公司 Company" class="form-item">
-          <a-input v-model:value="draftLog.company" placeholder="如：Goldman Sachs" />
+        <a-form-item :label="t('student.netlog.k24')" class="form-item">
+          <a-input v-model:value="draftLog.company" :placeholder="t('student.netlog.k25')" />
         </a-form-item>
-        <a-form-item label="对方姓名" class="form-item">
-          <a-input v-model:value="draftLog.person" placeholder="如：John Smith" />
+        <a-form-item :label="t('student.netlog.k12')" class="form-item">
+          <a-input v-model:value="draftLog.person" :placeholder="t('student.netlog.k26')" />
         </a-form-item>
-        <a-form-item label="级别" class="form-item">
+        <a-form-item :label="t('student.netlog.k8')" class="form-item">
           <a-select v-model:value="draftLog.level" :options="levelOptions" />
         </a-form-item>
-        <a-form-item label="沟通方式" class="form-item">
+        <a-form-item :label="t('student.netlog.k14')" class="form-item">
           <a-select v-model:value="draftLog.channel" :options="channelOptions" />
         </a-form-item>
-        <a-form-item label="沟通日期" class="form-item full-span">
+        <a-form-item :label="t('student.netlog.k27')" class="form-item full-span">
           <a-date-picker class="full-width" />
         </a-form-item>
-        <a-form-item label="沟通内容" class="form-item full-span">
-          <a-textarea v-model:value="draftLog.notes" :rows="4" placeholder="记录本次 networking 的沟通内容" />
+        <a-form-item :label="t('student.netlog.k15')" class="form-item full-span">
+          <a-textarea v-model:value="draftLog.notes" :rows="4" :placeholder="t('student.netlog.k28')" />
         </a-form-item>
-        <a-form-item label="收获与总结" class="form-item full-span">
-          <a-textarea v-model:value="draftLog.summary" :rows="4" placeholder="总结你的收获、下一步行动和 follow-up" />
+        <a-form-item :label="t('student.netlog.k16')" class="form-item full-span">
+          <a-textarea v-model:value="draftLog.summary" :rows="4" :placeholder="t('student.netlog.k29')" />
         </a-form-item>
       </div>
 
       <div class="dialog-actions">
-        <a-button @click="createOpen = false">取消</a-button>
-        <a-button type="primary" @click="createOpen = false">提交记录</a-button>
+        <a-button @click="createOpen = false">{{ t('student.netlog.k19') }}</a-button>
+        <a-button type="primary" @click="createOpen = false">{{ t('student.netlog.k20') }}</a-button>
       </div>
     </a-modal>
   </div>
@@ -116,7 +116,10 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OsgPageContainer } from '@osg/shared/components'
+
+const { t } = useI18n()
 
 type NetworkingLog = {
   actionId: string
@@ -140,9 +143,9 @@ const levelOptions = [
 
 const channelOptions = [
   { value: 'LinkedIn', label: 'LinkedIn' },
-  { value: 'Phone', label: '电话' },
-  { value: 'Email', label: '邮件' },
-  { value: 'Meeting', label: '面谈' }
+  { value: 'Phone', label: t('student.netlog.k30') },
+  { value: 'Email', label: t('student.netlog.k31') },
+  { value: 'Meeting', label: t('student.netlog.k32') }
 ]
 
 const networkingLogs: NetworkingLog[] = [
@@ -154,8 +157,8 @@ const networkingLogs: NetworkingLog[] = [
     level: 'Associate',
     time: '12/09/2025',
     channel: 'LinkedIn',
-    notes: '通过 LinkedIn 联系到对方，进行了 30 分钟电话沟通，重点了解 IBD 部门工作内容与面试流程。',
-    summary: '1. 了解了 IBD 的日常工作节奏\n2. 获得了面试准备建议\n3. 对方愿意在后续流程中提供内推支持'
+    notes: t('student.netlog.k33'),
+    summary: t('student.netlog.k34')
   },
   {
     actionId: 'log-002',
@@ -165,8 +168,8 @@ const networkingLogs: NetworkingLog[] = [
     level: 'VP',
     time: '12/05/2025',
     channel: 'Email',
-    notes: '通过邮件跟进前次 coffee chat，确认了团队在香港办公室的招聘节奏与首轮行为面方向。',
-    summary: '1. 招聘节奏集中在 1 月\n2. 推荐提前准备 Why this desk / Why Hong Kong 相关问题'
+    notes: t('student.netlog.k35'),
+    summary: t('student.netlog.k36')
   }
 ]
 

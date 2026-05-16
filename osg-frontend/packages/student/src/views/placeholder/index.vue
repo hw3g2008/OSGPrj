@@ -8,11 +8,11 @@
           v-if="requestedPath"
           type="info"
           show-icon
-          :message="`已保留路由：${requestedPath}`"
+          :message="t('student.placeholder.k2')"
           class="placeholder-path"
         />
         <p class="placeholder-note">
-          当前页面会在后续需求中逐步开放，本次先保留导航与路由承接，避免误入未交付功能。
+          {{ t('student.placeholder.k1') }}
         </p>
       </a-card>
     </OsgPageContainer>
@@ -23,6 +23,8 @@
 import { OsgPageContainer } from '@osg/shared/components'
 import { COMING_SOON_TOAST } from '@/navigation/access'
 
+const { t } = useI18n()
+
 withDefaults(
   defineProps<{
     title?: string
@@ -31,7 +33,7 @@ withDefaults(
   }>(),
   {
     title: COMING_SOON_TOAST,
-    subtitle: '当前页面不在本次学生端交付范围内。',
+    subtitle: t('student.placeholder.k3'),
     requestedPath: ''
   }
 )

@@ -92,12 +92,32 @@ for (const filePath of walkFiles(SCAN_DIR)) {
   // NOT user-facing display text. Mark with: // i18n-skip-file: <reason>
   if (lines.slice(0, 10).some((l) => /i18n-skip-file/.test(l))) continue
 
-  // Track block-comment state for .ts files (simple, conservative)
+  // Track block-comment and HTML-comment state
   let inBlockComment = false
+  let inHtmlComment = false
 
   lines.forEach((raw, idx) => {
-    // Crude block-comment tracking
     let line = raw
+
+    // HTML comment tracking (<!-- ... -->)
+    if (inHtmlComment) {
+      const end = line.indexOf('-->')
+      if (end === -1) return
+      line = line.slice(end + 3)
+      inHtmlComment = false
+    }
+    const htmlStart = line.indexOf('<!--')
+    if (htmlStart !== -1) {
+      const htmlEnd = line.indexOf('-->', htmlStart + 4)
+      if (htmlEnd === -1) {
+        line = line.slice(0, htmlStart)
+        inHtmlComment = true
+      } else {
+        line = line.slice(0, htmlStart) + line.slice(htmlEnd + 3)
+      }
+    }
+
+    // Block-comment tracking (/* ... */)
     if (inBlockComment) {
       const end = line.indexOf('*/')
       if (end === -1) return
