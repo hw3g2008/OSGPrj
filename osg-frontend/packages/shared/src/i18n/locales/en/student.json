@@ -1,1 +1,51 @@
-{}
+{
+  "brand": {
+    "title": "OSG",
+    "tagline": "One Strategy Group Job Coaching platform — accelerating your career growth",
+    "icpPrefix": "ICP",
+    "icpNumber": "Ji ICP No. 17000879-4"
+  },
+  "login": {
+    "feature": {
+      "coaching": "Professional Job Coaching",
+      "mentor": "Senior Mentor Team",
+      "tracking": "Full Progress Tracking"
+    },
+    "header": {
+      "portal": "Student Center",
+      "welcome": "Welcome back",
+      "subtitle": "Sign in to your student account with email"
+    },
+    "field": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "Please enter your email",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Please enter your password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
+    },
+    "action": {
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "submit": "Sign In",
+      "submitting": "Signing in..."
+    }
+  },
+  "forgotPassword": {
+    "logoLabel": "Forgot Password",
+    "title": "Reset Password",
+    "action": {
+      "sending": "Sending...",
+      "verifying": "Verifying...",
+      "resetting": "Resetting..."
+    },
+    "step3": {
+      "confirmLabel": "Confirm Password"
+    },
+    "success": {
+      "title": "Password reset successfully",
+      "description": "Your password has been reset. Please sign in with the new password.",
+      "backToLogin": "Back to Sign In"
+    }
+  }
+}

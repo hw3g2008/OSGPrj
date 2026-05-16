@@ -17,6 +17,8 @@ const forgotPasswordViewSource = fs.readFileSync(
   'utf-8'
 )
 
+// P0.6 之后：shared/forgotPasswordHelpers 已 i18n 化，返回 i18n key 而非中文字面量。
+// 本期 W2-batch-1 同步把 student 端 spec 对齐到新契约（断言 key 而非 zh 文本）。
 describe('student forgot password workflow', () => {
   describe('maskForgotPasswordEmail', () => {
     it('masks the local part and keeps the full domain', () => {
@@ -29,10 +31,10 @@ describe('student forgot password workflow', () => {
   })
 
   describe('getForgotPasswordStepDescription', () => {
-    it('describes the first three steps and clears the success state copy', () => {
-      expect(getForgotPasswordStepDescription(1)).toBe('请输入您注册时使用的邮箱，我们将发送验证码')
-      expect(getForgotPasswordStepDescription(2)).toBe('请输入验证码')
-      expect(getForgotPasswordStepDescription(3)).toBe('请设置新密码')
+    it('returns i18n keys for the first three steps and clears the success state copy', () => {
+      expect(getForgotPasswordStepDescription(1)).toBe('common.shared.forgotPassword.steps.1')
+      expect(getForgotPasswordStepDescription(2)).toBe('common.shared.forgotPassword.steps.2')
+      expect(getForgotPasswordStepDescription(3)).toBe('common.shared.forgotPassword.steps.3')
       expect(getForgotPasswordStepDescription(4)).toBe('')
     })
   })
@@ -45,10 +47,10 @@ describe('student forgot password workflow', () => {
       })
     })
 
-    it('enables resend when the countdown reaches zero', () => {
+    it('enables resend with an i18n key when the countdown reaches zero', () => {
       expect(getForgotPasswordResendMeta(0)).toEqual({
         disabled: false,
-        label: '重新发送'
+        label: 'common.shared.forgotPassword.resend'
       })
     })
   })
@@ -57,35 +59,35 @@ describe('student forgot password workflow', () => {
     it('returns the neutral state for an empty password', () => {
       expect(getPasswordStrengthMeta('')).toEqual({
         className: '',
-        text: '密码强度'
+        text: 'common.shared.forgotPassword.strength.placeholder'
       })
     })
 
     it('returns a strong state for a mixed password that meets the prototype threshold', () => {
       expect(getPasswordStrengthMeta('Abcd1234')).toEqual({
         className: 'strength-strong',
-        text: '强'
+        text: 'common.shared.forgotPassword.strength.strong'
       })
     })
   })
 
   describe('validators', () => {
     it('requires a full six-digit verification code', () => {
-      expect(validateForgotPasswordCode('12345')).toBe('请输入 6 位验证码')
+      expect(validateForgotPasswordCode('12345')).toBe('common.shared.forgotPassword.errors.codeLength6')
       expect(validateForgotPasswordCode('123456')).toBe('')
     })
 
     it('rejects mismatched confirmation passwords', () => {
-      expect(validateForgotPasswordConfirmation('secret123', 'secret999')).toBe('两次输入的密码不一致')
+      expect(validateForgotPasswordConfirmation('secret123', 'secret999')).toBe('common.shared.forgotPassword.errors.confirmMismatch')
       expect(validateForgotPasswordConfirmation('secret123', 'secret123')).toBe('')
     })
 
     it('matches the shared backend password rules before submit', () => {
-      expect(validateForgotPasswordPassword('')).toBe('请输入新密码')
-      expect(validateForgotPasswordPassword('short1')).toBe('密码长度需为 8-20 字符')
-      expect(validateForgotPasswordPassword('12345678')).toBe('密码需包含字母')
-      expect(validateForgotPasswordPassword('Password')).toBe('密码需包含数字')
-      expect(validateForgotPasswordPassword('VeryLongPassword123456789')).toBe('密码长度需为 8-20 字符')
+      expect(validateForgotPasswordPassword('')).toBe('common.shared.forgotPassword.errors.newPasswordEmpty')
+      expect(validateForgotPasswordPassword('short1')).toBe('common.shared.forgotPassword.errors.passwordLength')
+      expect(validateForgotPasswordPassword('12345678')).toBe('common.shared.forgotPassword.errors.passwordNeedLetters')
+      expect(validateForgotPasswordPassword('Password')).toBe('common.shared.forgotPassword.errors.passwordNeedDigits')
+      expect(validateForgotPasswordPassword('VeryLongPassword123456789')).toBe('common.shared.forgotPassword.errors.passwordLength')
       expect(validateForgotPasswordPassword('Abcd1234')).toBe('')
     })
   })

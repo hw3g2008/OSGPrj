@@ -548,7 +548,9 @@ node osg-frontend/scripts/extract-i18n.mjs --check packages/<END>/src/views/<mod
 - [x] admin.login (2026-05-16, 3 files)
 
 **W2 student**
-- [ ] 待补
+- [x] student.login (2026-05-16, 4 files: index.vue + login-workflow.ts + login.spec.ts + zh/en student.json)
+- [x] student.forgotPassword (2026-05-16, 3 files: index.vue + forgot-password.spec.ts; 复用 common.shared.forgotPassword.*)
+- [ ] 其余 18 模块待补 (account-locked / ai-interview / ai-resume / applications / career / communication / complaint / courses / dashboard / faq / feedback / files / interview-bank / mock-practice / netlog / notice / online-test-bank / placeholder / positions / profile / questions / report / resources / restricted / resume / schedule)
 
 **W3 mentor**
 - [ ] 待补

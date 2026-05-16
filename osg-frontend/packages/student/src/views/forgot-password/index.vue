@@ -1,25 +1,25 @@
 <template>
   <div class="forgot-page login-page">
     <div class="login-left">
-      <h1>OSG</h1>
-      <p>One Strategy Group 求职辅导平台，助力您的职业发展</p>
+      <h1>{{ t('student.brand.title') }}</h1>
+      <p>{{ t('student.brand.tagline') }}</p>
     </div>
 
     <div class="login-right">
       <div class="login-box">
         <router-link to="/login" class="back-link">
           <i class="mdi mdi-arrow-left" aria-hidden="true"></i>
-          返回登录
+          {{ t('common.shared.forgotPassword.step4.backToLogin') }}
         </router-link>
 
         <div class="login-logo">
           <div class="login-logo-icon">
             <i class="mdi mdi-key" aria-hidden="true"></i>
           </div>
-          <span>找回密码</span>
+          <span>{{ t('student.forgotPassword.logoLabel') }}</span>
         </div>
 
-        <h2 class="login-title">重置密码</h2>
+        <h2 class="login-title">{{ t('student.forgotPassword.title') }}</h2>
         <p class="login-subtitle">{{ stepDescription }}</p>
 
         <div class="steps">
@@ -40,32 +40,32 @@
         <div id="step-1" class="step-content" :class="{ active: currentStep === 1 }">
           <a-form @finish="handleSendCode">
             <div class="form-group">
-              <label class="form-label" for="forgot-email">邮箱地址</label>
+              <label class="form-label" for="forgot-email">{{ t('common.shared.forgotPassword.step1.emailLabel') }}</label>
               <a-input
                 v-model:value="step1Form.email"
-                placeholder="请输入注册邮箱"
+                :placeholder="t('common.shared.forgotPassword.step1.emailPlaceholder')"
                 autocomplete="email"
               ></a-input>
               <p class="field-error" :class="{ show: Boolean(emailError) }">{{ emailError }}</p>
             </div>
             <a-button id="send-btn" type="primary" class="login-btn" :loading="sendingCode" html-type="submit">
-              {{ sendingCode ? '发送中...' : '发送验证码' }}
+              {{ sendingCode ? t('student.forgotPassword.action.sending') : t('common.shared.forgotPassword.step1.sendCode') }}
             </a-button>
           </a-form>
         </div>
 
         <div id="step-2" class="step-content" :class="{ active: currentStep === 2 }">
           <p class="masked-email">
-            验证码已发送至 <strong>{{ maskedEmail }}</strong>
+            {{ t('common.shared.forgotPassword.step2.sentTo') }} <strong>{{ maskedEmail }}</strong>
           </p>
           <a-form @finish="handleVerifyCode">
             <div class="form-group">
-              <label class="form-label" for="fp-code">验证码</label>
+              <label class="form-label" for="fp-code">{{ t('common.shared.forgotPassword.step2.codeLabel') }}</label>
               <div class="input-row">
                 <a-input
                   v-model:value="step2Form.code"
                   :maxlength="6"
-                  placeholder="请输入6位验证码"
+                  :placeholder="t('common.shared.forgotPassword.step2.codePlaceholder')"
                 ></a-input>
                 <a-button
                   id="fp-resend-btn"
@@ -80,7 +80,7 @@
               <p class="field-error" :class="{ show: Boolean(codeError) }">{{ codeError }}</p>
             </div>
             <a-button id="verify-btn" type="primary" class="login-btn" :loading="verifying" html-type="submit">
-              {{ verifying ? '验证中...' : '验证' }}
+              {{ verifying ? t('student.forgotPassword.action.verifying') : t('common.shared.forgotPassword.step2.verify') }}
             </a-button>
             <p class="countdown-text">{{ countdownText }}</p>
           </a-form>
@@ -89,10 +89,10 @@
         <div id="step-3" class="step-content" :class="{ active: currentStep === 3 }">
           <a-form @finish="handleResetPassword">
             <div class="form-group">
-              <label class="form-label" for="new-password">新密码</label>
+              <label class="form-label" for="new-password">{{ t('common.shared.forgotPassword.step3.newPasswordLabel') }}</label>
               <a-input-password
                   v-model:value="step3Form.newPassword"
-                  placeholder="请输入新密码"
+                  :placeholder="t('common.shared.forgotPassword.step3.newPasswordPlaceholder')"
                   autocomplete="new-password"
                 ></a-input-password>
               <div class="password-strength">
@@ -104,18 +104,18 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="confirm-password">确认密码</label>
+              <label class="form-label" for="confirm-password">{{ t('student.forgotPassword.step3.confirmLabel') }}</label>
               <a-input-password
                   v-model:value="step3Form.confirmPassword"
                   :class="{ error: Boolean(confirmError) }"
-                  placeholder="请再次输入新密码"
+                  :placeholder="t('common.shared.forgotPassword.step3.confirmPlaceholder')"
                   autocomplete="new-password"
                 ></a-input-password>
               <p class="field-error" :class="{ show: Boolean(confirmError) }">{{ confirmError }}</p>
             </div>
 
             <a-button id="reset-btn" type="primary" class="login-btn" :loading="resetting" html-type="submit">
-              {{ resetting ? '重置中...' : '重置密码' }}
+              {{ resetting ? t('student.forgotPassword.action.resetting') : t('common.shared.forgotPassword.step3.resetButton') }}
             </a-button>
           </a-form>
         </div>
@@ -124,13 +124,13 @@
           <div class="success-icon">
             <i class="mdi mdi-check" aria-hidden="true"></i>
           </div>
-          <h3 class="success-title">密码重置成功</h3>
-          <p class="success-desc">您的密码已成功重置，请使用新密码登录</p>
-          <router-link to="/login" class="login-link">返回登录</router-link>
+          <h3 class="success-title">{{ t('student.forgotPassword.success.title') }}</h3>
+          <p class="success-desc">{{ t('student.forgotPassword.success.description') }}</p>
+          <router-link to="/login" class="login-link">{{ t('student.forgotPassword.success.backToLogin') }}</router-link>
         </div>
 
         <div class="copyright">
-          备案号 <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">冀ICP备17000879号-4</a>
+          {{ t('student.brand.icpPrefix') }} <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">{{ t('student.brand.icpNumber') }}</a>
         </div>
       </div>
     </div>
@@ -138,8 +138,11 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { resetPassword, sendResetCode, verifyResetCode } from '@osg/shared/api'
 import { useForgotPasswordFlow } from '@osg/shared/composables'
+
+const { t } = useI18n()
 
 // M6: 业务逻辑由 shared composable 接管（5 端共用）。
 // student 端仅注入端特定 API endpoints + 本地视觉骨架。

@@ -176,7 +176,10 @@ describe('student login workflow', () => {
     })
 
     it('keeps the loading label and forgot-password entry', () => {
-      expect(loginViewSource).toContain("loading ? '登录中...' : '登 录'")
+      // i18n 化后：登录按钮文案改为 t() 调用，loading 三元路径仍保留
+      expect(loginViewSource).toContain(
+        "loading ? t('student.login.action.submitting') : t('student.login.action.submit')",
+      )
       expect(loginViewSource).toContain('to="/forgot-password"')
     })
 

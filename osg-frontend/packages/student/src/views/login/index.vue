@@ -1,20 +1,20 @@
 <template>
   <div class="login-page">
     <div class="login-left">
-      <h1>OSG</h1>
-      <p>One Strategy Group 求职辅导平台，助力您的职业发展</p>
+      <h1>{{ t('student.brand.title') }}</h1>
+      <p>{{ t('student.brand.tagline') }}</p>
       <div class="login-features">
         <div class="login-feature">
           <i class="mdi mdi-briefcase-check" aria-hidden="true"></i>
-          <span>专业求职辅导</span>
+          <span>{{ t('student.login.feature.coaching') }}</span>
         </div>
         <div class="login-feature">
           <i class="mdi mdi-account-group" aria-hidden="true"></i>
-          <span>资深导师团队</span>
+          <span>{{ t('student.login.feature.mentor') }}</span>
         </div>
         <div class="login-feature">
           <i class="mdi mdi-chart-line" aria-hidden="true"></i>
-          <span>全程进度跟踪</span>
+          <span>{{ t('student.login.feature.tracking') }}</span>
         </div>
       </div>
     </div>
@@ -25,10 +25,10 @@
           <div class="login-logo-icon">
             <i class="mdi mdi-school" aria-hidden="true"></i>
           </div>
-          <span>学员中心</span>
+          <span>{{ t('student.login.header.portal') }}</span>
         </div>
-        <h2 class="login-title">欢迎回来</h2>
-        <p class="login-subtitle">使用邮箱登录学员账号</p>
+        <h2 class="login-title">{{ t('student.login.header.welcome') }}</h2>
+        <p class="login-subtitle">{{ t('student.login.header.subtitle') }}</p>
 
         <div
           v-if="loginError"
@@ -42,7 +42,7 @@
 
         <form class="login-form" novalidate @submit.prevent="handleLogin">
           <div class="form-group" :class="{ 'has-error': !!fieldErrors.username }">
-            <label class="form-label" for="login-username">邮箱</label>
+            <label class="form-label" for="login-username">{{ t('student.login.field.emailLabel') }}</label>
             <div class="input-wrapper">
               <i class="mdi mdi-email-outline input-icon" aria-hidden="true"></i>
               <input
@@ -50,7 +50,7 @@
                 v-model="formState.username"
                 type="email"
                 class="form-input form-input--with-icon"
-                placeholder="请输入邮箱"
+                :placeholder="t('student.login.field.emailPlaceholder')"
                 autocomplete="email"
                 spellcheck="false"
                 @input="clearFieldError('username')"
@@ -60,7 +60,7 @@
           </div>
 
           <div class="form-group" :class="{ 'has-error': !!fieldErrors.password }">
-            <label class="form-label" for="login-password">密码</label>
+            <label class="form-label" for="login-password">{{ t('student.login.field.passwordLabel') }}</label>
             <div class="pwd-wrapper">
               <i class="mdi mdi-lock-outline input-icon" aria-hidden="true"></i>
               <input
@@ -68,7 +68,7 @@
                 v-model="formState.password"
                 :type="showPassword ? 'text' : 'password'"
                 class="form-input form-input--with-icon form-input--with-toggle"
-                placeholder="请输入密码"
+                :placeholder="t('student.login.field.passwordPlaceholder')"
                 autocomplete="current-password"
                 spellcheck="false"
                 @input="clearFieldError('password')"
@@ -77,7 +77,7 @@
                 type="button"
                 class="pwd-toggle"
                 tabindex="-1"
-                :aria-label="showPassword ? '隐藏密码' : '显示密码'"
+                :aria-label="showPassword ? t('student.login.field.hidePassword') : t('student.login.field.showPassword')"
                 :aria-pressed="showPassword"
                 @click="showPassword = !showPassword"
               >
@@ -94,9 +94,9 @@
           <div class="login-links">
             <label class="remember-me">
               <input v-model="formState.remember" type="checkbox" />
-              <span>记住我</span>
+              <span>{{ t('student.login.action.rememberMe') }}</span>
             </label>
-            <router-link to="/forgot-password">忘记密码？</router-link>
+            <router-link to="/forgot-password">{{ t('student.login.action.forgotPassword') }}</router-link>
           </div>
 
           <button
@@ -105,12 +105,12 @@
             class="login-btn"
             :disabled="loading"
           >
-            <span>{{ loading ? '登录中...' : '登 录' }}</span>
+            <span>{{ loading ? t('student.login.action.submitting') : t('student.login.action.submit') }}</span>
           </button>
         </form>
 
         <div class="copyright">
-          备案号 <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">冀ICP备17000879号-4</a>
+          {{ t('student.brand.icpPrefix') }} <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">{{ t('student.brand.icpNumber') }}</a>
         </div>
       </div>
     </div>
@@ -121,6 +121,7 @@
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import { studentLogin, getStudentInfo as getInfo } from '@osg/shared/api'
 import { setToken, setUser } from '@osg/shared/utils'
 import { useMustChangePassword } from '@osg/shared/composables'
@@ -130,6 +131,7 @@ import {
   validateLoginForm
 } from './login-workflow'
 
+const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 

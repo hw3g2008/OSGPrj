@@ -1,1 +1,51 @@
-{}
+{
+  "brand": {
+    "title": "OSG",
+    "tagline": "One Strategy Group 求职辅导平台，助力您的职业发展",
+    "icpPrefix": "备案号",
+    "icpNumber": "冀ICP备17000879号-4"
+  },
+  "login": {
+    "feature": {
+      "coaching": "专业求职辅导",
+      "mentor": "资深导师团队",
+      "tracking": "全程进度跟踪"
+    },
+    "header": {
+      "portal": "学员中心",
+      "welcome": "欢迎回来",
+      "subtitle": "使用邮箱登录学员账号"
+    },
+    "field": {
+      "emailLabel": "邮箱",
+      "emailPlaceholder": "请输入邮箱",
+      "passwordLabel": "密码",
+      "passwordPlaceholder": "请输入密码",
+      "showPassword": "显示密码",
+      "hidePassword": "隐藏密码"
+    },
+    "action": {
+      "rememberMe": "记住我",
+      "forgotPassword": "忘记密码？",
+      "submit": "登 录",
+      "submitting": "登录中..."
+    }
+  },
+  "forgotPassword": {
+    "logoLabel": "找回密码",
+    "title": "重置密码",
+    "action": {
+      "sending": "发送中...",
+      "verifying": "验证中...",
+      "resetting": "重置中..."
+    },
+    "step3": {
+      "confirmLabel": "确认密码"
+    },
+    "success": {
+      "title": "密码重置成功",
+      "description": "您的密码已成功重置，请使用新密码登录",
+      "backToLogin": "返回登录"
+    }
+  }
+}
