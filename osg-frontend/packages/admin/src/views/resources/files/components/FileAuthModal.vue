@@ -8,30 +8,30 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-shield-key-outline" aria-hidden="true" />
-        <span>文件授权</span>
+        <span>{{ t('admin.resources.files.authModal.title') }}</span>
       </span>
     </template>
 
-    <p style="margin:0 0 16px;color:#64748b">{{ row?.fileName || '当前文件' }} 的可访问范围设置。</p>
+    <p style="margin:0 0 16px;color:#64748b">{{ t('admin.resources.files.authModal.desc', { name: row?.fileName || t('admin.resources.files.authModal.descCurrentFile') }) }}</p>
 
     <a-form layout="vertical">
-      <a-form-item label="授权类型">
+      <a-form-item :label="t('admin.resources.files.authModal.authType')">
         <a-radio-group v-model:value="authType">
-          <a-radio value="all">全部用户</a-radio>
-          <a-radio value="class">指定班级</a-radio>
-          <a-radio value="user">指定用户</a-radio>
+          <a-radio value="all">{{ t('admin.resources.files.authModal.authTypeAll') }}</a-radio>
+          <a-radio value="class">{{ t('admin.resources.files.authModal.authTypeClass') }}</a-radio>
+          <a-radio value="user">{{ t('admin.resources.files.authModal.authTypeUser') }}</a-radio>
         </a-radio-group>
       </a-form-item>
 
-      <a-form-item v-if="authType === 'class'" label="班级范围">
+      <a-form-item v-if="authType === 'class'" :label="t('admin.resources.files.authModal.classRange')">
         <a-checkbox-group v-model:value="authorizedClasses" :options="classOptions" />
       </a-form-item>
 
       <template v-if="authType === 'user'">
-        <a-form-item label="添加用户">
+        <a-form-item :label="t('admin.resources.files.authModal.addUser')">
           <div style="display:flex;gap:8px">
-            <a-input v-model:value="draftUser" placeholder="添加用户" style="flex:1" @press-enter="addUser" />
-            <a-button @click="addUser">添加</a-button>
+            <a-input v-model:value="draftUser" :placeholder="t('admin.resources.files.authModal.addUserPlaceholder')" style="flex:1" @press-enter="addUser" />
+            <a-button @click="addUser">{{ t('admin.resources.files.authModal.add') }}</a-button>
           </div>
         </a-form-item>
         <div v-if="authorizedUsers.length" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
@@ -41,16 +41,19 @@
     </a-form>
 
     <template #footer>
-      <a-button @click="close">取消</a-button>
-      <a-button type="primary" :loading="submitting" @click="submit">保存授权</a-button>
+      <a-button @click="close">{{ t('admin.resources.files.authModal.cancel') }}</a-button>
+      <a-button type="primary" :loading="submitting" @click="submit">{{ t('admin.resources.files.authModal.save') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { FileAuthType, FileRow, UpdateFileAuthPayload } from '@osg/shared/api/admin/file'
 import { OverlaySurfaceModal } from '@osg/shared/components'
+
+const { t } = useI18n()
 
 const classOptions = ['2024Fall', '2025Spring']
 

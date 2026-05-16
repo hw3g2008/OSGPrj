@@ -1,10 +1,10 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="文件管理" title-en="File Management">
+    <PageHeader :title-zh="t('admin.resources.files.pageTitle')" title-en="File Management">
       <template #actions>
         <a-button type="primary" @click="showNewFolderModal = true">
           <template #icon><FolderAddOutlined /></template>
-          新建文件夹
+          {{ t('admin.resources.files.createFolder') }}
         </a-button>
       </template>
     </PageHeader>
@@ -12,17 +12,17 @@
     <a-card :bordered="false">
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
-          <a-input v-model:value="keyword" placeholder="搜索文件名" allow-clear style="width: 200px" @press-enter="loadFiles" />
+          <a-input v-model:value="keyword" :placeholder="t('admin.resources.files.searchPlaceholder')" allow-clear style="width: 200px" @press-enter="loadFiles" />
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="loadFiles">
             <template #icon><SearchOutlined /></template>
-            搜索
+            {{ t('admin.resources.files.search') }}
           </a-button>
         </a-form-item>
       </a-form>
 
-      <a-table :columns="fileColumns" :data-source="rows" :row-key="(r: FileRow) => r.fileId" :pagination="false" :locale="{ emptyText: '暂无文件记录' }" :scroll="{ x: 800 }">
+      <a-table :columns="fileColumns" :data-source="rows" :row-key="(r: FileRow) => r.fileId" :pagination="false" :locale="{ emptyText: t('admin.resources.files.empty') }" :scroll="{ x: 800 }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'fileName'">
             <div style="display: flex; align-items: center; gap: 10px">
@@ -40,7 +40,7 @@
             {{ formatTime(record.createTime) }}
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button type="link" size="small" @click="openAuthModal(record)">授权</a-button>
+            <a-button type="link" size="small" @click="openAuthModal(record)">{{ t('admin.resources.files.action.authorize') }}</a-button>
           </template>
         </template>
       </a-table>
@@ -62,7 +62,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { FolderAddOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
@@ -77,6 +78,8 @@ import {
   type UpdateFileAuthPayload
 } from '@osg/shared/api/admin/file'
 
+const { t } = useI18n()
+
 const fileTypeIconMap: Record<FileRow['fileType'], string> = {
   folder: 'mdi-folder',
   pdf: 'mdi-file-pdf-box',
@@ -89,15 +92,15 @@ const fileTypeColorMap: Record<FileRow['fileType'], string> = {
   word: '#2563eb'
 }
 
-const fileColumns = [
+const fileColumns = computed(() => [
   { title: 'ID', dataIndex: 'fileId', key: 'fileId', width: 80, customRender: ({ text }: { text: number }) => `#${text}`, fixed: 'left' as const },
-  { title: '文件名', dataIndex: 'fileName', key: 'fileName', width: 200 },
-  { title: '分类', dataIndex: 'className', key: 'className', width: 100 },
-  { title: '大小', dataIndex: 'fileSize', key: 'fileSize', width: 100 },
-  { title: '授权对象', dataIndex: 'authorizedTo', key: 'authorizedTo', width: 120 },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 140 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
-]
+  { title: t('admin.resources.files.columns.fileName'), dataIndex: 'fileName', key: 'fileName', width: 200 },
+  { title: t('admin.resources.files.columns.className'), dataIndex: 'className', key: 'className', width: 100 },
+  { title: t('admin.resources.files.columns.fileSize'), dataIndex: 'fileSize', key: 'fileSize', width: 100 },
+  { title: t('admin.resources.files.columns.authorizedTo'), dataIndex: 'authorizedTo', key: 'authorizedTo', width: 120 },
+  { title: t('admin.resources.files.columns.createTime'), dataIndex: 'createTime', key: 'createTime', width: 140 },
+  { title: t('admin.resources.files.columns.action'), dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
+])
 
 const rows = ref<FileRow[]>([])
 const keyword = ref('')
@@ -111,7 +114,7 @@ const loadFiles = async () => {
     const response = await getFileList({ keyword: keyword.value || undefined })
     rows.value = response.rows ?? []
   } catch (_error) {
-    message.error('文件列表加载失败')
+    message.error(t('admin.resources.files.messages.loadError'))
   }
 }
 
@@ -120,7 +123,7 @@ const handleCreateFolder = async (payload: CreateFileFolderPayload) => {
   try {
     await createFileFolder(payload)
     showNewFolderModal.value = false
-    message.success('文件夹创建成功')
+    message.success(t('admin.resources.files.messages.folderCreated'))
     await loadFiles()
   } catch (_error) {
     // request helper handles messages
@@ -139,7 +142,7 @@ const handleUpdateAuth = async (payload: UpdateFileAuthPayload) => {
   try {
     await updateFileAuth(payload)
     showAuthModal.value = false
-    message.success('文件授权已更新')
+    message.success(t('admin.resources.files.messages.authUpdated'))
     await loadFiles()
   } catch (_error) {
     // request helper handles messages

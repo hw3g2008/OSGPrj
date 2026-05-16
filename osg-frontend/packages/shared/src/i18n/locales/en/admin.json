@@ -547,6 +547,49 @@
         "cancel": "Cancel",
         "save": "Save"
       }
+    },
+    "files": {
+      "pageTitle": "File Management",
+      "createFolder": "New Folder",
+      "searchPlaceholder": "Search file name",
+      "search": "Search",
+      "empty": "No files found",
+      "action": {
+        "authorize": "Authorize"
+      },
+      "columns": {
+        "fileName": "File Name",
+        "className": "Category",
+        "fileSize": "Size",
+        "authorizedTo": "Authorized To",
+        "createTime": "Created At",
+        "action": "Action"
+      },
+      "messages": {
+        "loadError": "Failed to load file list",
+        "folderCreated": "Folder created successfully",
+        "authUpdated": "File authorization updated"
+      },
+      "authModal": {
+        "title": "File Authorization",
+        "desc": "Access scope settings for {name}.",
+        "descCurrentFile": "current file",
+        "authType": "Authorization Type",
+        "authTypeAll": "All Users",
+        "authTypeClass": "Specific Classes",
+        "authTypeUser": "Specific Users",
+        "classRange": "Classes",
+        "addUser": "Add User",
+        "addUserPlaceholder": "Add user",
+        "add": "Add",
+        "cancel": "Cancel",
+        "save": "Save Authorization"
+      },
+      "newFolderModal": {
+        "title": "New Folder",
+        "cancel": "Cancel",
+        "create": "Create Folder"
+      }
     }
   },
   "students": {

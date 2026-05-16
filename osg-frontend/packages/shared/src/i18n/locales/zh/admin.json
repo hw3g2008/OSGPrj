@@ -547,6 +547,49 @@
         "cancel": "取消",
         "save": "保存"
       }
+    },
+    "files": {
+      "pageTitle": "文件管理",
+      "createFolder": "新建文件夹",
+      "searchPlaceholder": "搜索文件名",
+      "search": "搜索",
+      "empty": "暂无文件记录",
+      "action": {
+        "authorize": "授权"
+      },
+      "columns": {
+        "fileName": "文件名",
+        "className": "分类",
+        "fileSize": "大小",
+        "authorizedTo": "授权对象",
+        "createTime": "创建时间",
+        "action": "操作"
+      },
+      "messages": {
+        "loadError": "文件列表加载失败",
+        "folderCreated": "文件夹创建成功",
+        "authUpdated": "文件授权已更新"
+      },
+      "authModal": {
+        "title": "文件授权",
+        "desc": "{name} 的可访问范围设置。",
+        "descCurrentFile": "当前文件",
+        "authType": "授权类型",
+        "authTypeAll": "全部用户",
+        "authTypeClass": "指定班级",
+        "authTypeUser": "指定用户",
+        "classRange": "班级范围",
+        "addUser": "添加用户",
+        "addUserPlaceholder": "添加用户",
+        "add": "添加",
+        "cancel": "取消",
+        "save": "保存授权"
+      },
+      "newFolderModal": {
+        "title": "新建文件夹",
+        "cancel": "取消",
+        "create": "创建文件夹"
+      }
     }
   },
   "students": {
