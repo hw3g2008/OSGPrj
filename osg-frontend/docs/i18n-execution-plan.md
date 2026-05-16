@@ -545,7 +545,7 @@ node osg-frontend/scripts/extract-i18n.mjs --check packages/<END>/src/views/<mod
 ### Phase 1（5 worker 并行）
 
 **W1 admin**
-- [ ] 待补
+- [x] admin.login (2026-05-16, 3 files)
 
 **W2 student**
 - [ ] 待补
