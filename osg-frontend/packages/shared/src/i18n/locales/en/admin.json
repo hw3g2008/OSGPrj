@@ -1218,6 +1218,126 @@
         "noteLabel": "Notes",
         "close": "Close"
       }
+    },
+    "studentPositions": {
+      "pageTitle": "Student Added Positions",
+      "pendingCount": "{count} pending review",
+      "coachingCount": "{count} with coaching request",
+      "hasCoaching": "Coaching Requested",
+      "unnamedStudent": "Unnamed Student",
+      "studentFallback": "Student",
+      "empty": "No student-added positions match the current filters",
+      "filter": {
+        "statusAll": "All Status",
+        "categoryPlaceholder": "All Categories",
+        "coachingPlaceholder": "Coaching Request",
+        "hasCoaching": "Has Coaching Request",
+        "noCoaching": "No Coaching Request",
+        "searchPlaceholder": "Search company or position name",
+        "search": "Search",
+        "reset": "Reset"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "category": {
+        "summer": "Summer Internship",
+        "fulltime": "Full-time",
+        "offcycle": "Off-cycle",
+        "spring": "Spring Internship",
+        "events": "Recruitment Event"
+      },
+      "columns": {
+        "companyPosition": "Company / Position",
+        "category": "Category",
+        "student": "Submitted By",
+        "submittedAt": "Submitted At",
+        "status": "Status",
+        "action": "Action"
+      },
+      "action": {
+        "edit": "Edit",
+        "reject": "Reject",
+        "viewResult": "View Result"
+      },
+      "reviewInfo": {
+        "title": "Review Notes",
+        "description": "Approved positions will be added to the public position library and visible to other students. Positions with coaching requests will automatically be forwarded to the lead mentor for mentor assignment."
+      },
+      "relativeTime": {
+        "justNow": "Just submitted",
+        "withinHour": "Within 1 hour",
+        "hoursAgo": "{hours} hrs ago",
+        "daysAgo": "{days} days ago"
+      },
+      "messages": {
+        "approveSuccess": "Student-added position approved",
+        "rejectSuccess": "Student-added position rejected"
+      },
+      "rejectModal": {
+        "title": "Reject Position",
+        "student": "Current Student",
+        "description": "Once rejected, this position will not be added to the public library and the student will be notified.",
+        "reasonLabel": "Rejection Reason",
+        "reasons": {
+          "inaccessible": "Position link inaccessible",
+          "notOnSite": "Not found on company website",
+          "mismatch": "Information differs from official source",
+          "duplicate": "Duplicate of existing position",
+          "other": "Other"
+        },
+        "noteLabel": "Additional Notes",
+        "notePlaceholder": "Optional: add notes for this rejection",
+        "cancel": "Cancel",
+        "confirm": "Confirm Rejection",
+        "warnReason": "Please select a rejection reason"
+      },
+      "reviewModal": {
+        "titleEdit": "Edit Student-Added Position",
+        "titleResult": "Student-Added Position Result",
+        "submittedPending": "Submitted time pending",
+        "submittedAt": "Submitted at {time}",
+        "mode": {
+          "create": "Create New Public Position",
+          "merge": "Merge to Existing Position"
+        },
+        "dupHintTitle": "Duplicate position detected",
+        "dupHintDesc": "Existing position ID #{id}. Recommended:",
+        "dupHintSwitch": "Switch to Merge",
+        "mergeToLabel": "Merge to existing position",
+        "mergeSearchPlaceholder": "Search by company or position name",
+        "sections": {
+          "basicInfo": "Basic Info",
+          "companyInfo": "Company Info"
+        },
+        "fields": {
+          "category": "Category",
+          "positionName": "Position Name",
+          "positionNamePlaceholder": "e.g. Summer Analyst",
+          "department": "Department",
+          "projectYear": "Project Year",
+          "industry": "Industry",
+          "industryPlaceholder": "e.g. Bulge Bracket / Buyside / Consulting",
+          "deadline": "Deadline",
+          "deadlinePlaceholder": "Select deadline",
+          "recruitmentCycle": "Recruitment Cycle",
+          "companyName": "Company Name",
+          "companyType": "Company Type",
+          "region": "Region",
+          "city": "City",
+          "companyWebsite": "Company Website",
+          "positionUrl": "Position URL *"
+        },
+        "selectPlaceholder": "Please select",
+        "cityNoRegion": "Please select a region first",
+        "cancel": "Cancel",
+        "reject": "Reject Position",
+        "save": "Save & Approve",
+        "warnMerge": "Please select a target position to merge",
+        "warnUrl": "Please enter the position URL"
+      }
     }
   },
   "profile": {

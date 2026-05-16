@@ -9,20 +9,20 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-close-octagon-outline" aria-hidden="true"></span>
-        <span>拒绝岗位</span>
+        <span>{{ t('admin.career.studentPositions.rejectModal.title') }}</span>
       </span>
     </template>
 
     <section class="student-reject-modal__hero">
-      <strong>{{ position?.studentName || '当前学生' }}</strong>
-      <span>拒绝后，该岗位不会加入公共岗位库，学生将收到审核结果通知。</span>
+      <strong>{{ position?.studentName || t('admin.career.studentPositions.rejectModal.student') }}</strong>
+      <span>{{ t('admin.career.studentPositions.rejectModal.description') }}</span>
     </section>
 
-    <section class="student-reject-modal__section" data-field-name="拒绝原因">
+    <section class="student-reject-modal__section">
       <label class="student-reject-modal__label">
-        <span>拒绝原因 *</span>
+        <span>{{ t('admin.career.studentPositions.rejectModal.reasonLabel') }}</span>
       </label>
-      <div class="student-reject-modal__reason-grid" data-field-name="拒绝原因">
+      <div class="student-reject-modal__reason-grid">
         <button
           v-for="option in reasonOptions"
           :key="option.value"
@@ -38,32 +38,34 @@
       </div>
     </section>
 
-    <section class="student-reject-modal__section" data-field-name="补充说明">
+    <section class="student-reject-modal__section">
       <label class="student-reject-modal__label">
-        <span>补充说明</span>
+        <span>{{ t('admin.career.studentPositions.rejectModal.noteLabel') }}</span>
       </label>
       <a-textarea
         v-model:value="formState.note"
-        data-field-name="补充说明"
         :rows="4"
         :maxlength="120"
-        placeholder="可选，补充本次拒绝说明"
+        :placeholder="t('admin.career.studentPositions.rejectModal.notePlaceholder')"
       />
       <div class="student-reject-modal__meta">{{ formState.note.length }}/120</div>
     </section>
 
     <template #footer>
-      <a-button data-surface-part="cancel-control" @click="handleClose">取消</a-button>
-      <a-button danger data-surface-part="confirm-control" @click="handleSubmit">确认拒绝</a-button>
+      <a-button data-surface-part="cancel-control" @click="handleClose">{{ t('admin.career.studentPositions.rejectModal.cancel') }}</a-button>
+      <a-button danger data-surface-part="confirm-control" @click="handleSubmit">{{ t('admin.career.studentPositions.rejectModal.confirm') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { RejectStudentPositionPayload, StudentPositionListItem } from '@osg/shared/api/admin/studentPosition'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   visible: boolean
@@ -80,13 +82,13 @@ const formState = reactive({
   note: ''
 })
 
-const reasonOptions = [
-  { label: '岗位链接无法访问', value: '岗位链接无法访问' },
-  { label: '公司官网无此岗位', value: '公司官网无此岗位' },
-  { label: '信息与官方不符', value: '信息与官方不符' },
-  { label: '与现有岗位重复', value: '与现有岗位重复' },
-  { label: '其他', value: '其他' }
-]
+const reasonOptions = computed(() => [
+  { label: t('admin.career.studentPositions.rejectModal.reasons.inaccessible'), value: '岗位链接无法访问' }, // i18n-skip-line: backend contract value
+  { label: t('admin.career.studentPositions.rejectModal.reasons.notOnSite'), value: '公司官网无此岗位' }, // i18n-skip-line: backend contract value
+  { label: t('admin.career.studentPositions.rejectModal.reasons.mismatch'), value: '信息与官方不符' }, // i18n-skip-line: backend contract value
+  { label: t('admin.career.studentPositions.rejectModal.reasons.duplicate'), value: '与现有岗位重复' }, // i18n-skip-line: backend contract value
+  { label: t('admin.career.studentPositions.rejectModal.reasons.other'), value: '其他' }, // i18n-skip-line: backend contract value
+])
 
 watch(
   () => props.visible,
@@ -105,7 +107,7 @@ const handleClose = () => {
 
 const handleSubmit = () => {
   if (!formState.reason) {
-    message.warning('请选择拒绝原因')
+    message.warning(t('admin.career.studentPositions.rejectModal.warnReason'))
     return
   }
 

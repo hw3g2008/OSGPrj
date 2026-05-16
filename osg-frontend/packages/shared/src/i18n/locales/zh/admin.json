@@ -1219,6 +1219,126 @@
         "noteLabel": "备注",
         "close": "关闭"
       }
+    },
+    "studentPositions": {
+      "pageTitle": "学生自添岗位",
+      "pendingCount": "{count} 条待审核",
+      "coachingCount": "{count} 条有辅导申请",
+      "hasCoaching": "有辅导申请",
+      "unnamedStudent": "未命名学生",
+      "studentFallback": "学员",
+      "empty": "当前筛选条件下暂无学生自添岗位",
+      "filter": {
+        "statusAll": "全部状态",
+        "categoryPlaceholder": "全部类别",
+        "coachingPlaceholder": "有无辅导申请",
+        "hasCoaching": "有辅导申请",
+        "noCoaching": "无辅导申请",
+        "searchPlaceholder": "搜索公司或岗位名称",
+        "search": "搜索",
+        "reset": "重置"
+      },
+      "status": {
+        "pending": "待审核",
+        "approved": "已通过",
+        "rejected": "已拒绝"
+      },
+      "category": {
+        "summer": "暑期实习",
+        "fulltime": "全职招聘",
+        "offcycle": "非常规周期",
+        "spring": "春季实习",
+        "events": "招聘活动"
+      },
+      "columns": {
+        "companyPosition": "公司/岗位",
+        "category": "岗位分类",
+        "student": "提交学生",
+        "submittedAt": "提交时间",
+        "status": "状态",
+        "action": "操作"
+      },
+      "action": {
+        "edit": "编辑",
+        "reject": "拒绝",
+        "viewResult": "查看结果"
+      },
+      "reviewInfo": {
+        "title": "审核说明",
+        "description": "岗位通过后将加入公共岗位库，其他学生可见。有辅导申请的岗位通过后，辅导申请将自动流转到班主任端进行导师分配。"
+      },
+      "relativeTime": {
+        "justNow": "刚刚提交",
+        "withinHour": "1 小时内",
+        "hoursAgo": "{hours} 小时前",
+        "daysAgo": "{days} 天前"
+      },
+      "messages": {
+        "approveSuccess": "学生自添岗位已通过审核",
+        "rejectSuccess": "学生自添岗位已拒绝"
+      },
+      "rejectModal": {
+        "title": "拒绝岗位",
+        "student": "当前学生",
+        "description": "拒绝后，该岗位不会加入公共岗位库，学生将收到审核结果通知。",
+        "reasonLabel": "拒绝原因",
+        "reasons": {
+          "inaccessible": "岗位链接无法访问",
+          "notOnSite": "公司官网无此岗位",
+          "mismatch": "信息与官方不符",
+          "duplicate": "与现有岗位重复",
+          "other": "其他"
+        },
+        "noteLabel": "补充说明",
+        "notePlaceholder": "可选，补充本次拒绝说明",
+        "cancel": "取消",
+        "confirm": "确认拒绝",
+        "warnReason": "请选择拒绝原因"
+      },
+      "reviewModal": {
+        "titleEdit": "学生自添岗位编辑",
+        "titleResult": "学生自添岗位结果",
+        "submittedPending": "提交时间待补充",
+        "submittedAt": "提交于 {time}",
+        "mode": {
+          "create": "新增公共岗位",
+          "merge": "合并到已有岗位"
+        },
+        "dupHintTitle": "检测到已有相同公司+岗位记录",
+        "dupHintDesc": "已有岗位 ID #{id}。建议",
+        "dupHintSwitch": "切换到「合并到已有岗位」",
+        "mergeToLabel": "合并到已有岗位",
+        "mergeSearchPlaceholder": "按公司或岗位名搜索",
+        "sections": {
+          "basicInfo": "基本信息",
+          "companyInfo": "公司信息"
+        },
+        "fields": {
+          "category": "岗位分类",
+          "positionName": "岗位名称",
+          "positionNamePlaceholder": "如 Summer Analyst",
+          "department": "部门",
+          "projectYear": "项目时间",
+          "industry": "行业",
+          "industryPlaceholder": "如 Bulge Bracket / Buyside / Consulting",
+          "deadline": "截止日期",
+          "deadlinePlaceholder": "选择截止时间",
+          "recruitmentCycle": "招聘周期",
+          "companyName": "公司名称",
+          "companyType": "公司类别",
+          "region": "岗位地区",
+          "city": "城市",
+          "companyWebsite": "公司官网",
+          "positionUrl": "岗位链接 *"
+        },
+        "selectPlaceholder": "请选择",
+        "cityNoRegion": "请先选择岗位地区",
+        "cancel": "取消",
+        "reject": "拒绝岗位",
+        "save": "保存并通过",
+        "warnMerge": "请选择合并目标公共岗位",
+        "warnUrl": "请填写岗位链接"
+      }
     }
   },
   "profile": {

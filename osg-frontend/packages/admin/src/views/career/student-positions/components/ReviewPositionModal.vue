@@ -16,44 +16,44 @@
     <section class="student-review-modal__hero">
       <div class="student-review-modal__avatar">{{ submitterInitials }}</div>
       <div class="student-review-modal__hero-copy">
-        <strong>{{ position?.studentName || '未命名学生' }}</strong>
+        <strong>{{ position?.studentName || t('admin.career.studentPositions.unnamedStudent') }}</strong>
         <span>ID {{ position?.studentId || '--' }}</span>
         <span>{{ submittedLabel }}</span>
       </div>
       <div class="student-review-modal__hero-meta">
         <span :class="['student-review-modal__status', `student-review-modal__status--${statusTone}`]">{{ statusLabel }}</span>
-        <span v-if="position?.hasCoachingRequest === 'yes'" class="student-review-modal__coaching">有辅导申请</span>
+        <span v-if="position?.hasCoachingRequest === 'yes'" class="student-review-modal__coaching">{{ t('admin.career.studentPositions.hasCoaching') }}</span>
       </div>
     </section>
 
     <!-- RULE-D RD-002 合并/新增分支选择 -->
     <section v-if="isPending" class="student-review-modal__mode" data-surface-part="review-mode">
       <a-radio-group v-model:value="reviewMode" button-style="solid">
-        <a-radio-button value="create">新增公共岗位</a-radio-button>
-        <a-radio-button value="merge">合并到已有岗位</a-radio-button>
+        <a-radio-button value="create">{{ t('admin.career.studentPositions.reviewModal.mode.create') }}</a-radio-button>
+        <a-radio-button value="merge">{{ t('admin.career.studentPositions.reviewModal.mode.merge') }}</a-radio-button>
       </a-radio-group>
       <a-alert
         v-if="reviewMode === 'create' && duplicateHintPositionId"
         type="warning"
         show-icon
         class="student-review-modal__dup-hint"
-        message="检测到已有相同公司+岗位记录"
+        :message="t('admin.career.studentPositions.reviewModal.dupHintTitle')"
       >
         <template #description>
-          <span>已有岗位 ID #{{ duplicateHintPositionId }}。建议</span>
-          <a-button type="link" size="small" @click="switchToMergeWithHint">切换到「合并到已有岗位」</a-button>
+          <span>{{ t('admin.career.studentPositions.reviewModal.dupHintDesc', { id: duplicateHintPositionId }) }}</span>
+          <a-button type="link" size="small" @click="switchToMergeWithHint">{{ t('admin.career.studentPositions.reviewModal.dupHintSwitch') }}</a-button>
         </template>
       </a-alert>
     </section>
 
     <!-- RULE-D RD-002 合并模式：搜索 + 选定已有公共岗位 -->
     <section v-if="isPending && reviewMode === 'merge'" class="student-review-modal__merge">
-      <fieldset class="student-review-modal__field" data-field-name="合并目标岗位">
-        <span>合并到已有岗位 *</span>
+      <fieldset class="student-review-modal__field">
+        <span>{{ t('admin.career.studentPositions.reviewModal.mergeToLabel') }}</span>
         <a-select
           v-model:value="mergeToPositionId"
           show-search
-          placeholder="按公司或岗位名搜索"
+          :placeholder="t('admin.career.studentPositions.reviewModal.mergeSearchPlaceholder')"
           style="width: 100%"
           :filter-option="false"
           :options="mergeOptions"
@@ -76,58 +76,58 @@
         <header class="student-review-modal__section-head">
           <div class="student-review-modal__section-title">
             <span class="mdi mdi-briefcase-variant-outline" aria-hidden="true"></span>
-            <span>基本信息</span>
+            <span>{{ t('admin.career.studentPositions.reviewModal.sections.basicInfo') }}</span>
           </div>
         </header>
 
         <div class="student-review-modal__grid">
-          <fieldset class="student-review-modal__field" data-field-name="岗位分类">
-            <span>岗位分类</span>
-            <a-select v-model:value="form.positionCategory" placeholder="请选择" allow-clear :disabled="!isPending">
+          <fieldset class="student-review-modal__field">
+            <span>{{ t('admin.career.studentPositions.reviewModal.fields.category') }}</span>
+            <a-select v-model:value="form.positionCategory" :placeholder="t('admin.career.studentPositions.reviewModal.selectPlaceholder')" allow-clear :disabled="!isPending">
               <a-select-option v-for="option in categoryOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
             </a-select>
           </fieldset>
 
-          <label class="student-review-modal__field" data-field-name="岗位名称">
-            <span>岗位名称</span>
-            <a-input v-model:value="form.positionName" placeholder="如 Summer Analyst" :disabled="!isPending" />
+          <label class="student-review-modal__field">
+            <span>{{ t('admin.career.studentPositions.reviewModal.fields.positionName') }}</span>
+            <a-input v-model:value="form.positionName" :placeholder="t('admin.career.studentPositions.reviewModal.fields.positionNamePlaceholder')" :disabled="!isPending" />
           </label>
 
-          <fieldset class="student-review-modal__field" data-field-name="部门">
-            <span>部门</span>
-            <a-select v-model:value="form.department" placeholder="请选择" allow-clear show-search :disabled="!isPending">
+          <fieldset class="student-review-modal__field">
+            <span>{{ t('admin.career.studentPositions.reviewModal.fields.department') }}</span>
+            <a-select v-model:value="form.department" :placeholder="t('admin.career.studentPositions.reviewModal.selectPlaceholder')" allow-clear show-search :disabled="!isPending">
               <a-select-option v-for="option in departmentOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
             </a-select>
           </fieldset>
 
-          <fieldset class="student-review-modal__field" data-field-name="项目时间">
-            <span>项目时间</span>
-            <a-select v-model:value="form.projectYear" placeholder="请选择" allow-clear :disabled="!isPending">
+          <fieldset class="student-review-modal__field">
+            <span>{{ t('admin.career.studentPositions.reviewModal.fields.projectYear') }}</span>
+            <a-select v-model:value="form.projectYear" :placeholder="t('admin.career.studentPositions.reviewModal.selectPlaceholder')" allow-clear :disabled="!isPending">
               <a-select-option v-for="option in projectYearOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
             </a-select>
           </fieldset>
 
-          <label class="student-review-modal__field student-review-modal__field--wide" data-field-name="行业">
-            <span>行业</span>
-            <a-input v-model:value="form.industry" placeholder="如 Bulge Bracket / Buyside / Consulting" :disabled="!isPending" />
+          <label class="student-review-modal__field student-review-modal__field--wide">
+            <span>{{ t('admin.career.studentPositions.reviewModal.fields.industry') }}</span>
+            <a-input v-model:value="form.industry" :placeholder="t('admin.career.studentPositions.reviewModal.fields.industryPlaceholder')" :disabled="!isPending" />
           </label>
 
-          <fieldset class="student-review-modal__field" data-field-name="截止日期">
-            <span>截止日期</span>
+          <fieldset class="student-review-modal__field">
+            <span>{{ t('admin.career.studentPositions.reviewModal.fields.deadline') }}</span>
             <a-date-picker
               v-model:value="form.deadline"
               show-time
               format="YYYY-MM-DD HH:mm"
               value-format="YYYY-MM-DDTHH:mm"
-              placeholder="选择截止时间"
+              :placeholder="t('admin.career.studentPositions.reviewModal.fields.deadlinePlaceholder')"
               style="width: 100%"
               :disabled="!isPending"
             />
           </fieldset>
         </div>
 
-        <fieldset class="student-review-modal__chip-group" data-field-name="招聘周期">
-          <span class="student-review-modal__chip-label">招聘周期</span>
+        <fieldset class="student-review-modal__chip-group">
+          <span class="student-review-modal__chip-label">{{ t('admin.career.studentPositions.reviewModal.fields.recruitmentCycle') }}</span>
           <a-button
             v-for="option in recruitmentCycleOptions"
             :key="option.value"
@@ -145,35 +145,35 @@
         <header class="student-review-modal__section-head">
           <div class="student-review-modal__section-title">
             <span class="mdi mdi-domain" aria-hidden="true"></span>
-            <span>公司信息</span>
+            <span>{{ t('admin.career.studentPositions.reviewModal.sections.companyInfo') }}</span>
           </div>
         </header>
 
         <div class="student-review-modal__grid">
-          <label class="student-review-modal__field" data-field-name="公司名称">
-            <span>公司名称</span>
-            <a-input v-model:value="form.companyName" placeholder="公司名称" :disabled="!isPending" />
+          <label class="student-review-modal__field">
+            <span>{{ t('admin.career.studentPositions.reviewModal.fields.companyName') }}</span>
+            <a-input v-model:value="form.companyName" :placeholder="t('admin.career.studentPositions.reviewModal.fields.companyName')" :disabled="!isPending" />
           </label>
 
-          <fieldset class="student-review-modal__field" data-field-name="公司类别">
-            <span>公司类别</span>
-            <a-select v-model:value="form.companyType" placeholder="请选择" allow-clear :disabled="!isPending">
+          <fieldset class="student-review-modal__field">
+            <span>{{ t('admin.career.studentPositions.reviewModal.fields.companyType') }}</span>
+            <a-select v-model:value="form.companyType" :placeholder="t('admin.career.studentPositions.reviewModal.selectPlaceholder')" allow-clear :disabled="!isPending">
               <a-select-option v-for="option in companyTypeOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
             </a-select>
           </fieldset>
 
-          <fieldset class="student-review-modal__field" data-field-name="大区">
-            <span>岗位地区</span>
-            <a-select v-model:value="form.region" placeholder="请选择" allow-clear :disabled="!isPending" @change="onRegionChange">
+          <fieldset class="student-review-modal__field">
+            <span>{{ t('admin.career.studentPositions.reviewModal.fields.region') }}</span>
+            <a-select v-model:value="form.region" :placeholder="t('admin.career.studentPositions.reviewModal.selectPlaceholder')" allow-clear :disabled="!isPending" @change="onRegionChange">
               <a-select-option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
             </a-select>
           </fieldset>
 
-          <fieldset class="student-review-modal__field" data-field-name="城市">
-            <span>城市</span>
+          <fieldset class="student-review-modal__field">
+            <span>{{ t('admin.career.studentPositions.reviewModal.fields.city') }}</span>
             <a-select
               v-model:value="form.city"
-              :placeholder="form.region ? '请选择' : '请先选择岗位地区'"
+              :placeholder="form.region ? t('admin.career.studentPositions.reviewModal.selectPlaceholder') : t('admin.career.studentPositions.reviewModal.cityNoRegion')"
               allow-clear
               show-search
               :disabled="!isPending || !form.region"
@@ -182,13 +182,13 @@
             </a-select>
           </fieldset>
 
-          <label class="student-review-modal__field" data-field-name="公司官网">
-            <span>公司官网</span>
+          <label class="student-review-modal__field">
+            <span>{{ t('admin.career.studentPositions.reviewModal.fields.companyWebsite') }}</span>
             <a-input v-model:value="form.companyWebsite" placeholder="https://company.com" :disabled="!isPending" />
           </label>
 
-          <label class="student-review-modal__field" data-field-name="岗位链接">
-            <span>岗位链接 *</span>
+          <label class="student-review-modal__field">
+            <span>{{ t('admin.career.studentPositions.reviewModal.fields.positionUrl') }}</span>
             <a-input v-model:value="form.positionUrl" placeholder="https://company.com/jobs/..." :disabled="!isPending" />
           </label>
         </div>
@@ -196,7 +196,7 @@
     </div>
 
     <template #footer>
-      <a-button data-surface-part="cancel-control" @click="handleClose">取消</a-button>
+      <a-button data-surface-part="cancel-control" @click="handleClose">{{ t('admin.career.studentPositions.reviewModal.cancel') }}</a-button>
       <a-button
         v-if="isPending"
         danger
@@ -205,7 +205,7 @@
         :data-surface-sample-key="props.position ? `student-position-${props.position.studentPositionId}` : 'student-position'"
         @click="handleRejectRequest"
       >
-        拒绝岗位
+        {{ t('admin.career.studentPositions.reviewModal.reject') }}
       </a-button>
       <a-button
         v-if="isPending"
@@ -213,7 +213,7 @@
         data-surface-part="confirm-control"
         @click="handleSubmit"
       >
-        保存并通过
+        {{ t('admin.career.studentPositions.reviewModal.save') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -221,6 +221,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 import {
@@ -230,6 +231,8 @@ import {
   type StudentPositionListItem,
 } from '@osg/shared/api/admin/studentPosition'
 import type { PositionMeta, PositionMetaOption } from '@osg/shared/api/admin/position'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   visible: boolean
@@ -349,22 +352,22 @@ watch(
 
 const selectedCycles = computed(() => form.recruitmentCycle)
 const isPending = computed(() => props.position?.status === 'pending')
-const modalTitle = computed(() => (isPending.value ? '学生自添岗位编辑' : '学生自添岗位结果'))
+const modalTitle = computed(() => isPending.value ? t('admin.career.studentPositions.reviewModal.titleEdit') : t('admin.career.studentPositions.reviewModal.titleResult'))
 
 const submitterInitials = computed(() => {
-  const value = props.position?.studentName || '学员'
+  const value = props.position?.studentName || t('admin.career.studentPositions.studentFallback')
   return value.slice(0, 2).toUpperCase()
 })
 
 const submittedLabel = computed(() => {
-  if (!props.position?.submittedAt) return '提交时间待补充'
-  return `提交于 ${formatDateTime(props.position.submittedAt)}`
+  if (!props.position?.submittedAt) return t('admin.career.studentPositions.reviewModal.submittedPending')
+  return t('admin.career.studentPositions.reviewModal.submittedAt', { time: formatDateTime(props.position.submittedAt) })
 })
 
 const statusLabel = computed(() => {
-  if (props.position?.status === 'approved') return '已通过'
-  if (props.position?.status === 'rejected') return '已拒绝'
-  return '待审核'
+  if (props.position?.status === 'approved') return t('admin.career.studentPositions.status.approved')
+  if (props.position?.status === 'rejected') return t('admin.career.studentPositions.status.rejected')
+  return t('admin.career.studentPositions.status.pending')
 })
 
 const statusTone = computed(() => {
@@ -382,7 +385,6 @@ const toggleCycle = (value: string) => {
 }
 
 const onRegionChange = () => {
-  // 切换地区时，若当前城市不在新地区的字典内则清空
   const next = cityOptions.value
   if (!next.some((opt) => opt.value === form.city)) {
     form.city = undefined
@@ -401,7 +403,7 @@ const handleSubmit = () => {
   // RULE-D RD-002 合并分支：仅传 mergeToPositionId
   if (reviewMode.value === 'merge') {
     if (!mergeToPositionId.value) {
-      message.warning('请选择合并目标公共岗位')
+      message.warning(t('admin.career.studentPositions.reviewModal.warnMerge'))
       return
     }
     emit('submit', { mergeToPositionId: mergeToPositionId.value })
@@ -411,7 +413,7 @@ const handleSubmit = () => {
   // 新增分支：仅 岗位链接 必填，对齐学生端
   const positionUrl = form.positionUrl.trim()
   if (!positionUrl) {
-    message.warning('请填写岗位链接')
+    message.warning(t('admin.career.studentPositions.reviewModal.warnUrl'))
     return
   }
 
