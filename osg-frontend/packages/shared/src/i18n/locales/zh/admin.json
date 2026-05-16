@@ -1383,7 +1383,8 @@
       "messageManagement": "消息管理",
       "complaints": "投诉建议",
       "operationLogs": "操作日志"
-    }
+    },
+    "noPermissionWarning": "您没有权限访问此页面"
   },
   "career": {
     "positions": {
@@ -2140,6 +2141,57 @@
           "allStudent": "全部学员",
           "targetStudent": "指定学员"
         }
+      }
+    },
+    "modal": {
+      "title": "个人设置",
+      "fields": {
+        "name": {
+          "label": "姓名",
+          "placeholder": "请输入姓名"
+        },
+        "account": {
+          "label": "账号",
+          "placeholder": "当前登录账号"
+        },
+        "email": {
+          "label": "邮箱",
+          "placeholder": "未设置邮箱"
+        },
+        "oldPassword": {
+          "label": "旧密码",
+          "placeholder": "修改密码时请输入旧密码"
+        },
+        "newPassword": {
+          "label": "新密码",
+          "placeholder": "8-20位，包含字母和数字"
+        },
+        "confirmPassword": {
+          "label": "确认密码",
+          "placeholder": "请再次输入新密码"
+        }
+      },
+      "passwordSection": {
+        "hint": "修改密码时需先填写旧密码"
+      },
+      "cancel": "取消",
+      "save": "保存",
+      "validation": {
+        "newPasswordRequired": "请输入新密码",
+        "passwordLength": "密码长度需为8-20位",
+        "passwordNeedsLetter": "密码需包含字母",
+        "passwordNeedsNumber": "密码需包含数字",
+        "oldPasswordRequired": "请输入旧密码",
+        "confirmPasswordRequired": "请确认新密码",
+        "passwordMismatch": "两次输入的密码不一致",
+        "nameRequired": "请输入姓名"
+      },
+      "errors": {
+        "passwordChangeFailed": "密码修改失败，请检查输入信息",
+        "profileUpdateFailed": "个人资料修改失败，请检查输入信息"
+      },
+      "messages": {
+        "saveSuccess": "保存成功"
       }
     }
   },

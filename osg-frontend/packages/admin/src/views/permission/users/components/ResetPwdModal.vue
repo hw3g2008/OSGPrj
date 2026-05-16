@@ -87,7 +87,7 @@ const handleSubmit = async () => {
     emit('success')
     handleClose()
   } catch (_error) {
-    // 交给拦截器处理
+    // i18n-skip-line: dev comment — 交给拦截器处理
   } finally {
     loading.value = false
   }

@@ -48,7 +48,7 @@
         </div>
       </template>
 
-      <!-- 待分配导师表格 -->
+      <!-- Pending mentor assignment table -->
       <template v-if="activeTab === 'pending'">
         <a-alert type="error" show-icon style="margin-bottom: 12px; border-radius: 8px;">
           <template #message>{{ t('admin.career.mockPractice.pendingAlert') }}</template>
@@ -99,7 +99,7 @@
         </a-table>
       </template>
 
-      <!-- 全部记录表格 -->
+      <!-- All records table -->
       <a-table
         v-else
         :columns="allColumns"

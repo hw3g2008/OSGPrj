@@ -9,7 +9,7 @@
       </template>
     </PageHeader>
 
-    <!-- 超时提醒横幅 -->
+    <!-- Overdue reminder banner -->
     <a-alert v-if="summary.overtimeMentors.length" type="error" show-icon banner style="border-radius: 12px">
       <template #message>
         <strong>{{ t('admin.teaching.reports.alert.overtime') }}</strong>
@@ -23,7 +23,7 @@
     </a-alert>
 
     <a-card :bordered="false">
-      <!-- 筛选条件 -->
+      <!-- Filters -->
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
           <a-input v-model:value="filters.keyword" :placeholder="t('admin.teaching.reports.filter.searchPlaceholder')" allow-clear style="width: 180px" @press-enter="handleSearch" />
@@ -53,7 +53,7 @@
         </a-form-item>
       </a-form>
 
-      <!-- Tab 切换 -->
+      <!-- Tab switch -->
       <a-tabs v-model:activeKey="activeTab" @change="(key: string) => switchTab(key)">
         <a-tab-pane v-for="tab in tabs" :key="tab.key">
           <template #tab>
@@ -63,7 +63,7 @@
         </a-tab-pane>
       </a-tabs>
 
-      <!-- 批量操作栏 -->
+      <!-- Bulk actions bar -->
       <a-space v-if="activeTab === 'pending'" style="margin-bottom: 12px">
         <a-button type="primary" size="small" :disabled="!selectedRowKeys.length" @click="handleBatchApprove">
           <template #icon><CheckOutlined /></template>
@@ -76,7 +76,7 @@
         <span style="color: #64748b; font-size: 13px">{{ t('admin.teaching.reports.batchOp.selected', { count: selectedRowKeys.length }) }}</span>
       </a-space>
 
-      <!-- 课时审核表格 -->
+      <!-- Class hour review table -->
       <a-table
         :columns="reportColumns"
         :data-source="rows"

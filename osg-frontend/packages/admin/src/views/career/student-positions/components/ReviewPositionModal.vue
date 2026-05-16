@@ -26,7 +26,7 @@
       </div>
     </section>
 
-    <!-- RULE-D RD-002 合并/新增分支选择 -->
+    <!-- RULE-D RD-002 merge/create mode selection -->
     <section v-if="isPending" class="student-review-modal__mode" data-surface-part="review-mode">
       <a-radio-group v-model:value="reviewMode" button-style="solid">
         <a-radio-button value="create">{{ t('admin.career.studentPositions.reviewModal.mode.create') }}</a-radio-button>
@@ -46,7 +46,7 @@
       </a-alert>
     </section>
 
-    <!-- RULE-D RD-002 合并模式：搜索 + 选定已有公共岗位 -->
+    <!-- RULE-D RD-002 merge mode: search and select existing public position -->
     <section v-if="isPending && reviewMode === 'merge'" class="student-review-modal__merge">
       <fieldset class="student-review-modal__field">
         <span>{{ t('admin.career.studentPositions.reviewModal.mergeToLabel') }}</span>
@@ -247,7 +247,7 @@ const emit = defineEmits<{
   requestReject: []
 }>()
 
-// RULE-D RD-002 合并/新增模式
+// i18n-skip-line: dev comment — RULE-D RD-002 合并/新增模式
 const reviewMode = ref<'create' | 'merge'>('create')
 const mergeToPositionId = ref<number | undefined>(undefined)
 const mergeLoading = ref(false)
@@ -400,7 +400,7 @@ const handleRejectRequest = () => {
 }
 
 const handleSubmit = () => {
-  // RULE-D RD-002 合并分支：仅传 mergeToPositionId
+  // i18n-skip-line: dev comment — RULE-D RD-002 合并分支：仅传 mergeToPositionId
   if (reviewMode.value === 'merge') {
     if (!mergeToPositionId.value) {
       message.warning(t('admin.career.studentPositions.reviewModal.warnMerge'))
@@ -410,7 +410,7 @@ const handleSubmit = () => {
     return
   }
 
-  // 新增分支：仅 岗位链接 必填，对齐学生端
+  // i18n-skip-line: dev comment — 新增分支：仅 岗位链接 必填，对齐学生端
   const positionUrl = form.positionUrl.trim()
   if (!positionUrl) {
     message.warning(t('admin.career.studentPositions.reviewModal.warnUrl'))

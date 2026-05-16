@@ -335,7 +335,7 @@ const handleDisable = (record: any) => {
         message.success(t('admin.permission.users.messages.disabledSuccess'))
         loadUserList()
       } catch (_error) {
-        // 交给拦截器处理
+        // i18n-skip-line: dev comment — 交给拦截器处理
       }
     }
   })
@@ -349,7 +349,7 @@ const handleEnable = async (record: any) => {
     message.success(t('admin.permission.users.messages.enabledSuccess'))
     loadUserList()
   } catch (_error) {
-    // 交给拦截器处理
+    // i18n-skip-line: dev comment — 交给拦截器处理
   }
 }
 

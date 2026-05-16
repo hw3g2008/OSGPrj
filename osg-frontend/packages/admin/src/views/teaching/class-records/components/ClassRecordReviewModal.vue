@@ -9,14 +9,14 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-clipboard-check-outline" aria-hidden="true"></span>
-        <span>课程记录审核</span>
+        <span>{{ t('admin.teaching.classRecords.reviewModal.title') }}</span>
         <span class="class-record-review-modal__title-sub">#{{ detail?.recordId || '--' }}</span>
       </span>
     </template>
 
     <div v-if="loading" class="class-record-review-modal__loading">
       <span class="mdi mdi-loading mdi-spin" aria-hidden="true"></span>
-      <span>正在加载课程记录...</span>
+      <span>{{ t('admin.teaching.classRecords.reviewModal.loading') }}</span>
     </div>
 
     <template v-else>
@@ -27,66 +27,64 @@
         </div>
         <div class="class-record-review-modal__grid">
           <div class="class-record-review-modal__cell">
-            <span class="class-record-review-modal__label">学员</span>
+            <span class="class-record-review-modal__label">{{ t('admin.teaching.classRecords.fields.student') }}</span>
             <strong>{{ detail?.studentName || '--' }} <span v-if="detail?.studentId" class="class-record-review-modal__sub-text">({{ detail.studentId }})</span></strong>
           </div>
           <div class="class-record-review-modal__cell">
-            <span class="class-record-review-modal__label">申报人</span>
+            <span class="class-record-review-modal__label">{{ t('admin.teaching.classRecords.fields.reporter') }}</span>
             <strong>{{ detail?.mentorName || '--' }} <a-tag v-if="detail?.courseSource" size="small" color="blue">{{ normalizeSourceLabel(detail.courseSource) }}</a-tag></strong>
           </div>
           <div class="class-record-review-modal__cell">
-            <span class="class-record-review-modal__label">辅导内容</span>
+            <span class="class-record-review-modal__label">{{ t('admin.teaching.classRecords.fields.coachingContent') }}</span>
             <strong>{{ normalizeCourseType(detail?.courseType) }}<span v-if="detail?.coachingCompany" class="class-record-review-modal__company"> {{ detail.coachingCompany }}</span></strong>
           </div>
           <div class="class-record-review-modal__cell">
-            <span class="class-record-review-modal__label">课程内容</span>
+            <span class="class-record-review-modal__label">{{ t('admin.teaching.classRecords.fields.courseContent') }}</span>
             <strong><a-tag v-if="detail?.classStatus" color="processing">{{ detail.classStatus }}</a-tag><span v-else>--</span></strong>
           </div>
           <div class="class-record-review-modal__cell">
-            <span class="class-record-review-modal__label">上课日期</span>
+            <span class="class-record-review-modal__label">{{ t('admin.teaching.classRecords.fields.classDate') }}</span>
             <strong>{{ formatDate(detail?.classDate) }}</strong>
           </div>
           <div class="class-record-review-modal__cell">
-            <span class="class-record-review-modal__label">时长</span>
-            <strong>{{ detail?.durationHours ? detail.durationHours + '小时' : '--' }}</strong>
+            <span class="class-record-review-modal__label">{{ t('admin.teaching.classRecords.fields.duration') }}</span>
+            <strong>{{ detail?.durationHours ? t('admin.teaching.classRecords.fields.durationValue', { hours: detail.durationHours }) : '--' }}</strong>
           </div>
           <div class="class-record-review-modal__cell">
-            <span class="class-record-review-modal__label">课时费</span>
+            <span class="class-record-review-modal__label">{{ t('admin.teaching.classRecords.fields.fee') }}</span>
             <strong class="class-record-review-modal__fee">{{ formatFee(detail?.courseFee) }}</strong>
           </div>
           <div class="class-record-review-modal__cell">
-            <span class="class-record-review-modal__label">提交时间</span>
+            <span class="class-record-review-modal__label">{{ t('admin.teaching.classRecords.fields.submitTime') }}</span>
             <strong>{{ formatDateTime(detail?.submittedAt) }}</strong>
           </div>
         </div>
       </section>
 
-      <section v-if="detail?.feedbackContent" class="class-record-review-modal__section" data-field-name="课程反馈">
-        <div class="class-record-review-modal__section-head"><span>课程反馈</span></div>
+      <section v-if="detail?.feedbackContent" class="class-record-review-modal__section" data-field-name="课程反馈"><!-- i18n-skip-line: playwright selector -->
+        <div class="class-record-review-modal__section-head"><span>{{ t('admin.teaching.classRecords.fields.feedback') }}</span></div>
         <div class="class-record-review-modal__feedback">{{ detail.feedbackContent }}</div>
       </section>
 
-      <section class="class-record-review-modal__section" data-field-name="附件">
-        <div class="class-record-review-modal__section-head"><span>附件</span></div>
+      <section class="class-record-review-modal__section" data-field-name="附件"><!-- i18n-skip-line: playwright selector -->
+        <div class="class-record-review-modal__section-head"><span>{{ t('admin.teaching.classRecords.fields.attachments') }}</span></div>
         <div v-if="detail?.attachments && detail.attachments.length > 0" class="class-record-review-modal__attachments">
           <div v-for="att in detail.attachments" :key="att.attachmentId" class="class-record-review-modal__att-card" @click="handleDownload(att.filePath)">
             <span class="mdi mdi-file-pdf-box class-record-review-modal__att-icon" aria-hidden="true"></span>
             <div class="class-record-review-modal__att-info">
-              <span class="class-record-review-modal__att-name">{{ att.fileName || '未命名文件' }}</span>
+              <span class="class-record-review-modal__att-name">{{ att.fileName || t('admin.teaching.classRecords.fields.unnamedFile') }}</span>
               <span class="class-record-review-modal__att-size">{{ formatFileSize(att.fileSize) }}</span>
             </div>
           </div>
         </div>
-        <div v-else class="class-record-review-modal__empty">暂无附件</div>
+        <div v-else class="class-record-review-modal__empty">{{ t('admin.teaching.classRecords.fields.noAttachments') }}</div>
       </section>
 
       <section
         class="class-record-review-modal__section"
-        data-field-name="审核结果"
-        data-field-name-alias="课程审核弹窗审核结果"
-      >
+        data-field-name="审核结果" data-field-name-alias="课程审核弹窗审核结果"><!-- i18n-skip-line: playwright selector -->
         <div class="class-record-review-modal__section-head">
-          <span>审核结果</span>
+          <span>{{ t('admin.teaching.classRecords.fields.reviewResult') }}</span>
           <div class="class-record-review-modal__result-toggle">
             <a-button
               :type="reviewResult === 'approved' ? 'primary' : 'default'"
@@ -94,7 +92,7 @@
               :disabled="submitting"
               @click="reviewResult = 'approved'"
             >
-              通过
+              {{ t('admin.teaching.classRecords.reviewModal.approveBtn') }}
             </a-button>
             <a-button
               :type="reviewResult === 'rejected' ? 'primary' : 'default'"
@@ -102,7 +100,7 @@
               :disabled="submitting"
               @click="reviewResult = 'rejected'"
             >
-              驳回
+              {{ t('admin.teaching.classRecords.reviewModal.rejectBtn') }}
             </a-button>
           </div>
         </div>
@@ -111,17 +109,13 @@
       <section
         v-if="reviewResult === 'rejected'"
         class="class-record-review-modal__section"
-        data-field-name="驳回原因"
-        data-field-name-alias="课程审核弹窗驳回原因"
-      >
+        data-field-name="驳回原因" data-field-name-alias="课程审核弹窗驳回原因"><!-- i18n-skip-line: playwright selector -->
         <a-form-item
-          label="驳回原因 *"
-          data-field-name="驳回原因"
-          data-field-name-alias="课程审核弹窗驳回原因"
-        >
+          :label="t('admin.teaching.classRecords.reviewModal.rejectReasonLabel')"
+          data-field-name="驳回原因" data-field-name-alias="课程审核弹窗驳回原因"><!-- i18n-skip-line: playwright selector -->
           <a-select
             v-model:value="rejectReason"
-            placeholder="请选择驳回原因"
+            :placeholder="t('admin.teaching.classRecords.reviewModal.rejectReasonPlaceholder')"
             :disabled="submitting"
           >
             <a-select-option v-for="option in rejectReasonOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
@@ -129,62 +123,55 @@
         </a-form-item>
 
         <a-form-item
-          label="驳回说明"
-          data-field-name="驳回说明"
-          data-field-name-alias="课程审核弹窗驳回说明"
-        >
+          :label="t('admin.teaching.classRecords.reviewModal.rejectRemarkLabel')"
+          data-field-name="驳回说明" data-field-name-alias="课程审核弹窗驳回说明"><!-- i18n-skip-line: playwright selector -->
           <a-textarea
             v-model:value="rejectRemark"
             :rows="4"
             :maxlength="120"
             :disabled="submitting"
-            placeholder="补充本次驳回说明"
+            :placeholder="t('admin.teaching.classRecords.reviewModal.rejectRemarkPlaceholder')"
           />
         </a-form-item>
       </section>
 
       <section
         class="class-record-review-modal__section"
-        data-field-name="审核备注"
-        data-field-name-alias="课程审核弹窗审核备注"
-      >
+        data-field-name="审核备注" data-field-name-alias="课程审核弹窗审核备注"><!-- i18n-skip-line: playwright selector -->
         <a-form-item
-          label="审核备注"
-          data-field-name="审核备注"
-          data-field-name-alias="课程审核弹窗审核备注"
-        >
+          :label="t('admin.teaching.classRecords.reviewModal.reviewRemarkLabel')"
+          data-field-name="审核备注" data-field-name-alias="课程审核弹窗审核备注"><!-- i18n-skip-line: playwright selector -->
           <a-textarea
             v-model:value="reviewRemark"
             :rows="3"
             :maxlength="120"
             :disabled="submitting"
-            placeholder="输入审核备注（可选）"
+            :placeholder="t('admin.teaching.classRecords.reviewModal.reviewRemarkPlaceholder')"
           />
         </a-form-item>
       </section>
 
       <section
         class="class-record-review-modal__section class-record-review-modal__section--compat"
-        data-field-name="课程审核弹窗审核结果"
         aria-hidden="true"
-      >
+        data-field-name="课程审核弹窗审核结果"><!-- i18n-skip-line: playwright compat -->
         <div class="class-record-review-modal__compat-alias">
-          <span>课程审核弹窗审核结果</span>
-          <span>课程审核弹窗驳回原因</span>
-          <span>课程审核弹窗驳回说明</span>
-          <span>课程审核弹窗审核备注</span>
+          <span>课程审核弹窗审核结果</span><!-- i18n-skip-line: playwright compat alias -->
+          <span>课程审核弹窗驳回原因</span><!-- i18n-skip-line: playwright compat alias -->
+          <span>课程审核弹窗驳回说明</span><!-- i18n-skip-line: playwright compat alias -->
+          <span>课程审核弹窗审核备注</span><!-- i18n-skip-line: playwright compat alias -->
         </div>
       </section>
     </template>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
+      <a-button @click="handleClose">{{ t('admin.teaching.classRecords.reviewModal.cancelBtn') }}</a-button>
       <a-button
         type="primary"
         :disabled="loading || submitting"
         @click="handleSubmit"
       >
-        {{ submitting ? '提交中...' : reviewResult === 'rejected' ? '确认驳回' : '确认通过' }}
+        {{ submitting ? t('admin.teaching.classRecords.reviewModal.submitting') : reviewResult === 'rejected' ? t('admin.teaching.classRecords.reviewModal.submitReject') : t('admin.teaching.classRecords.reviewModal.submitApprove') }}
       </a-button>
     </template>
 
@@ -193,10 +180,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { ReportRow } from '@osg/shared/api/admin/report'
+
+const { t } = useI18n()
 
 const props = withDefaults(defineProps<{
   visible: boolean
@@ -220,14 +210,15 @@ const rejectReason = ref('')
 const rejectRemark = ref('')
 const reviewRemark = ref('')
 
-const rejectReasonOptions = [
-  { value: '课时时长有误', label: '课时时长有误' },
-  { value: '课程内容描述不清', label: '课程内容描述不清' },
-  { value: '课程类型选择错误', label: '课程类型选择错误' },
-  { value: '缺少必要附件', label: '缺少必要附件' },
-  { value: '重复提交', label: '重复提交' },
-  { value: '其他原因', label: '其他原因' }
-]
+const REJECT_REASON_VALUES = ['课时时长有误', '课程内容描述不清', '课程类型选择错误', '缺少必要附件', '重复提交', '其他原因'] // i18n-skip-line: backend values
+const rejectReasonOptions = computed(() => [
+  { value: REJECT_REASON_VALUES[0], label: t('admin.teaching.classRecords.reviewModal.rejectReasons.r1') },
+  { value: REJECT_REASON_VALUES[1], label: t('admin.teaching.classRecords.reviewModal.rejectReasons.r2') },
+  { value: REJECT_REASON_VALUES[2], label: t('admin.teaching.classRecords.reviewModal.rejectReasons.r3') },
+  { value: REJECT_REASON_VALUES[3], label: t('admin.teaching.classRecords.reviewModal.rejectReasons.r4') },
+  { value: REJECT_REASON_VALUES[4], label: t('admin.teaching.classRecords.reviewModal.rejectReasons.r5') },
+  { value: REJECT_REASON_VALUES[5], label: t('admin.teaching.classRecords.reviewModal.rejectReasons.r6') },
+])
 
 watch(
   () => [props.visible, props.detail?.reviewRemark],
@@ -259,7 +250,7 @@ const buildRemark = () => {
 
 const handleSubmit = () => {
   if (reviewResult.value === 'rejected' && !rejectReason.value) {
-    message.warning('请选择驳回原因')
+    message.warning(t('admin.teaching.classRecords.reviewModal.missingRejectReason'))
     return
   }
 
@@ -278,9 +269,9 @@ const formatDate = (value?: string | null) => {
 
 const formatStatus = (value?: string | null) => {
   if (!value) return '--'
-  if (value === 'approved') return '已通过'
-  if (value === 'rejected') return '已驳回'
-  return '待审核'
+  if (value === 'approved') return t('admin.teaching.classRecords.status.approved')
+  if (value === 'rejected') return t('admin.teaching.classRecords.status.rejected')
+  return t('admin.teaching.classRecords.status.pending')
 }
 
 const statusTagColor = (value?: string | null) => {
@@ -291,16 +282,16 @@ const statusTagColor = (value?: string | null) => {
 
 const normalizeCourseType = (v?: string | null) => {
   if (!v) return '--'
-  if (v.toLowerCase().includes('mock') || v === 'mock_practice') return '模拟应聘'
-  if (v.toLowerCase().includes('position') || v === 'position_coaching') return '岗位辅导'
+  if (v.toLowerCase().includes('mock') || v === 'mock_practice') return t('admin.teaching.classRecords.courseTypes.mock')
+  if (v.toLowerCase().includes('position') || v === 'position_coaching') return t('admin.teaching.classRecords.courseTypes.position')
   return v
 }
 
 const normalizeSourceLabel = (v?: string | null) => {
   if (!v) return '--'
-  if (v === 'mentor') return '导师'
-  if (v === 'headteacher') return '班主任'
-  if (v === 'assistant') return '助教'
+  if (v === 'mentor') return t('admin.teaching.classRecords.sources.mentor')
+  if (v === 'headteacher') return t('admin.teaching.classRecords.sources.headteacher')
+  if (v === 'assistant') return t('admin.teaching.classRecords.sources.assistant')
   return v
 }
 

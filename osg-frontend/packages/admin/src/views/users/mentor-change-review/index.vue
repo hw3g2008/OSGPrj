@@ -1,27 +1,27 @@
 <template>
   <div class="osg-page mentor-change-review">
-    <PageHeader title-zh="导师资料变更审核" title-en="Mentor Profile Change Review" />
+    <PageHeader :title-zh="t('admin.users.mentorChangeReview.pageTitle')" title-en="Mentor Profile Change Review" />
 
     <a-card :bordered="false" class="mcr-filter-card">
       <a-form layout="inline" :model="filters" class="mcr-filter-form">
-        <a-form-item label="状态">
+        <a-form-item :label="t('admin.users.mentorChangeReview.filter.statusLabel')">
           <a-select
             v-model:value="filters.status"
-            placeholder="全部状态"
+            :placeholder="t('admin.users.mentorChangeReview.filter.statusPlaceholder')"
             allow-clear
             style="width: 160px"
           >
-            <a-select-option value="pending">待审核</a-select-option>
-            <a-select-option value="approved">已通过</a-select-option>
-            <a-select-option value="rejected">已驳回</a-select-option>
+            <a-select-option value="pending">{{ t('admin.users.mentorChangeReview.filter.statuses.pending') }}</a-select-option>
+            <a-select-option value="approved">{{ t('admin.users.mentorChangeReview.filter.statuses.approved') }}</a-select-option>
+            <a-select-option value="rejected">{{ t('admin.users.mentorChangeReview.filter.statuses.rejected') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="loadList">
             <template #icon><SearchOutlined /></template>
-            搜索
+            {{ t('admin.users.mentorChangeReview.filter.search') }}
           </a-button>
-          <a-button style="margin-left: 8px" @click="handleReset">重置</a-button>
+          <a-button style="margin-left: 8px" @click="handleReset">{{ t('admin.users.mentorChangeReview.filter.reset') }}</a-button>
         </a-form-item>
       </a-form>
     </a-card>
@@ -32,9 +32,9 @@
         :data-source="filteredRows"
         :row-key="(record: MentorChangeRequestItem) => record.requestId"
         :loading="loading"
-        :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: (total: number) => `共 ${total} 条` }"
+        :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: (total: number) => t('admin.users.mentorChangeReview.table.showTotal', { total }) }"
         :scroll="{ x: 1100 }"
-        :locale="{ emptyText: '暂无导师资料变更申请' }"
+        :locale="{ emptyText: t('admin.users.mentorChangeReview.table.empty') }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'changeSummary'">
@@ -50,69 +50,69 @@
             <span>{{ formatTime(record.reviewedAt) || '-' }}</span>
           </template>
           <template v-else-if="column.key === 'action'">
-            <a-button type="link" size="small" @click="openDetail(record)">查看</a-button>
+            <a-button type="link" size="small" @click="openDetail(record)">{{ t('admin.users.mentorChangeReview.action.view') }}</a-button>
             <a-button
               v-if="record.status === 'pending'"
               type="link"
               size="small"
               @click="handleApprove(record)"
-            >通过</a-button>
+            >{{ t('admin.users.mentorChangeReview.action.approve') }}</a-button>
             <a-button
               v-if="record.status === 'pending'"
               type="link"
               size="small"
               danger
               @click="openReject(record)"
-            >驳回</a-button>
+            >{{ t('admin.users.mentorChangeReview.action.reject') }}</a-button>
           </template>
         </template>
       </a-table>
     </a-card>
 
-    <!-- 详情弹窗 -->
+    <!-- Detail modal -->
     <a-modal
       v-model:open="detailOpen"
-      title="变更详情"
+      :title="t('admin.users.mentorChangeReview.detail.title')"
       :footer="null"
       width="640px"
       destroy-on-close
     >
       <div v-if="selectedRecord" class="mcr-detail">
         <a-descriptions :column="1" bordered size="small">
-          <a-descriptions-item label="请求 ID">{{ selectedRecord.requestId }}</a-descriptions-item>
-          <a-descriptions-item label="导师 userId">{{ selectedRecord.userId }}</a-descriptions-item>
-          <a-descriptions-item label="变更字段">{{ formatSummary(selectedRecord.changeSummary) || '-' }}</a-descriptions-item>
-          <a-descriptions-item label="状态">
+          <a-descriptions-item :label="t('admin.users.mentorChangeReview.detail.labels.requestId')">{{ selectedRecord.requestId }}</a-descriptions-item>
+          <a-descriptions-item :label="t('admin.users.mentorChangeReview.detail.labels.userId')">{{ selectedRecord.userId }}</a-descriptions-item>
+          <a-descriptions-item :label="t('admin.users.mentorChangeReview.detail.labels.changeSummary')">{{ formatSummary(selectedRecord.changeSummary) || '-' }}</a-descriptions-item>
+          <a-descriptions-item :label="t('admin.users.mentorChangeReview.detail.labels.status')">
             <a-tag :color="statusColor(selectedRecord.status)">{{ statusLabel(selectedRecord.status) }}</a-tag>
           </a-descriptions-item>
-          <a-descriptions-item label="提交人">{{ selectedRecord.requestedBy || '-' }}</a-descriptions-item>
-          <a-descriptions-item label="提交时间">{{ formatTime(selectedRecord.createTime) || '-' }}</a-descriptions-item>
-          <a-descriptions-item label="审核人">{{ selectedRecord.reviewer || '-' }}</a-descriptions-item>
-          <a-descriptions-item label="审核时间">{{ formatTime(selectedRecord.reviewedAt) || '-' }}</a-descriptions-item>
+          <a-descriptions-item :label="t('admin.users.mentorChangeReview.detail.labels.requestedBy')">{{ selectedRecord.requestedBy || '-' }}</a-descriptions-item>
+          <a-descriptions-item :label="t('admin.users.mentorChangeReview.detail.labels.createTime')">{{ formatTime(selectedRecord.createTime) || '-' }}</a-descriptions-item>
+          <a-descriptions-item :label="t('admin.users.mentorChangeReview.detail.labels.reviewer')">{{ selectedRecord.reviewer || '-' }}</a-descriptions-item>
+          <a-descriptions-item :label="t('admin.users.mentorChangeReview.detail.labels.reviewedAt')">{{ formatTime(selectedRecord.reviewedAt) || '-' }}</a-descriptions-item>
         </a-descriptions>
         <div class="mcr-detail__payload">
-          <div class="mcr-detail__title">变更内容（payload）</div>
+          <div class="mcr-detail__title">{{ t('admin.users.mentorChangeReview.detail.payloadTitle') }}</div>
           <pre class="mcr-detail__pre">{{ formatPayload(selectedRecord.payloadJson) }}</pre>
         </div>
         <div v-if="selectedRecord.status === 'rejected' && selectedRecord.remark" class="mcr-detail__remark">
-          <strong>驳回原因：</strong>{{ selectedRecord.remark }}
+          <strong>{{ t('admin.users.mentorChangeReview.detail.rejectReasonLabel') }}</strong>{{ selectedRecord.remark }}
         </div>
       </div>
     </a-modal>
 
-    <!-- 驳回弹窗 -->
+    <!-- Reject modal -->
     <a-modal
       v-model:open="rejectOpen"
-      title="驳回变更"
+      :title="t('admin.users.mentorChangeReview.rejectModal.title')"
       :confirm-loading="rejectLoading"
-      ok-text="确认驳回"
-      cancel-text="取消"
+      :ok-text="t('admin.users.mentorChangeReview.rejectModal.okText')"
+      :cancel-text="t('admin.users.mentorChangeReview.rejectModal.cancelText')"
       destroy-on-close
       @ok="handleRejectConfirm"
     >
       <a-form layout="vertical" :model="rejectForm" class="osg-modal-form">
-        <a-form-item label="驳回原因" required>
-          <a-textarea v-model:value="rejectForm.reason" placeholder="请输入驳回原因" :rows="4" />
+        <a-form-item :label="t('admin.users.mentorChangeReview.rejectModal.reasonLabel')" required>
+          <a-textarea v-model:value="rejectForm.reason" :placeholder="t('admin.users.mentorChangeReview.rejectModal.reasonPlaceholder')" :rows="4" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -121,6 +121,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Modal, message } from 'ant-design-vue'
 import { SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
@@ -131,27 +132,19 @@ import {
   type MentorChangeRequestItem,
 } from '@osg/shared/api/admin/mentorChangeReview'
 
-const columns = [
-  { title: '请求 ID', dataIndex: 'requestId', key: 'requestId', width: 100, fixed: 'left' as const },
-  { title: '导师 userId', dataIndex: 'userId', key: 'userId', width: 120 },
-  { title: '变更字段', dataIndex: 'changeSummary', key: 'changeSummary', width: 200 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '提交人', dataIndex: 'requestedBy', key: 'requestedBy', width: 130 },
-  { title: '提交时间', dataIndex: 'createTime', key: 'createTime', width: 160 },
-  { title: '审核人', dataIndex: 'reviewer', key: 'reviewer', width: 130 },
-  { title: '审核时间', dataIndex: 'reviewedAt', key: 'reviewedAt', width: 160 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 200, fixed: 'right' as const },
-]
+const { t } = useI18n()
 
-const FIELD_LABEL_MAP: Record<string, string> = {
-  nickName: '昵称',
-  sex: '性别',
-  phonenumber: '手机号',
-  email: '邮箱',
-  remark: '备注',
-  region: '地区',
-  city: '城市',
-}
+const columns = computed(() => [
+  { title: t('admin.users.mentorChangeReview.columns.requestId'), dataIndex: 'requestId', key: 'requestId', width: 100, fixed: 'left' as const },
+  { title: t('admin.users.mentorChangeReview.columns.userId'), dataIndex: 'userId', key: 'userId', width: 120 },
+  { title: t('admin.users.mentorChangeReview.columns.changeSummary'), dataIndex: 'changeSummary', key: 'changeSummary', width: 200 },
+  { title: t('admin.users.mentorChangeReview.columns.status'), dataIndex: 'status', key: 'status', width: 100 },
+  { title: t('admin.users.mentorChangeReview.columns.requestedBy'), dataIndex: 'requestedBy', key: 'requestedBy', width: 130 },
+  { title: t('admin.users.mentorChangeReview.columns.createTime'), dataIndex: 'createTime', key: 'createTime', width: 160 },
+  { title: t('admin.users.mentorChangeReview.columns.reviewer'), dataIndex: 'reviewer', key: 'reviewer', width: 130 },
+  { title: t('admin.users.mentorChangeReview.columns.reviewedAt'), dataIndex: 'reviewedAt', key: 'reviewedAt', width: 160 },
+  { title: t('admin.users.mentorChangeReview.columns.action'), dataIndex: 'action', key: 'action', width: 200, fixed: 'right' as const },
+])
 
 const loading = ref(false)
 const rows = ref<MentorChangeRequestItem[]>([])
@@ -175,7 +168,7 @@ async function loadList() {
     const data = await listMentorChangeRequests({ status: filters.status })
     rows.value = Array.isArray(data) ? data : []
   } catch (err) {
-    message.error('加载变更申请失败')
+    message.error(t('admin.users.mentorChangeReview.messages.loadError'))
   } finally {
     loading.value = false
   }
@@ -193,17 +186,17 @@ function openDetail(record: MentorChangeRequestItem) {
 
 function handleApprove(record: MentorChangeRequestItem) {
   Modal.confirm({
-    title: '通过变更申请',
-    content: `确认通过请求 #${record.requestId}？通过后变更内容会写入导师账号。`,
-    okText: '通过',
-    cancelText: '取消',
+    title: t('admin.users.mentorChangeReview.approveModal.title'),
+    content: t('admin.users.mentorChangeReview.approveModal.content', { id: record.requestId }),
+    okText: t('admin.users.mentorChangeReview.approveModal.okText'),
+    cancelText: t('admin.users.mentorChangeReview.approveModal.cancelText'),
     onOk: async () => {
       try {
         await approveMentorChangeRequest(record.requestId)
-        message.success('已通过')
+        message.success(t('admin.users.mentorChangeReview.messages.approveSuccess'))
         await loadList()
       } catch (err) {
-        message.error('通过失败')
+        message.error(t('admin.users.mentorChangeReview.messages.approveFail'))
       }
     },
   })
@@ -221,17 +214,17 @@ async function handleRejectConfirm() {
   }
   const reason = rejectForm.reason.trim()
   if (!reason) {
-    message.warning('请填写驳回原因')
+    message.warning(t('admin.users.mentorChangeReview.messages.rejectReasonRequired'))
     return
   }
   rejectLoading.value = true
   try {
     await rejectMentorChangeRequest(rejectTarget.value.requestId, { reason })
-    message.success('已驳回')
+    message.success(t('admin.users.mentorChangeReview.messages.rejectSuccess'))
     rejectOpen.value = false
     await loadList()
   } catch (err) {
-    message.error('驳回失败')
+    message.error(t('admin.users.mentorChangeReview.messages.rejectFail'))
   } finally {
     rejectLoading.value = false
   }
@@ -239,11 +232,16 @@ async function handleRejectConfirm() {
 
 function formatSummary(summary?: string) {
   if (!summary) return ''
+  const separator = t('admin.users.mentorChangeReview.table.summarySeparator')
   return summary
     .split(',')
-    .map((field) => FIELD_LABEL_MAP[field.trim()] || field.trim())
+    .map((field) => {
+      const key = field.trim()
+      const labelKey = `admin.users.mentorChangeReview.fieldLabels.${key}` as never
+      return t(labelKey) || key
+    })
     .filter(Boolean)
-    .join('、')
+    .join(separator)
 }
 
 function formatTime(value?: string) {
@@ -261,9 +259,9 @@ function formatPayload(json?: string) {
 }
 
 function statusLabel(status?: string) {
-  if (status === 'pending') return '待审核'
-  if (status === 'approved') return '已通过'
-  if (status === 'rejected') return '已驳回'
+  if (status === 'pending') return t('admin.users.mentorChangeReview.status.pending')
+  if (status === 'approved') return t('admin.users.mentorChangeReview.status.approved')
+  if (status === 'rejected') return t('admin.users.mentorChangeReview.status.rejected')
   return '-'
 }
 

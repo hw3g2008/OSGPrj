@@ -9,7 +9,7 @@
       </template>
     </PageHeader>
 
-    <!-- 统计卡片 -->
+    <!-- Stat cards -->
     <a-row :gutter="16">
       <a-col :span="6">
         <a-card :bordered="false" :body-style="{ textAlign: 'center', background: '#eff6ff', borderRadius: '12px' }">
@@ -48,7 +48,7 @@
       <a-alert v-else-if="activeTab === 'networking'" type="info" show-icon :message="t('admin.teaching.feedback.alert.networking')" style="margin-bottom: 16px; border-radius: 8px; background: #f3e8ff; border-color: #d8b4fe" />
       <a-alert v-else-if="activeTab === 'mock_midterm'" type="warning" show-icon :message="t('admin.teaching.feedback.alert.mockMidterm')" style="margin-bottom: 16px; border-radius: 8px" />
 
-      <!-- 通用筛选 -->
+      <!-- Common filters -->
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
           <a-input v-model:value="keyword" :placeholder="t('admin.teaching.feedback.filter.searchPlaceholder')" allow-clear style="width: 150px" />
@@ -83,7 +83,7 @@
         </a-form-item>
       </a-form>
 
-      <!-- Prep Feedback 表格 -->
+      <!-- Prep Feedback table -->
       <a-table v-if="activeTab === 'prep'" :columns="prepColumns" :data-source="rows" :row-key="(r: FeedbackRow) => r.feedbackId" :pagination="false" :locale="{ emptyText: t('admin.teaching.feedback.empty') }" :scroll="{ x: 1100 }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'mentorName'"><strong>{{ record.mentorName }}</strong></template>
@@ -103,7 +103,7 @@
         </template>
       </a-table>
 
-      <!-- Networking 表格 -->
+      <!-- Networking table -->
       <a-table v-else-if="activeTab === 'networking'" :columns="networkingColumns" :data-source="rows" :row-key="(r: FeedbackRow) => r.feedbackId" :pagination="false" :locale="{ emptyText: t('admin.teaching.feedback.empty') }" :scroll="{ x: 1100 }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'mentorName'"><strong>{{ record.mentorName }}</strong></template>
@@ -123,7 +123,7 @@
         </template>
       </a-table>
 
-      <!-- Mock Midterm 表格 -->
+      <!-- Mock Midterm table -->
       <a-table v-else :columns="mockColumns" :data-source="rows" :row-key="(r: FeedbackRow) => r.feedbackId" :pagination="false" :locale="{ emptyText: t('admin.teaching.feedback.empty') }" :scroll="{ x: 1100 }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'mentorName'"><strong>{{ record.mentorName }}</strong></template>

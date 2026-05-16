@@ -58,7 +58,7 @@
         </a-select>
       </a-form-item>
 
-      <!-- Fix 3: 官网地址字段，company_name Tab 特有，供 Playwright 定位 -->
+      <!-- Website field, company_name tab only, for Playwright locator -->
       <a-form-item
         v-if="props.tab === 'osg_company_name'"
         name="website"
@@ -67,7 +67,7 @@
         <a-input v-model:value="formState.website" :placeholder="t('admin.permission.dicts.modal.websitePlaceholder')" />
       </a-form-item>
 
-      <!-- 国家/地区字段，school Tab 特有，下拉来自 osg_region 字典 -->
+      <!-- Country/region field, school tab only, options from osg_region dict -->
       <a-form-item
         v-if="props.tab === 'osg_school'"
         name="country"
@@ -81,7 +81,7 @@
         />
       </a-form-item>
 
-      <!-- 国际电话区号字段，country_code Tab 特有 -->
+      <!-- International calling code field, country_code tab only -->
       <a-form-item
         v-if="props.tab === 'osg_country_code'"
         name="callingCode"
@@ -200,7 +200,7 @@ const statusChecked = computed({
 
 const rules = computed(() => ({
   dictLabel: [{ required: true, message: t('admin.permission.dicts.modal.validNameRequired', { field: nameFieldLabel.value }), trigger: 'blur' }],
-  // 字典键值是机器标识符，与后端 SQL 类型及代码 switch 联动；需严格限制为标识符格式
+  // i18n-skip-line: dev comment — 字典键值是机器标识符，与后端 SQL 类型及代码 switch 联动；需严格限制为标识符格式
   dictValue: [
     { required: true, message: t('admin.permission.dicts.modal.validDictValueRequired'), trigger: 'blur' },
     {
@@ -339,7 +339,7 @@ const handleSubmit = async () => {
     handleClose()
   } catch (error: any) {
     if (error.errorFields) return
-    // 移除组件内的错误提示，让拦截器处理
+    // i18n-skip-line: dev comment — 移除组件内的错误提示，让拦截器处理
   } finally {
     loading.value = false
   }

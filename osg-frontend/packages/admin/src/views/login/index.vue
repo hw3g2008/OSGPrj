@@ -195,7 +195,7 @@ const refreshCaptcha = async () => {
       formState.uuid = res.uuid || ''
     }
   } catch {
-    // 验证码获取失败时静默处理
+    // i18n-skip-line: dev comment — 验证码获取失败时静默处理
   }
 }
 

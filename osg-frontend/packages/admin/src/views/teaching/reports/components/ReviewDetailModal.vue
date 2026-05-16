@@ -14,7 +14,7 @@
       </span>
     </template>
 
-    <!-- 基本信息 3x3 网格 -->
+    <!-- Basic info 3x3 grid -->
     <section class="info-grid">
       <div class="info-cell">
         <span class="info-label">{{ t('admin.teaching.reports.modal.mentor') }}</span>
@@ -72,13 +72,13 @@
       <div class="section-content">{{ detail?.comments || '--' }}</div>
     </section>
 
-    <!-- 课程反馈内容 -->
+    <!-- Course feedback content -->
     <section class="detail-section">
       <label class="section-label">{{ t('admin.teaching.reports.modal.feedbackLabel') }}</label>
       <div class="section-content section-content--tall">{{ detail?.feedbackContent || t('admin.teaching.reports.modal.noFeedback') }}</div>
     </section>
 
-    <!-- 审核备注 -->
+    <!-- Review remarks -->
     <section class="detail-section">
       <label class="section-label">{{ t('admin.teaching.reports.modal.reviewNote') }}</label>
       <a-textarea

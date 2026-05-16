@@ -76,7 +76,7 @@ export function buildMenuGroupsFromRuntimeRouters(routes: RuntimeRouteRecord[]):
     .filter((route) => !route.hidden)
     .map((route) => {
       const fullPath = resolvePath('', route.path)
-      const title = route.meta?.title?.trim() || route.path || '未命名分组'
+      const title = route.meta?.title?.trim() || route.path || 'Unnamed Group'
       const children = hasVisibleChildren(route)
         ? collectLeafItems(route.children || [], fullPath)
         : collectLeafItems([route], '')

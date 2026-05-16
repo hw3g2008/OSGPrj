@@ -9,7 +9,7 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-account-cog" aria-hidden="true" />
-        <span>个人设置</span>
+        <span>{{ t('admin.profile.modal.title') }}</span>
       </span>
     </template>
 
@@ -22,33 +22,33 @@
       :required-mark="false"
       class="profile-modal__form"
     >
-      <a-form-item name="name" data-field-name="姓名">
+      <a-form-item name="name" data-field-name="姓名"><!-- i18n-skip-line: playwright selector -->
         <template #label>
-          <span class="profile-modal__label">姓名<span class="profile-modal__required">*</span></span>
+          <span class="profile-modal__label">{{ t('admin.profile.modal.fields.name.label') }}<span class="profile-modal__required">*</span></span>
         </template>
-        <a-input v-model:value="formState.name" placeholder="请输入姓名" allow-clear />
+        <a-input v-model:value="formState.name" :placeholder="t('admin.profile.modal.fields.name.placeholder')" allow-clear />
       </a-form-item>
 
-      <a-form-item name="account" data-field-name="账号">
+      <a-form-item name="account" data-field-name="账号"><!-- i18n-skip-line: playwright selector -->
         <template #label>
-          <span class="profile-modal__label">账号</span>
+          <span class="profile-modal__label">{{ t('admin.profile.modal.fields.account.label') }}</span>
         </template>
         <a-input
           v-model:value="formState.account"
           class="profile-modal__read-only"
-          placeholder="当前登录账号"
+          :placeholder="t('admin.profile.modal.fields.account.placeholder')"
           disabled
         />
       </a-form-item>
 
-      <a-form-item name="email" data-field-name="邮箱">
+      <a-form-item name="email" data-field-name="邮箱"><!-- i18n-skip-line: playwright selector -->
         <template #label>
-          <span class="profile-modal__label">邮箱</span>
+          <span class="profile-modal__label">{{ t('admin.profile.modal.fields.email.label') }}</span>
         </template>
         <a-input
           v-model:value="formState.email"
           class="profile-modal__read-only"
-          placeholder="未设置邮箱"
+          :placeholder="t('admin.profile.modal.fields.email.placeholder')"
           disabled
         />
       </a-form-item>
@@ -56,38 +56,38 @@
       <div class="profile-modal__password-section">
         <div class="profile-modal__section-badge" data-content-part="status-banner">
           <span class="mdi mdi-lock-reset" aria-hidden="true" />
-          <span>修改密码时需先填写旧密码</span>
+          <span>{{ t('admin.profile.modal.passwordSection.hint') }}</span>
         </div>
 
-        <a-form-item name="oldPassword" data-field-name="旧密码">
+        <a-form-item name="oldPassword" data-field-name="旧密码"><!-- i18n-skip-line: playwright selector -->
           <template #label>
-            <span class="profile-modal__label">旧密码</span>
+            <span class="profile-modal__label">{{ t('admin.profile.modal.fields.oldPassword.label') }}</span>
           </template>
           <a-input-password
             v-model:value="formState.oldPassword"
-            placeholder="修改密码时请输入旧密码"
+            :placeholder="t('admin.profile.modal.fields.oldPassword.placeholder')"
             :visibility-toggle="false"
           />
         </a-form-item>
 
-        <a-form-item name="newPassword" data-field-name="新密码">
+        <a-form-item name="newPassword" data-field-name="新密码"><!-- i18n-skip-line: playwright selector -->
           <template #label>
-            <span class="profile-modal__label">新密码</span>
+            <span class="profile-modal__label">{{ t('admin.profile.modal.fields.newPassword.label') }}</span>
           </template>
           <a-input-password
             v-model:value="formState.newPassword"
-            placeholder="8-20位，包含字母和数字"
+            :placeholder="t('admin.profile.modal.fields.newPassword.placeholder')"
             :visibility-toggle="false"
           />
         </a-form-item>
 
-        <a-form-item name="confirmPassword" data-field-name="确认密码">
+        <a-form-item name="confirmPassword" data-field-name="确认密码"><!-- i18n-skip-line: playwright selector -->
           <template #label>
-            <span class="profile-modal__label">确认密码</span>
+            <span class="profile-modal__label">{{ t('admin.profile.modal.fields.confirmPassword.label') }}</span>
           </template>
           <a-input-password
             v-model:value="formState.confirmPassword"
-            placeholder="请再次输入新密码"
+            :placeholder="t('admin.profile.modal.fields.confirmPassword.placeholder')"
             :visibility-toggle="false"
           />
         </a-form-item>
@@ -95,10 +95,10 @@
     </a-form>
 
     <template #footer>
-      <a-button data-surface-part="cancel-control" @click="handleClose">取消</a-button>
+      <a-button data-surface-part="cancel-control" @click="handleClose">{{ t('admin.profile.modal.cancel') }}</a-button>
       <a-button type="primary" :loading="saving" @click="handleSave">
         <span class="mdi mdi-check" aria-hidden="true" />
-        <span>保存</span>
+        <span>{{ t('admin.profile.modal.save') }}</span>
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -107,9 +107,12 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import { http } from '@osg/shared/utils'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 import { useUserStore } from '@/stores/user'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   visible: boolean
@@ -138,32 +141,32 @@ const hasPasswordChange = computed(() =>
 
 const validatePassword = (_rule: any, value: string) => {
   if (!hasPasswordChange.value && !value) return Promise.resolve()
-  if (!value) return Promise.reject('请输入新密码')
-  if (value.length < 8 || value.length > 20) return Promise.reject('密码长度需为8-20位')
-  if (!/[a-zA-Z]/.test(value)) return Promise.reject('密码需包含字母')
-  if (!/\d/.test(value)) return Promise.reject('密码需包含数字')
+  if (!value) return Promise.reject(t('admin.profile.modal.validation.newPasswordRequired'))
+  if (value.length < 8 || value.length > 20) return Promise.reject(t('admin.profile.modal.validation.passwordLength'))
+  if (!/[a-zA-Z]/.test(value)) return Promise.reject(t('admin.profile.modal.validation.passwordNeedsLetter'))
+  if (!/\d/.test(value)) return Promise.reject(t('admin.profile.modal.validation.passwordNeedsNumber'))
   return Promise.resolve()
 }
 
 const validateOldPassword = (_rule: any, value: string) => {
   if (!hasPasswordChange.value && !value) return Promise.resolve()
-  if (!value) return Promise.reject('请输入旧密码')
+  if (!value) return Promise.reject(t('admin.profile.modal.validation.oldPasswordRequired'))
   return Promise.resolve()
 }
 
 const validateConfirm = (_rule: any, value: string) => {
   if (!hasPasswordChange.value && !value) return Promise.resolve()
-  if (!value) return Promise.reject('请确认新密码')
-  if (value !== formState.newPassword) return Promise.reject('两次输入的密码不一致')
+  if (!value) return Promise.reject(t('admin.profile.modal.validation.confirmPasswordRequired'))
+  if (value !== formState.newPassword) return Promise.reject(t('admin.profile.modal.validation.passwordMismatch'))
   return Promise.resolve()
 }
 
-const rules = {
-  name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+const rules = computed(() => ({
+  name: [{ required: true, message: t('admin.profile.modal.validation.nameRequired'), trigger: 'blur' }],
   oldPassword: [{ validator: validateOldPassword, trigger: 'blur' }],
   newPassword: [{ validator: validatePassword, trigger: 'blur' }],
   confirmPassword: [{ validator: validateConfirm, trigger: 'blur' }],
-}
+}))
 
 const resetPasswordFields = () => {
   formState.oldPassword = ''
@@ -207,7 +210,7 @@ const handleSave = async () => {
         oldPassword: formState.oldPassword,
         newPassword: formState.newPassword,
       }, {
-        customErrorMessage: '密码修改失败，请检查输入信息',
+        customErrorMessage: t('admin.profile.modal.errors.passwordChangeFailed'),
       })
     }
 
@@ -217,15 +220,15 @@ const handleSave = async () => {
       phonenumber: userStore.userInfo?.phonenumber || '',
       sex: userStore.userInfo?.sex,
     }, {
-      customErrorMessage: '个人资料修改失败，请检查输入信息',
+      customErrorMessage: t('admin.profile.modal.errors.profileUpdateFailed'),
     })
 
     await userStore.fetchInfo()
-    message.success('保存成功')
+    message.success(t('admin.profile.modal.messages.saveSuccess'))
     handleClose()
   } catch (error: any) {
     if (error?.errorFields) return
-    // 移除组件内的错误提示，让拦截器处理
+    // suppress error here, interceptor handles it
   } finally {
     saving.value = false
   }

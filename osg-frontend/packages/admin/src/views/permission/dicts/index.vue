@@ -438,7 +438,7 @@ const handleDisable = (record: AdminDictListRow) => {
         message.success(t('admin.permission.dicts.messages.disabledSuccess'))
         loadDataList()
       } catch (error) {
-        // 移除组件内的错误提示，让拦截器处理
+        // i18n-skip-line: dev comment — 移除组件内的错误提示，让拦截器处理
       }
     }
   })
@@ -460,7 +460,7 @@ const handleEnable = async (record: AdminDictListRow) => {
     message.success(t('admin.permission.dicts.messages.enabledSuccess'))
     loadDataList()
   } catch (error) {
-    // 移除组件内的错误提示，让拦截器处理
+    // i18n-skip-line: dev comment — 移除组件内的错误提示，让拦截器处理
   }
 }
 
@@ -472,7 +472,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .category-cards {
   display: grid;
-  /* 所有分类卡片强制一排平分宽度；分组数变化时自适应（卡片随之变窄） */
+  /* Force all category cards into one row with equal width; adapts as group count changes */
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
   gap: 16px;

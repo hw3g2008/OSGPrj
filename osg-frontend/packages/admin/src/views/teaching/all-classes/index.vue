@@ -1,25 +1,25 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="全部课程" title-en="All Classes">
+    <PageHeader :title-zh="t('admin.teaching.allClasses.pageTitle')" title-en="All Classes">
       <template #actions>
         <a-button @click="handleExport">
           <template #icon><ExportOutlined /></template>
-          导出
+          {{ t('admin.teaching.allClasses.export') }}
         </a-button>
       </template>
     </PageHeader>
 
     <a-alert type="info" show-icon style="margin-bottom: 0">
-      <template #message>课程审核与支付流程</template>
+      <template #message>{{ t('admin.teaching.allClasses.alert.message') }}</template>
       <template #description>
         <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; align-items: center">
-          <a-tag>① 导师/班主任/助教提交</a-tag>
+          <a-tag>{{ t('admin.teaching.allClasses.alert.step1') }}</a-tag>
           <span>→</span>
-          <a-tag color="orange">② 待审核</a-tag>
+          <a-tag color="orange">{{ t('admin.teaching.allClasses.alert.step2') }}</a-tag>
           <span>→</span>
-          <a-tag color="blue">③ 未支付</a-tag>
+          <a-tag color="blue">{{ t('admin.teaching.allClasses.alert.step3') }}</a-tag>
           <span>→</span>
-          <a-tag color="green">④ 已支付</a-tag>
+          <a-tag color="green">{{ t('admin.teaching.allClasses.alert.step4') }}</a-tag>
         </div>
       </template>
     </a-alert>
@@ -36,38 +36,38 @@
 
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
-          <a-input v-model:value="keyword" placeholder="搜索学员/导师姓名..." allow-clear style="width: 200px" @press-enter="handleSearch" />
+          <a-input v-model:value="keyword" :placeholder="t('admin.teaching.allClasses.filter.searchPlaceholder')" allow-clear style="width: 200px" @press-enter="handleSearch" />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filterCourseType" placeholder="全部课程类型" allow-clear style="width: 150px">
-            <a-select-option value="onboarding_interview">入职面试</a-select-option>
-            <a-select-option value="mock_interview">模拟面试</a-select-option>
-            <a-select-option value="written_test">笔试辅导</a-select-option>
-            <a-select-option value="midterm_exam">模拟期中考试</a-select-option>
-            <a-select-option value="communication_midterm">人际关系期中考试</a-select-option>
-            <a-select-option value="qbank_request">题库申请</a-select-option>
+          <a-select v-model:value="filterCourseType" :placeholder="t('admin.teaching.allClasses.filter.courseTypePlaceholder')" allow-clear style="width: 150px">
+            <a-select-option value="onboarding_interview">{{ t('admin.teaching.allClasses.filter.courseTypes.onboarding_interview') }}</a-select-option>
+            <a-select-option value="mock_interview">{{ t('admin.teaching.allClasses.filter.courseTypes.mock_interview') }}</a-select-option>
+            <a-select-option value="written_test">{{ t('admin.teaching.allClasses.filter.courseTypes.written_test') }}</a-select-option>
+            <a-select-option value="midterm_exam">{{ t('admin.teaching.allClasses.filter.courseTypes.midterm_exam') }}</a-select-option>
+            <a-select-option value="communication_midterm">{{ t('admin.teaching.allClasses.filter.courseTypes.communication_midterm') }}</a-select-option>
+            <a-select-option value="qbank_request">{{ t('admin.teaching.allClasses.filter.courseTypes.qbank_request') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filterSource" placeholder="全部来源" allow-clear style="width: 120px">
-            <a-select-option value="mentor">导师端</a-select-option>
-            <a-select-option value="headteacher">班主任端</a-select-option>
-            <a-select-option value="assistant">助教端</a-select-option>
+          <a-select v-model:value="filterSource" :placeholder="t('admin.teaching.allClasses.filter.sourcePlaceholder')" allow-clear style="width: 120px">
+            <a-select-option value="mentor">{{ t('admin.teaching.allClasses.filter.sources.mentor') }}</a-select-option>
+            <a-select-option value="headteacher">{{ t('admin.teaching.allClasses.filter.sources.headteacher') }}</a-select-option>
+            <a-select-option value="assistant">{{ t('admin.teaching.allClasses.filter.sources.assistant') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-date-picker v-model:value="filterDateStart" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 130px" />
+          <a-date-picker v-model:value="filterDateStart" :placeholder="t('admin.teaching.allClasses.filter.dateStart')" value-format="YYYY-MM-DD" style="width: 130px" />
         </a-form-item>
         <a-form-item>
-          <a-date-picker v-model:value="filterDateEnd" placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 130px" />
+          <a-date-picker v-model:value="filterDateEnd" :placeholder="t('admin.teaching.allClasses.filter.dateEnd')" value-format="YYYY-MM-DD" style="width: 130px" />
         </a-form-item>
         <a-form-item>
           <a-space>
             <a-button type="primary" @click="handleSearch">
               <template #icon><SearchOutlined /></template>
-              搜索
+              {{ t('admin.teaching.allClasses.filter.search') }}
             </a-button>
-            <a-button @click="handleReset">重置</a-button>
+            <a-button @click="handleReset">{{ t('admin.teaching.allClasses.filter.reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
@@ -76,9 +76,9 @@
         :columns="classColumns"
         :data-source="rows"
         :row-key="(r: AllClassesRow) => r.recordId"
-        :locale="{ emptyText: '当前筛选下暂无课程记录' }"
+        :locale="{ emptyText: t('admin.teaching.allClasses.empty') }"
         :scroll="{ x: 1100 }"
-        :pagination="{ current: currentPage, pageSize, total, simple: false, showTotal: (t: number) => `共 ${t} 条记录`, onChange: onPageChange }"
+        :pagination="{ current: currentPage, pageSize, total, simple: false, showTotal: (tot: number) => t('admin.teaching.allClasses.pagination.total', { total: tot }), onChange: onPageChange }"
         :row-class-name="(record: AllClassesRow) => rowClassMap[record.displayStatus] || ''"
       >
         <template #bodyCell="{ column, record }">
@@ -108,8 +108,8 @@
             <span v-else style="color: #94a3b8">-</span>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button v-if="record.displayStatus === 'pending'" type="primary" size="small" @click="openDetail(record.recordId)">审核</a-button>
-            <a-button v-else type="link" size="small" :danger="record.displayStatus === 'rejected'" @click="openDetail(record.recordId)">查看</a-button>
+            <a-button v-if="record.displayStatus === 'pending'" type="primary" size="small" @click="openDetail(record.recordId)">{{ t('admin.teaching.allClasses.action.review') }}</a-button>
+            <a-button v-else type="link" size="small" :danger="record.displayStatus === 'rejected'" @click="openDetail(record.recordId)">{{ t('admin.teaching.allClasses.action.view') }}</a-button>
           </template>
         </template>
       </a-table>
@@ -127,6 +127,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
@@ -139,6 +140,8 @@ import {
   type AllClassesSummary,
   type AllClassesTab
 } from '@osg/shared/api/admin/allClasses'
+
+const { t } = useI18n()
 
 const tabBadgeColor: Record<string, string> = {
   all: '#1890ff',
@@ -176,18 +179,18 @@ const rowClassMap: Record<string, string> = {
   rejected: 'row-rejected'
 }
 
-const classColumns = [
-  { title: '课程ID', dataIndex: 'classId', key: 'classId', width: 80, fixed: 'left' as const },
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
-  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 100 },
-  { title: '课程类型', dataIndex: 'courseTypeLabel', key: 'courseTypeLabel', width: 110 },
-  { title: '时长', dataIndex: 'durationHours', key: 'durationHours', width: 70 },
-  { title: '日期', dataIndex: 'classDate', key: 'classDate', width: 100 },
-  { title: '来源', dataIndex: 'sourceLabel', key: 'sourceLabel', width: 90 },
-  { title: '状态', dataIndex: 'displayStatusLabel', key: 'displayStatusLabel', width: 80 },
-  { title: '评价', dataIndex: 'rate', key: 'rate', width: 70 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
-]
+const classColumns = computed(() => [
+  { title: t('admin.teaching.allClasses.columns.classId'), dataIndex: 'classId', key: 'classId', width: 80, fixed: 'left' as const },
+  { title: t('admin.teaching.allClasses.columns.student'), dataIndex: 'studentName', key: 'studentName', width: 120 },
+  { title: t('admin.teaching.allClasses.columns.mentor'), dataIndex: 'mentorName', key: 'mentorName', width: 100 },
+  { title: t('admin.teaching.allClasses.columns.courseType'), dataIndex: 'courseTypeLabel', key: 'courseTypeLabel', width: 110 },
+  { title: t('admin.teaching.allClasses.columns.duration'), dataIndex: 'durationHours', key: 'durationHours', width: 70 },
+  { title: t('admin.teaching.allClasses.columns.date'), dataIndex: 'classDate', key: 'classDate', width: 100 },
+  { title: t('admin.teaching.allClasses.columns.source'), dataIndex: 'sourceLabel', key: 'sourceLabel', width: 90 },
+  { title: t('admin.teaching.allClasses.columns.status'), dataIndex: 'displayStatusLabel', key: 'displayStatusLabel', width: 80 },
+  { title: t('admin.teaching.allClasses.columns.rate'), dataIndex: 'rate', key: 'rate', width: 70 },
+  { title: t('admin.teaching.allClasses.columns.action'), dataIndex: 'action', key: 'action', width: 80, fixed: 'right' as const },
+])
 
 const keyword = ref('')
 const filterCourseType = ref('')
@@ -209,15 +212,15 @@ const summary = ref<AllClassesSummary>({
   paidCount: 0,
   rejectedCount: 0,
   selectedTab: 'all',
-  flowSteps: ['导师/班主任/助教提交', '待审核', '未支付', '已支付']
+  flowSteps: []
 })
 
 const tabs = computed(() => ([
-  { key: 'all' as const, label: '全部', count: summary.value.allCount },
-  { key: 'pending' as const, label: '待审核', count: summary.value.pendingCount },
-  { key: 'unpaid' as const, label: '未支付', count: summary.value.unpaidCount },
-  { key: 'paid' as const, label: '已支付', count: summary.value.paidCount },
-  { key: 'rejected' as const, label: '已驳回', count: summary.value.rejectedCount }
+  { key: 'all' as const, label: t('admin.teaching.allClasses.tabs.all'), count: summary.value.allCount },
+  { key: 'pending' as const, label: t('admin.teaching.allClasses.tabs.pending'), count: summary.value.pendingCount },
+  { key: 'unpaid' as const, label: t('admin.teaching.allClasses.tabs.unpaid'), count: summary.value.unpaidCount },
+  { key: 'paid' as const, label: t('admin.teaching.allClasses.tabs.paid'), count: summary.value.paidCount },
+  { key: 'rejected' as const, label: t('admin.teaching.allClasses.tabs.rejected'), count: summary.value.rejectedCount }
 ]))
 
 const onPageChange = (page: number) => {
@@ -237,7 +240,7 @@ const loadData = async () => {
     summary.value = response.summary
     total.value = response.total ?? 0
   } catch (_error) {
-    message.error('全部课程加载失败')
+    message.error(t('admin.teaching.allClasses.messages.loadError'))
   }
 }
 
@@ -268,24 +271,24 @@ const openDetail = async (recordId: number) => {
     detail.value = await getAllClassesDetail(recordId)
     detailVisible.value = true
   } catch (_error) {
-    message.error('课程详情加载失败')
+    message.error(t('admin.teaching.allClasses.messages.detailError'))
   }
 }
 
 const handleApprove = () => {
-  message.success('已通过审核')
+  message.success(t('admin.teaching.allClasses.messages.approveSuccess'))
   detailVisible.value = false
   void loadData()
 }
 
 const handleReject = () => {
-  message.success('已驳回')
+  message.success(t('admin.teaching.allClasses.messages.rejectSuccess'))
   detailVisible.value = false
   void loadData()
 }
 
 const handleExport = () => {
-  message.info('导出功能将在后续版本中接入')
+  message.info(t('admin.teaching.allClasses.messages.exportInfo'))
 }
 
 const formatDate = (value?: string | null) => {

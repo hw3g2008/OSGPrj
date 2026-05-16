@@ -123,7 +123,7 @@ const close = () => {
 }
 
 const submit = () => {
-  // a-input-number :max 已会拦截超限输入，此处提交前再做一道兼险
+  // i18n-skip-line: dev comment — a-input-number :max 已会拦截超限输入，此处提交前再做一道兼险
   if ((amountInput.value ?? 0) > MAX_AMOUNT) {
     message.error(MAX_AMOUNT_MESSAGE)
     return

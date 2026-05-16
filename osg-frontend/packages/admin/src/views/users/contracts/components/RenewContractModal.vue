@@ -19,7 +19,7 @@
       layout="vertical"
       :required-mark="false"
     >
-      <!-- ══ 学员选择 ══ -->
+      <!-- ══ Student Selection ══ -->
       <div class="renew-contract-modal__section">
         <a-form-item>
           <template #label>
@@ -54,7 +54,7 @@
         </a-form-item>
       </div>
 
-      <!-- ══ 合同金额 ══ -->
+      <!-- ══ Contract Amount ══ -->
       <div class="renew-contract-modal__part-title">
         <div class="renew-contract-modal__part-title-heading">
           <i class="mdi mdi-cash-multiple" aria-hidden="true"></i>
@@ -134,7 +134,7 @@
         </div>
       </div>
 
-      <!-- ══ 合同期限 & 续签原因 ══ -->
+      <!-- ══ Contract Duration & Renewal Reason ══ -->
       <div class="renew-contract-modal__part-title">
         <div class="renew-contract-modal__part-title-heading">
           <i class="mdi mdi-calendar-range" aria-hidden="true"></i>
@@ -189,7 +189,7 @@
         </div>
       </div>
 
-      <!-- ══ 附件 & 备注 ══ -->
+      <!-- ══ Attachment & Notes ══ -->
       <div class="renew-contract-modal__section">
         <div class="renew-contract-modal__grid">
           <a-form-item class="renew-contract-modal__field--wide">
@@ -272,9 +272,9 @@ const props = defineProps<{
   studentOptions: StudentOption[]
   presetContract?: ContractListItem | null
   /**
-   * 批次 7.5「重新加入」：true 时提交时附带 reactivateAccount=true，
-   * 后端在续签事务内把退费学员账号置回正常（accountStatus=0 + frozen=0）。
-   * 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.6
+   * Batch 7.5 "re-join": when true, submits with reactivateAccount=true.
+   * Backend reactivates the refunded student account in the same transaction (accountStatus=0 + frozen=0).
+   * See docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.6
    */
   reactivateAccount?: boolean
 }>()
@@ -468,7 +468,7 @@ const handleSubmit = async () => {
       otherReason: form.otherReason.trim() || undefined,
       attachmentPath: form.attachmentPath || undefined,
       remark: form.remark.trim() || undefined,
-      // 批次 7.5：退费学员「重新加入」走该 flag，由后端在同事务内激活账号
+      // i18n-skip-line: dev comment — 批次 7.5：退费学员「重新加入」走该 flag，由后端在同事务内激活账号
       reactivateAccount: props.reactivateAccount === true ? true : undefined,
     })
     message.success(props.reactivateAccount ? t('admin.users.contracts.renew.successReactivate') : t('admin.users.contracts.renew.successRenew'))

@@ -66,7 +66,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 import type { MockPracticeListItem } from '@osg/shared/api/admin/mockPractice'
-// §D.2 admin mock-practice 反馈模态状态显示接入 SSOT composable
+// i18n-skip-line: dev comment — §D.2 admin mock-practice 反馈模态状态显示接入 SSOT composable
 import { deriveMockPracticeStatus } from '@osg/shared/composables'
 
 const { t } = useI18n()
@@ -95,7 +95,7 @@ const practiceTypeLabel = computed(() => {
   return t('admin.career.mockPractice.type.default')
 })
 
-/** §D.2 接入 deriveMockPracticeStatus（保留 'scheduled' → '已安排' 兼容映射） */
+/** §D.2 deriveMockPracticeStatus integration (keeps 'scheduled' compat mapping) */ // i18n-skip-line: dev comment
 const statusLabel = computed(() => {
   const value = props.row?.status
   if (value === 'scheduled') return t('admin.career.mockPractice.status.scheduled')

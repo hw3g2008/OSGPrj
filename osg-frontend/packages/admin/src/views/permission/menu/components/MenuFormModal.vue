@@ -38,13 +38,13 @@
         <a-input v-model:value="formState.menuName" :placeholder="t('admin.permission.menu.modal.namePlaceholder')" />
       </a-form-item>
       <a-form-item v-if="formState.menuType === 'C'" :label="t('admin.permission.menu.modal.pathLabel')">
-        <a-input v-model:value="formState.path" placeholder="如：permission/menu" />
+        <a-input v-model:value="formState.path" placeholder="e.g. permission/menu" />
       </a-form-item>
       <a-form-item v-if="formState.menuType === 'C'" :label="t('admin.permission.menu.modal.componentLabel')">
-        <a-input v-model:value="formState.component" placeholder="如：permission/menu/index" />
+        <a-input v-model:value="formState.component" placeholder="e.g. permission/menu/index" />
       </a-form-item>
       <a-form-item v-if="formState.menuType === 'F'" :label="t('admin.permission.menu.modal.permsLabel')" required>
-        <a-input v-model:value="formState.perms" placeholder="如：system:menu:list" />
+        <a-input v-model:value="formState.perms" placeholder="e.g. system:menu:list" />
       </a-form-item>
       <a-row :gutter="16">
         <a-col :span="12">
@@ -88,7 +88,7 @@ const emit = defineEmits<{
   'submit': [payload: MenuMutationPayload]
 }>()
 
-// 动态获取上级菜单选项
+// i18n-skip-line: dev comment — 动态获取上级菜单选项
 const parentDirOptions = ref<MenuListItem[]>([])   // dir list for menu-C parent
 const parentMenuOptions = ref<MenuListItem[]>([])  // menu list for button-F parent
 const loadParentMenus = async () => {
@@ -97,7 +97,7 @@ const loadParentMenus = async () => {
     parentDirOptions.value = list.filter((m) => m.menuType === 'M')
     parentMenuOptions.value = list.filter((m) => m.menuType === 'C')
   } catch {
-    // 静默
+    // i18n-skip-line: dev comment — 静默
   }
 }
 

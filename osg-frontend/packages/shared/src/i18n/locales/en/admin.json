@@ -1383,7 +1383,8 @@
       "messageManagement": "Messages",
       "complaints": "Complaints",
       "operationLogs": "Operation Logs"
-    }
+    },
+    "noPermissionWarning": "You do not have permission to access this page"
   },
   "career": {
     "positions": {
@@ -2139,6 +2140,57 @@
           "allStudent": "All Students",
           "targetStudent": "Specific Students"
         }
+      }
+    },
+    "modal": {
+      "title": "Profile Settings",
+      "fields": {
+        "name": {
+          "label": "Name",
+          "placeholder": "Enter name"
+        },
+        "account": {
+          "label": "Account",
+          "placeholder": "Current login account"
+        },
+        "email": {
+          "label": "Email",
+          "placeholder": "No email configured"
+        },
+        "oldPassword": {
+          "label": "Old Password",
+          "placeholder": "Required when changing password"
+        },
+        "newPassword": {
+          "label": "New Password",
+          "placeholder": "8-20 chars, letters and numbers"
+        },
+        "confirmPassword": {
+          "label": "Confirm Password",
+          "placeholder": "Re-enter new password"
+        }
+      },
+      "passwordSection": {
+        "hint": "Enter old password before changing password"
+      },
+      "cancel": "Cancel",
+      "save": "Save",
+      "validation": {
+        "newPasswordRequired": "Enter new password",
+        "passwordLength": "Password must be 8-20 characters",
+        "passwordNeedsLetter": "Password must contain letters",
+        "passwordNeedsNumber": "Password must contain numbers",
+        "oldPasswordRequired": "Enter old password",
+        "confirmPasswordRequired": "Confirm new password",
+        "passwordMismatch": "Passwords do not match",
+        "nameRequired": "Enter name"
+      },
+      "errors": {
+        "passwordChangeFailed": "Failed to change password, please check input",
+        "profileUpdateFailed": "Failed to update profile, please check input"
+      },
+      "messages": {
+        "saveSuccess": "Saved successfully"
       }
     }
   },

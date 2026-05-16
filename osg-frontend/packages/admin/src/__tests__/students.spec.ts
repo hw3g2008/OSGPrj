@@ -38,8 +38,8 @@ describe('学员详情入口与编辑联动', () => {
     expect(studentsViewSource).toContain('students-banner__cta')
     expect(studentsViewSource).toContain('action-cell')
     expect(studentsViewSource).toContain('btn-text-sm')
-    expect(studentsViewSource).toContain('详情')
-    expect(studentsViewSource).toContain('编辑')
+    expect(studentsViewSource).toContain("t('admin.students.index.detail')")
+    expect(studentsViewSource).toContain("t('admin.students.index.edit')")
     expect(studentsViewSource).toContain('<ActionDropdown')
   })
 
@@ -58,11 +58,11 @@ describe('学员详情入口与编辑联动', () => {
     expect(studentsViewSource).toContain('permission-table')
     expect(studentsViewSource).not.toContain('min-width: 1540px')
     expect(filterBarSource).toContain('filter-bar')
-    expect(actionDropdownSource).toContain('更多')
+    expect(actionDropdownSource).toContain("t('admin.students.index.more')")
   })
 
   it('keeps the student table in a dense single-screen layout instead of clipping the right-side columns', () => {
-    expect(studentsViewSource).toContain("{ key: 'blacklist', label: '黑名单' }")
+    expect(studentsViewSource).toContain("t('admin.students.index.tabs.blacklist')")
     expect(studentsViewSource).toContain('font-size: 12px')
     expect(actionDropdownSource).not.toContain("{ key: 'detail', label: '详情' }")
     expect(actionDropdownSource).not.toContain("{ key: 'edit', label: '编辑' }")
@@ -116,26 +116,23 @@ describe('学员详情入口与编辑联动', () => {
   })
 
   it('keeps the add-student modal step flow and contract step fields wired in the component source', () => {
-    expect(addStudentModalSource).toContain('Step 1 · 基本信息')
-    expect(addStudentModalSource).toContain('Step 2 · 合同信息')
-    expect(addStudentModalSource).toContain('下一步')
-    expect(addStudentModalSource).toContain('返回上一步')
-    expect(addStudentModalSource).toContain('合同金额')
-    expect(addStudentModalSource).toContain('学习时长（小时）')
-    expect(addStudentModalSource).toContain('开始日期')
-    expect(addStudentModalSource).toContain('结束日期')
+    expect(addStudentModalSource).toContain("t('admin.students.addModal.sections.basicInfo')")
+    expect(addStudentModalSource).toContain("t('admin.students.addModal.sections.contractInfo')")
+    expect(addStudentModalSource).toContain("t('admin.students.addModal.fields.totalHours')")
+    expect(addStudentModalSource).toContain("t('admin.students.addModal.fields.startDate')")
+    expect(addStudentModalSource).toContain("t('admin.students.addModal.fields.endDate')")
   })
 
   it('wires the direction multiselect via osg_major_direction dict and keeps searchable mentor selectors in add-student modal', () => {
     expect(addStudentModalSource).toContain("getAdminDictOptions('osg_major_direction')")
     expect(addStudentModalSource).toContain('mode="multiple"')
-    expect(addStudentModalSource).toContain('输入姓名搜索班主任')
-    expect(addStudentModalSource).toContain('输入姓名搜索助教')
+    expect(addStudentModalSource).toContain("t('admin.students.addModal.placeholders.searchMentor')")
+    expect(addStudentModalSource).toContain("t('admin.students.addModal.placeholders.searchAssistant')")
   })
 
   it('exposes the end_contract status action wired through the dropdown, type chain and modal copy', () => {
     // 操作下拉新菜单项
-    expect(studentsViewSource).toContain('<a-menu-item key="end_contract">结束合同</a-menu-item>')
+    expect(studentsViewSource).toContain("t('admin.students.index.endContract')")
     // 类型链路
     expect(studentsViewSource).toContain("'refund' | 'end_contract'")
     expect(studentsViewSource).toContain("'freeze' | 'restore' | 'refund' | 'end_contract'")

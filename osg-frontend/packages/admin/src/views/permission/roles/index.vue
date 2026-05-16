@@ -188,11 +188,11 @@ const loadRoleList = async () => {
     const roles = res.rows || []
     pagination.total = res.total || 0
 
-    // 为每个角色加载权限信息
+    // i18n-skip-line: dev comment — 为每个角色加载权限信息
     const rolesWithMenus = await Promise.all(
       roles.map(async (role) => {
         if (role.roleKey === 'super_admin') {
-          // 超级管理员显示全部权限
+          // i18n-skip-line: dev comment — 超级管理员显示全部权限
           return {
             ...role,
             menuNames: [t('admin.permission.roles.allPerms')]
@@ -203,16 +203,16 @@ const loadRoleList = async () => {
           const menuRes = await getRoleMenuIds(role.roleId)
           const checkedSet = new Set(menuRes.checkedKeys || [])
 
-          // 收集被选中叶子所属的二级菜单名称（去重）
+          // i18n-skip-line: dev comment — 收集被选中叶子所属的二级菜单名称（去重）
           const secondLevelNames: string[] = []
           const menus = menuRes.menus || []
           for (const top of menus) {
             if (!top.children?.length) {
-              // 一级无子项（如「首页」），跳过
+              // i18n-skip-line: dev comment — 一级无子项（如「首页」），跳过
               continue
             }
             for (const second of top.children) {
-              // 检查二级菜单本身或其下任意子项是否被选中
+              // i18n-skip-line: dev comment — 检查二级菜单本身或其下任意子项是否被选中
               const hasChecked = checkedSet.has(second.id) ||
                 (second.children || []).some((c: any) => checkedSet.has(c.id))
               if (hasChecked && !secondLevelNames.includes(second.label)) {

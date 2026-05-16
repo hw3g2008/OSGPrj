@@ -8,32 +8,32 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-file-check-outline" aria-hidden="true" />
-        <span>审核面试真题</span>
+        <span>{{ t('admin.resources.questions.modal.title') }}</span>
       </span>
     </template>
 
     <div v-if="row" style="display:grid;gap:18px">
-      <a-card size="small" title="学员信息">
+      <a-card size="small" :title="t('admin.resources.questions.modal.studentInfo')">
         <a-descriptions :column="3" size="small">
-          <a-descriptions-item label="提交学员">{{ row.studentName }} <span style="color:#94a3b8">{{ row.studentId || '—' }}</span></a-descriptions-item>
-          <a-descriptions-item label="来源">{{ row.sourceType }}</a-descriptions-item>
-          <a-descriptions-item label="提交时间">{{ formatTime(row.submittedAt) }}</a-descriptions-item>
+          <a-descriptions-item :label="t('admin.resources.questions.modal.submittedBy')">{{ row.studentName }} <span style="color:#94a3b8">{{ row.studentId || '—' }}</span></a-descriptions-item>
+          <a-descriptions-item :label="t('admin.resources.questions.columns.source')">{{ formatSourceType(row.sourceType) }}</a-descriptions-item>
+          <a-descriptions-item :label="t('admin.resources.questions.columns.submittedAt')">{{ formatTime(row.submittedAt) }}</a-descriptions-item>
         </a-descriptions>
       </a-card>
 
-      <a-card size="small" title="面试信息">
+      <a-card size="small" :title="t('admin.resources.questions.modal.interviewInfo')">
         <a-descriptions :column="3" size="small">
-          <a-descriptions-item label="公司">{{ row.companyName }}</a-descriptions-item>
-          <a-descriptions-item label="部门">{{ row.departmentName }}</a-descriptions-item>
-          <a-descriptions-item label="办公地点">{{ row.officeLocation }}</a-descriptions-item>
-          <a-descriptions-item label="轮次">{{ row.interviewRound }}</a-descriptions-item>
-          <a-descriptions-item label="面试日期">{{ formatTime(row.interviewDate) }}</a-descriptions-item>
-          <a-descriptions-item label="面试官">{{ row.interviewerName || '—' }}</a-descriptions-item>
-          <a-descriptions-item label="面试状态">{{ row.interviewStatus }}</a-descriptions-item>
+          <a-descriptions-item :label="t('admin.resources.questions.columns.company')">{{ row.companyName }}</a-descriptions-item>
+          <a-descriptions-item :label="t('admin.resources.questions.columns.department')">{{ row.departmentName }}</a-descriptions-item>
+          <a-descriptions-item :label="t('admin.resources.questions.columns.officeLocation')">{{ row.officeLocation }}</a-descriptions-item>
+          <a-descriptions-item :label="t('admin.resources.questions.columns.round')">{{ row.interviewRound }}</a-descriptions-item>
+          <a-descriptions-item :label="t('admin.resources.questions.modal.interviewDate')">{{ formatTime(row.interviewDate) }}</a-descriptions-item>
+          <a-descriptions-item :label="t('admin.resources.questions.modal.interviewer')">{{ row.interviewerName || '—' }}</a-descriptions-item>
+          <a-descriptions-item :label="t('admin.resources.questions.modal.interviewStatus')">{{ row.interviewStatus }}</a-descriptions-item>
         </a-descriptions>
       </a-card>
 
-      <a-card size="small" title="面试题目">
+      <a-card size="small" :title="t('admin.resources.questions.modal.questions')">
         <ol style="display:grid;gap:10px;margin:0;padding-left:18px">
           <li v-for="(item, index) in row.questionItems || []" :key="`${row.questionId}-${index}`" style="padding:10px 12px;border-left:4px solid #4f83cc;border-radius:12px;background:#f8fafc">
             <strong>Q{{ index + 1 }}</strong>
@@ -42,37 +42,45 @@
         </ol>
       </a-card>
 
-      <a-card size="small" title="补充说明">
-        <p style="margin:0;color:#334155">{{ row.supplementalNote || '无补充说明' }}</p>
+      <a-card size="small" :title="t('admin.resources.questions.modal.additionalNotes')">
+        <p style="margin:0;color:#334155">{{ row.supplementalNote || t('admin.resources.questions.modal.noAdditionalNotes') }}</p>
       </a-card>
 
       <a-alert type="success" show-icon style="border-radius:12px">
-        <template #message>开放范围预览</template>
+        <template #message>{{ t('admin.resources.questions.modal.scopePreview') }}</template>
         <template #description>
-          将开放给申请 {{ row.sharePreview || '同公司 + 同部门 + 同办公地点 + 同面试状态' }} 的学生，
-          当前符合条件：{{ row.eligibleStudentCount || 0 }} 人
+          {{ t('admin.resources.questions.modal.willShareWith') }} {{ row.sharePreview || t('admin.resources.questions.modal.sameScope') }} {{ t('admin.resources.questions.modal.students') }}，
+          {{ t('admin.resources.questions.modal.currentlyMatching') }}：{{ row.eligibleStudentCount || 0 }} {{ t('admin.resources.questions.modal.people') }}
         </template>
       </a-alert>
 
       <a-form layout="vertical">
-        <a-form-item label="审核备注">
-          <a-textarea v-model:value="comment" :rows="3" placeholder="补充审核意见（可选）" />
+        <a-form-item :label="t('admin.resources.questions.modal.reviewNotes')">
+          <a-textarea v-model:value="comment" :rows="3" :placeholder="t('admin.resources.questions.modal.reviewNotesPlaceholder')" />
         </a-form-item>
       </a-form>
     </div>
 
     <template #footer>
-      <a-button @click="$emit('update:modelValue', false)">取消</a-button>
-      <a-button danger :loading="submitting" :disabled="!row" @click="emitReject">驳回</a-button>
-      <a-button type="primary" :loading="submitting" :disabled="!row" @click="emitApprove">通过并开放</a-button>
+      <a-button @click="$emit('update:modelValue', false)">{{ t('admin.resources.questions.actions.cancel') }}</a-button>
+      <a-button danger :loading="submitting" :disabled="!row" @click="emitReject">{{ t('admin.resources.questions.actions.reject') }}</a-button>
+      <a-button type="primary" :loading="submitting" :disabled="!row" @click="emitApprove">{{ t('admin.resources.questions.actions.approveAndShare') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { i18n } from '@osg/shared'
 import type { InterviewQuestionRow } from '@osg/shared/api/admin/question'
 import { OverlaySurfaceModal } from '@osg/shared/components'
+
+const t = (key: string) => (i18n.global.t as unknown as (k: string) => string)(key)
+
+const formatSourceType = (sourceType: string) =>
+  sourceType === '入职面试申请' // i18n-skip-line: backend values
+    ? t('admin.resources.questions.sources.interviewApplication')
+    : t('admin.resources.questions.sources.selfSubmitted')
 
 const props = defineProps<{
   modelValue: boolean

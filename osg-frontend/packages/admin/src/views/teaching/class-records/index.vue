@@ -1,27 +1,27 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="课程记录" title-en="Class Records">
+    <PageHeader :title-zh="t('admin.teaching.classRecords.pageTitle')" title-en="Class Records">
       <template #actions>
         <a-button :loading="exporting" @click="handleExport">
           <template #icon><ExportOutlined /></template>
-          {{ exporting ? '导出中...' : '导出' }}
+          {{ exporting ? t('admin.teaching.classRecords.exporting') : t('admin.teaching.classRecords.export') }}
         </a-button>
       </template>
     </PageHeader>
 
     <a-alert type="info" show-icon style="border-radius: 12px; background: linear-gradient(135deg, #eef2ff, #e0e7ff); border: none">
-      <template #message><strong>课程记录流程</strong></template>
+      <template #message><strong>{{ t('admin.teaching.classRecords.alert.message') }}</strong></template>
       <template #description>
         <a-space wrap>
-          <a-tag class="flow-tag--purple">① 学员申请岗位/模拟应聘</a-tag>
+          <a-tag class="flow-tag--purple">{{ t('admin.teaching.classRecords.alert.step1') }}</a-tag>
           <span>→</span>
-          <a-tag class="flow-tag--purple">② 班主任分配导师</a-tag>
+          <a-tag class="flow-tag--purple">{{ t('admin.teaching.classRecords.alert.step2') }}</a-tag>
           <span>→</span>
-          <a-tag class="flow-tag--purple">③ 导师上课并申报记录</a-tag>
+          <a-tag class="flow-tag--purple">{{ t('admin.teaching.classRecords.alert.step3') }}</a-tag>
           <span>→</span>
-          <a-tag color="orange">④ 后台审核</a-tag>
+          <a-tag color="orange">{{ t('admin.teaching.classRecords.alert.step4') }}</a-tag>
           <span>→</span>
-          <a-tag color="green">⑤ 结算中心转账</a-tag>
+          <a-tag color="green">{{ t('admin.teaching.classRecords.alert.step5') }}</a-tag>
         </a-space>
       </template>
     </a-alert>
@@ -37,43 +37,43 @@
     <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
-          <a-input v-model:value="keyword" placeholder="搜索学员/申报人..." allow-clear style="width: 180px" data-field-name="搜索" @pressEnter="loadData" />
+          <a-input v-model:value="keyword" :placeholder="t('admin.teaching.classRecords.filter.searchPlaceholder')" allow-clear style="width: 180px" @pressEnter="loadData" data-field-name="搜索"/><!-- i18n-skip-line: playwright selector -->
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filterCoachingType" placeholder="辅导类型" allow-clear style="width: 130px" data-field-name="辅导类型">
-            <a-select-option value="position_coaching">岗位辅导</a-select-option>
-            <a-select-option value="mock_application">模拟应聘</a-select-option>
+          <a-select v-model:value="filterCoachingType" :placeholder="t('admin.teaching.classRecords.filter.coachingTypePlaceholder')" allow-clear style="width: 130px" data-field-name="辅导类型"><!-- i18n-skip-line: playwright selector -->
+            <a-select-option value="position_coaching">{{ t('admin.teaching.classRecords.filter.coachingTypes.position') }}</a-select-option>
+            <a-select-option value="mock_application">{{ t('admin.teaching.classRecords.filter.coachingTypes.mock') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filterCourseContent" placeholder="课程内容" allow-clear style="width: 140px" data-field-name="课程内容">
-            <a-select-option value="new_resume">新简历</a-select-option>
-            <a-select-option value="resume_update">简历更新</a-select-option>
-            <a-select-option value="case_prep">Case准备</a-select-option>
-            <a-select-option value="mock_interview">模拟面试</a-select-option>
-            <a-select-option value="communication_midterm">人际关系期中考试</a-select-option>
-            <a-select-option value="midterm_exam">模拟期中考试</a-select-option>
-            <a-select-option value="other">其他</a-select-option>
+          <a-select v-model:value="filterCourseContent" :placeholder="t('admin.teaching.classRecords.filter.courseContentPlaceholder')" allow-clear style="width: 140px" data-field-name="课程内容"><!-- i18n-skip-line: playwright selector -->
+            <a-select-option value="new_resume">{{ t('admin.teaching.classRecords.filter.courseContents.new_resume') }}</a-select-option>
+            <a-select-option value="resume_update">{{ t('admin.teaching.classRecords.filter.courseContents.resume_update') }}</a-select-option>
+            <a-select-option value="case_prep">{{ t('admin.teaching.classRecords.filter.courseContents.case_prep') }}</a-select-option>
+            <a-select-option value="mock_interview">{{ t('admin.teaching.classRecords.filter.courseContents.mock_interview') }}</a-select-option>
+            <a-select-option value="communication_midterm">{{ t('admin.teaching.classRecords.filter.courseContents.communication_midterm') }}</a-select-option>
+            <a-select-option value="midterm_exam">{{ t('admin.teaching.classRecords.filter.courseContents.midterm_exam') }}</a-select-option>
+            <a-select-option value="other">{{ t('admin.teaching.classRecords.filter.courseContents.other') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filterReporterRole" placeholder="申报人角色" allow-clear style="width: 130px" data-field-name="申报人角色">
-            <a-select-option value="mentor">导师</a-select-option>
-            <a-select-option value="headteacher">班主任</a-select-option>
-            <a-select-option value="assistant">助教</a-select-option>
+          <a-select v-model:value="filterReporterRole" :placeholder="t('admin.teaching.classRecords.filter.reporterRolePlaceholder')" allow-clear style="width: 130px" data-field-name="申报人角色"><!-- i18n-skip-line: playwright selector -->
+            <a-select-option value="mentor">{{ t('admin.teaching.classRecords.filter.sources.mentor') }}</a-select-option>
+            <a-select-option value="headteacher">{{ t('admin.teaching.classRecords.filter.sources.headteacher') }}</a-select-option>
+            <a-select-option value="assistant">{{ t('admin.teaching.classRecords.filter.sources.assistant') }}</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="上课日期">
+        <a-form-item :label="t('admin.teaching.classRecords.filter.dateLabel')">
           <a-space>
-            <a-date-picker v-model:value="filterDateStart" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 140px" data-field-name="上课日期开始" />
+            <a-date-picker v-model:value="filterDateStart" :placeholder="t('admin.teaching.classRecords.filter.dateStart')" value-format="YYYY-MM-DD" style="width: 140px" data-field-name="上课日期开始"/><!-- i18n-skip-line: playwright selector -->
             <span>~</span>
-            <a-date-picker v-model:value="filterDateEnd" placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 140px" data-field-name="上课日期结束" />
+            <a-date-picker v-model:value="filterDateEnd" :placeholder="t('admin.teaching.classRecords.filter.dateEnd')" value-format="YYYY-MM-DD" style="width: 140px" data-field-name="上课日期结束"/><!-- i18n-skip-line: playwright selector -->
           </a-space>
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="loadData">
             <template #icon><SearchOutlined /></template>
-            搜索
+            {{ t('admin.teaching.classRecords.filter.search') }}
           </a-button>
         </a-form-item>
       </a-form>
@@ -94,7 +94,7 @@
         :pagination="tablePagination"
         :loading="loading"
         :row-class-name="(record: ClassRecordRow) => record.status === 'pending' ? 'row-pending' : ''"
-        :locale="{ emptyText: '暂无课程记录' }"
+        :locale="{ emptyText: t('admin.teaching.classRecords.empty') }"
         :scroll="{ x: 1200 }"
         @change="handleTableChange"
       >
@@ -115,7 +115,7 @@
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'coachingType'">
-            <a-tag :color="record.coachingType === '模拟应聘' ? 'green' : 'blue'">{{ record.coachingType }}</a-tag>
+            <a-tag :color="record.coachingType === t('admin.teaching.classRecords.courseTypes.mock') ? 'green' : 'blue'">{{ record.coachingType }}</a-tag>
             <div v-if="record.coachingCompany" style="font-size: 12px; color: #64748b; margin-top: 2px">{{ record.coachingCompany }}</div>
           </template>
           <template v-else-if="column.dataIndex === 'courseContent'">
@@ -133,8 +133,8 @@
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <a-space>
-              <a-button v-if="record.status === 'pending'" type="primary" size="small" data-surface-trigger="modal-class-record-review" :data-surface-sample-key="`record-${record.recordId}`" @click="openRecordReview(record)">课程审核</a-button>
-              <a-button v-if="record.status !== 'pending'" type="link" size="small" data-surface-trigger="modal-class-record-detail" :data-surface-sample-key="`record-${record.recordId}`" @click="openRecordDetail(record)">详情</a-button>
+              <a-button v-if="record.status === 'pending'" type="primary" size="small" data-surface-trigger="modal-class-record-review" :data-surface-sample-key="`record-${record.recordId}`" @click="openRecordReview(record)">{{ t('admin.teaching.classRecords.action.review') }}</a-button>
+              <a-button v-if="record.status !== 'pending'" type="link" size="small" data-surface-trigger="modal-class-record-detail" :data-surface-sample-key="`record-${record.recordId}`" @click="openRecordDetail(record)">{{ t('admin.teaching.classRecords.action.detail') }}</a-button>
             </a-space>
           </template>
         </template>
@@ -160,6 +160,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { usePagination } from '@osg/shared'
@@ -175,19 +176,21 @@ import ClassRecordDetailModal from './components/ClassRecordDetailModal.vue'
 import ClassRecordReviewModal from './components/ClassRecordReviewModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 
-const recordColumns = [
-  { title: '记录ID', dataIndex: 'recordId', key: 'recordId', width: 90, fixed: 'left' as const },
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 120 },
-  { title: '申报人', dataIndex: 'mentorName', key: 'mentorName', width: 120 },
-  { title: '辅导内容', dataIndex: 'coachingType', key: 'coachingType', width: 130 },
-  { title: '课程内容', dataIndex: 'courseContent', key: 'courseContent', width: 120 },
-  { title: '上课日期', dataIndex: 'classDate', key: 'classDate', width: 110 },
-  { title: '时长', dataIndex: 'durationHours', key: 'durationHours', width: 70 },
-  { title: '课时费', dataIndex: 'courseFee', key: 'courseFee', width: 100 },
-  { title: '学员评价', dataIndex: 'studentRating', key: 'studentRating', width: 90 },
-  { title: '审核状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 160, fixed: 'right' as const },
-]
+const { t } = useI18n()
+
+const recordColumns = computed(() => [
+  { title: t('admin.teaching.classRecords.columns.recordId'), dataIndex: 'recordId', key: 'recordId', width: 90, fixed: 'left' as const },
+  { title: t('admin.teaching.classRecords.columns.student'), dataIndex: 'studentName', key: 'studentName', width: 120 },
+  { title: t('admin.teaching.classRecords.columns.reporter'), dataIndex: 'mentorName', key: 'mentorName', width: 120 },
+  { title: t('admin.teaching.classRecords.columns.coachingType'), dataIndex: 'coachingType', key: 'coachingType', width: 130 },
+  { title: t('admin.teaching.classRecords.columns.courseContent'), dataIndex: 'courseContent', key: 'courseContent', width: 120 },
+  { title: t('admin.teaching.classRecords.columns.classDate'), dataIndex: 'classDate', key: 'classDate', width: 110 },
+  { title: t('admin.teaching.classRecords.columns.duration'), dataIndex: 'durationHours', key: 'durationHours', width: 70 },
+  { title: t('admin.teaching.classRecords.columns.fee'), dataIndex: 'courseFee', key: 'courseFee', width: 100 },
+  { title: t('admin.teaching.classRecords.columns.studentRating'), dataIndex: 'studentRating', key: 'studentRating', width: 90 },
+  { title: t('admin.teaching.classRecords.columns.status'), dataIndex: 'status', key: 'status', width: 100 },
+  { title: t('admin.teaching.classRecords.columns.action'), dataIndex: 'action', key: 'action', width: 160, fixed: 'right' as const },
+])
 
 const keyword = ref('')
 const filterCoachingType = ref<string | undefined>(undefined)
@@ -229,26 +232,26 @@ const statCards = computed(() => {
   const current = stats.value
   if (!current) return []
   return [
-    { label: '总记录数', value: String(current.totalCount), color: '#3b82f6' },
-    { label: '待审核', value: String(current.pendingCount), color: '#f59e0b' },
-    { label: '已通过', value: String(current.approvedCount), color: '#22c55e' },
-    { label: '已驳回', value: String(current.rejectedCount), color: '#ef4444' },
-    { label: '待结算金额', value: formatFee(current.pendingSettlementAmount), color: '#3b82f6' }
+    { label: t('admin.teaching.classRecords.statCards.total'), value: String(current.totalCount), color: '#3b82f6' },
+    { label: t('admin.teaching.classRecords.statCards.pending'), value: String(current.pendingCount), color: '#f59e0b' },
+    { label: t('admin.teaching.classRecords.statCards.approved'), value: String(current.approvedCount), color: '#22c55e' },
+    { label: t('admin.teaching.classRecords.statCards.rejected'), value: String(current.rejectedCount), color: '#ef4444' },
+    { label: t('admin.teaching.classRecords.statCards.pendingSettlement'), value: formatFee(current.pendingSettlementAmount), color: '#3b82f6' }
   ]
 })
 
 const tabList = computed(() => [
-  { key: 'all', label: '全部', badge: null, badgeTone: '' },
-  { key: 'pending', label: '待审核', badge: stats.value?.pendingCount || null, badgeTone: 'warning' },
-  { key: 'approved', label: '已通过', badge: null, badgeTone: '' },
-  { key: 'rejected', label: '已驳回', badge: null, badgeTone: '' }
+  { key: 'all', label: t('admin.teaching.classRecords.tabs.all'), badge: null },
+  { key: 'pending', label: t('admin.teaching.classRecords.tabs.pending'), badge: stats.value?.pendingCount || null },
+  { key: 'approved', label: t('admin.teaching.classRecords.tabs.approved'), badge: null },
+  { key: 'rejected', label: t('admin.teaching.classRecords.tabs.rejected'), badge: null }
 ])
 
 const loadStats = async () => {
   try {
     stats.value = await getClassRecordStats(toFilters())
   } catch (_error) {
-    // 不阻塞列表加载
+    // silent
   }
 }
 
@@ -256,7 +259,7 @@ const loadData = async () => {
   try {
     await Promise.all([searchList(toFilters()), loadStats()])
   } catch (_error) {
-    message.error('课程记录加载失败')
+    message.error(t('admin.teaching.classRecords.messages.loadError'))
   }
 }
 
@@ -275,7 +278,7 @@ const loadRecordDetail = async (recordId: number) => {
     const response = await getReportDetail(recordId)
     selectedRecord.value = response
   } catch (_error) {
-    message.error('课程记录详情加载失败')
+    message.error(t('admin.teaching.classRecords.messages.detailError'))
   } finally {
     recordDetailLoading.value = false
   }
@@ -301,11 +304,11 @@ const handleReviewApprove = async (payload: { remark?: string }) => {
   reviewSubmitting.value = true
   try {
     await approveReport(selectedRecord.value.recordId, payload)
-    message.success('课时审核已通过')
+    message.success(t('admin.teaching.classRecords.messages.approveSuccess'))
     reviewVisible.value = false
     await refreshAfterMutation()
   } catch (_error) {
-    message.error('课时审核通过失败')
+    message.error(t('admin.teaching.classRecords.messages.approveFail'))
   } finally {
     reviewSubmitting.value = false
   }
@@ -319,11 +322,11 @@ const handleReviewReject = async (payload: { remark?: string }) => {
   reviewSubmitting.value = true
   try {
     await rejectReport(selectedRecord.value.recordId, payload)
-    message.success('课时审核已驳回')
+    message.success(t('admin.teaching.classRecords.messages.rejectSuccess'))
     reviewVisible.value = false
     await refreshAfterMutation()
   } catch (_error) {
-    message.error('课时审核驳回失败')
+    message.error(t('admin.teaching.classRecords.messages.rejectFail'))
   } finally {
     reviewSubmitting.value = false
   }
@@ -338,9 +341,9 @@ const handleExport = async () => {
   try {
     exporting.value = true
     await exportClassRecords(toFilters())
-    message.success('课程记录导出成功')
+    message.success(t('admin.teaching.classRecords.messages.exportSuccess'))
   } catch (_error) {
-    message.error('课程记录导出失败')
+    message.error(t('admin.teaching.classRecords.messages.exportFail'))
   } finally {
     exporting.value = false
   }
@@ -363,16 +366,16 @@ const formatHours = (value?: number | null) => {
 }
 
 const formatFee = (value?: string | number | null) => {
-  if (!value) return '\u00A50'
+  if (!value) return '¥0'
   const amount = Number(value)
-  if (Number.isNaN(amount)) return `\u00A5${value}`
-  return `\u00A5${amount.toLocaleString('en-US')}`
+  if (Number.isNaN(amount)) return `¥${value}`
+  return `¥${amount.toLocaleString('en-US')}`
 }
 
 const statusLabel = (status: string) => {
-  if (status === 'approved') return '已通过'
-  if (status === 'rejected') return '已驳回'
-  return '待审核'
+  if (status === 'approved') return t('admin.teaching.classRecords.status.approved')
+  if (status === 'rejected') return t('admin.teaching.classRecords.status.rejected')
+  return t('admin.teaching.classRecords.status.pending')
 }
 
 const statusTagColor = (status: string) => {
