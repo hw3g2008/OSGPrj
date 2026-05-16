@@ -1,37 +1,37 @@
 <template>
   <div class="mock-interview-feedback osg-modal-form" data-feedback="mock-interview">
     <div class="form-group">
-      <label class="form-label">模拟面试的目的是什么？</label>
+      <label class="form-label">{{ t('common.shared.classReport.mockInterview.purposeLabel') }}</label>
       <a-textarea
         :value="payload.purpose"
         :rows="2"
-        placeholder="请描述本次模拟面试的目的..."
+        :placeholder="t('common.shared.classReport.mockInterview.purposePlaceholder')"
         @update:value="update('purpose', $event)"
       />
     </div>
 
     <div class="form-group">
-      <label class="form-label">这次课程主要研究了哪些概念和主题？</label>
+      <label class="form-label">{{ t('common.shared.classReport.mockInterview.conceptsLabel') }}</label>
       <a-textarea
         :value="payload.concepts"
         :rows="2"
-        placeholder="请列出本次课程涉及的概念和主题..."
+        :placeholder="t('common.shared.classReport.mockInterview.conceptsPlaceholder')"
         @update:value="update('concepts', $event)"
       />
     </div>
 
     <div class="form-group">
-      <label class="form-label">这名学生哪科考的不好？</label>
+      <label class="form-label">{{ t('common.shared.classReport.mockInterview.improvementsLabel') }}</label>
       <a-textarea
         :value="payload.improvements"
         :rows="2"
-        placeholder="请描述学员需要改进的方面..."
+        :placeholder="t('common.shared.classReport.mockInterview.improvementsPlaceholder')"
         @update:value="update('improvements', $event)"
       />
     </div>
 
     <div class="form-group">
-      <label class="form-label">您如何评价这名学生的表现？</label>
+      <label class="form-label">{{ t('common.shared.classReport.mockInterview.performanceLabel') }}</label>
       <a-radio-group
         :value="payload.performanceLevel"
         @update:value="update('performanceLevel', $event)"
@@ -42,27 +42,27 @@
           :value="opt.value"
         >
           <span class="performance-option__emoji">{{ opt.emoji }}</span>
-          {{ opt.label }}
+          {{ t(opt.label) }}
         </a-radio>
       </a-radio-group>
     </div>
 
     <div class="form-group">
-      <label class="form-label">希望做但没做的事情</label>
+      <label class="form-label">{{ t('common.shared.classReport.mockInterview.wishedToDoLabel') }}</label>
       <a-textarea
         :value="payload.wishedToDo"
         :rows="2"
-        placeholder="请描述本次模拟面试中希望做但没有做的事情..."
+        :placeholder="t('common.shared.classReport.mockInterview.wishedToDoPlaceholder')"
         @update:value="update('wishedToDo', $event)"
       />
     </div>
 
     <div class="form-group">
-      <label class="form-label">补充说明（narrative）</label>
+      <label class="form-label">{{ t('common.shared.classReport.mockInterview.narrativeLabel') }}</label>
       <a-textarea
         :value="payload.narrative"
         :rows="3"
-        placeholder="可选：进一步补充本次课程反馈..."
+        :placeholder="t('common.shared.classReport.mockInterview.narrativePlaceholder')"
         @update:value="update('narrative', $event)"
       />
     </div>
@@ -71,6 +71,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 export interface MockInterviewFeedbackPayload {
   schemaVersion: 1
@@ -83,10 +86,10 @@ export interface MockInterviewFeedbackPayload {
 }
 
 const PERFORMANCE_OPTIONS = [
-  { value: 'disappointing', emoji: '😞', label: '令人失望' },
-  { value: 'good', emoji: '🙂', label: '好的' },
-  { value: 'great', emoji: '😊', label: '伟大的' },
-  { value: 'amazing', emoji: '🌟', label: '真棒' },
+  { value: 'disappointing', emoji: '😞', label: 'common.shared.classReport.mockInterview.performance.disappointing' },
+  { value: 'good', emoji: '🙂', label: 'common.shared.classReport.mockInterview.performance.good' },
+  { value: 'great', emoji: '😊', label: 'common.shared.classReport.mockInterview.performance.great' },
+  { value: 'amazing', emoji: '🌟', label: 'common.shared.classReport.mockInterview.performance.amazing' },
 ] as const
 
 const props = defineProps<{

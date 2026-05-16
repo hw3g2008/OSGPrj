@@ -11,10 +11,10 @@
       @remove="onRemove"
     >
       <p class="screenshot-upload__hint">
-        <span>点击或拖拽文件到此区域上传</span>
+        <span>{{ t('common.shared.classReport.screenshotUpload.dragHint') }}</span>
       </p>
       <p class="screenshot-upload__sub">
-        支持 png/jpg/pdf，单文件 ≤ {{ maxSizeMb }}MB，最多 {{ maxCount }} 张
+        {{ t('common.shared.classReport.screenshotUpload.spec', { mb: maxSizeMb, count: maxCount }) }}
       </p>
     </a-upload-dragger>
   </div>
@@ -32,6 +32,9 @@
 import { computed } from 'vue'
 import { Upload, message } from 'ant-design-vue'
 import type { UploadFile } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -91,18 +94,18 @@ function beforeUpload(file: File): boolean | typeof Upload.LIST_IGNORE {
   const mimeOk = !mime || ALLOWED_MIME.includes(mime)
 
   if (!extOk || !mimeOk) {
-    message.error(`仅支持 ${ALLOWED_EXT.join('/')} 文件`)
+    message.error(t('common.shared.classReport.screenshotUpload.errors.unsupported', { exts: ALLOWED_EXT.join('/') }))
     return Upload.LIST_IGNORE
   }
 
   const maxBytes = props.maxSizeMb * 1024 * 1024
   if (file.size > maxBytes) {
-    message.error(`单文件不能超过 ${props.maxSizeMb}MB`)
+    message.error(t('common.shared.classReport.screenshotUpload.errors.tooLarge', { mb: props.maxSizeMb }))
     return Upload.LIST_IGNORE
   }
 
   if (urls.value.length >= props.maxCount) {
-    message.error(`最多上传 ${props.maxCount} 张`)
+    message.error(t('common.shared.classReport.screenshotUpload.errors.tooMany', { count: props.maxCount }))
     return Upload.LIST_IGNORE
   }
 

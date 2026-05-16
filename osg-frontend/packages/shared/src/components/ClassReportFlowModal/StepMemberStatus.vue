@@ -1,19 +1,19 @@
 <template>
   <div class="step-member-status osg-modal-form" data-step="member-status">
     <div class="form-group">
-      <label class="form-label">学员状态 <span class="required">*</span></label>
+      <label class="form-label">{{ t('common.shared.classReport.memberStatus.label') }} <span class="required">*</span></label>
       <a-radio-group :value="form.memberStatus" @update:value="onStatusChange">
-        <a-radio :value="MEMBER_STATUS.NORMAL">正常上课</a-radio>
-        <a-radio :value="MEMBER_STATUS.ABSENT">旷课未到场</a-radio>
+        <a-radio :value="MEMBER_STATUS.NORMAL">{{ t('common.shared.classReport.memberStatus.normal') }}</a-radio>
+        <a-radio :value="MEMBER_STATUS.ABSENT">{{ t('common.shared.classReport.memberStatus.absent') }}</a-radio>
       </a-radio-group>
     </div>
 
     <div v-if="form.memberStatus === MEMBER_STATUS.ABSENT" class="form-group">
-      <label class="form-label">旷课说明 <span class="required">*</span></label>
+      <label class="form-label">{{ t('common.shared.classReport.memberStatus.absentRemarkLabel') }} <span class="required">*</span></label>
       <a-textarea
         :value="form.absentRemark || ''"
         :rows="4"
-        placeholder="请说明本次旷课原因 / 是否提前请假..."
+        :placeholder="t('common.shared.classReport.memberStatus.absentRemarkPlaceholder')"
         :auto-size="{ minRows: 4, maxRows: 8 }"
         @update:value="(v: string) => update('absentRemark', v)"
       />
@@ -30,7 +30,10 @@
  * - absent 时显示 absentRemark textarea；其它字段（feedback/rating）由父组件按 memberStatus 跳过
  */
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { MEMBER_STATUS, ABSENT_DEFAULT_HOURS } from '../../constants/classReport'
+
+const { t } = useI18n()
 import type { ClassReportPayload, MemberStatus } from '../../types/classReport'
 
 interface Props {

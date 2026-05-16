@@ -7,7 +7,7 @@
     :body-style="{ maxHeight: '85vh', overflowY: 'auto' }"
     :body-class="loading ? 'class-report-flow-modal__body osg-modal-form osg-modal-form--submitting' : 'class-report-flow-modal__body osg-modal-form'"
     wrap-class-name="class-report-flow-modal-wrap"
-    title="上报课程记录"
+    :title="t('common.shared.classReport.title')"
     @update:open="onVisibleChange"
     @cancel="onCancel"
   >
@@ -74,11 +74,11 @@
           <!-- T-514: 评分输入框 — 位于反馈区下方，正常上课时必填 -->
           <div class="form-group rate-group">
             <label class="form-label">
-              评分 <span class="required">*</span>
+              {{ t('common.shared.classReport.rate.label') }} <span class="required">*</span>
             </label>
             <a-input
               :value="formState.rate ?? ''"
-              placeholder="请填写评分（不限分制）"
+              :placeholder="t('common.shared.classReport.rate.placeholder')"
               style="width: 200px"
               @update:value="(v: string) => onFormPatch({ ...formState, rate: v })"
             />
@@ -101,7 +101,7 @@
 
     <template #footer>
       <a-space>
-        <a-button @click="onCancel">取消</a-button>
+        <a-button @click="onCancel">{{ t('common.action.cancel') }}</a-button>
         <!-- T-515 / §C3: 单屏版只有"取消 / 提交"，无 step 切换按钮 -->
         <a-button
           type="primary"
@@ -109,7 +109,7 @@
           :disabled="!canSubmit || loading"
           @click="handleSubmit"
         >
-          {{ loading ? '提交中...' : (isAbsent ? '提交旷课' : '提交') }}
+          {{ loading ? t('common.shared.classReport.submitLoading') : (isAbsent ? t('common.shared.classReport.submitAbsent') : t('common.action.submit')) }}
         </a-button>
       </a-space>
     </template>
@@ -131,6 +131,9 @@
  */
 import { computed, ref, watch, onMounted } from "vue"
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 import { useClassReport } from '../../composables/useClassReport'
 import { useStudentScopeFinder } from '../../composables/useStudentScopeFinder'
 import {
@@ -232,7 +235,7 @@ const rateError = computed(() => {
   if (!rateSubmitAttempted.value) return ''
   if (isAbsent.value) return ''
   const rate = formState.value.rate
-  if (!rate || rate.trim() === '') return '请填写评分'
+  if (!rate || rate.trim() === '') return t('common.shared.classReport.rate.required')
   return ''
 })
 
@@ -336,7 +339,7 @@ async function handleSubmit(): Promise<void> {
     if (!isAbsent.value) {
       const rate = formState.value.rate
       if (!rate || rate.trim() === '') {
-        message.warning('请填写评分')
+        message.warning(t('common.shared.classReport.rate.required'))
         return
       }
     }
@@ -365,7 +368,7 @@ async function handleSubmit(): Promise<void> {
     }
     const resp = await submitClassReport(props.end, payload)
     const recordId = Number(resp?.recordId ?? 0)
-    message.success('上报成功')
+    message.success(t('common.shared.classReport.submitSuccess'))
     emit('submitted', recordId)
     emit('update:visible', false)
     reset()
@@ -373,7 +376,7 @@ async function handleSubmit(): Promise<void> {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err)
     error.value = msg
-    message.error(msg || '上报失败')
+    message.error(msg || t('common.shared.classReport.submitFailed'))
   } finally {
     loading.value = false
   }

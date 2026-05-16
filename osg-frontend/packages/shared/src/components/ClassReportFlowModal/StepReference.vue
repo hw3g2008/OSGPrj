@@ -3,26 +3,26 @@
     <!-- 关联申请分支：job_coaching / mock_interview / communication_test -->
     <template v-if="isReferenceBranch">
       <div class="form-group">
-        <label class="form-label">关联类型</label>
+        <label class="form-label">{{ t('common.shared.classReport.reference.typeLabel') }}</label>
         <a-radio-group
           :value="form.referenceType || referenceTypeFromCourse"
           :disabled="isReadonlyReference"
           @update:value="(v: ReferenceType) => onReferenceTypeChange(v)"
         >
           <a-radio v-for="opt in referenceTypeOptions" :key="opt.value" :value="opt.value">
-            {{ opt.label }}
+            {{ t(opt.label) }}
           </a-radio>
         </a-radio-group>
       </div>
 
       <div class="form-group">
-        <label class="form-label">关联申请</label>
+        <label class="form-label">{{ t('common.shared.classReport.reference.applicationLabel') }}</label>
         <a-select
           :value="form.referenceId || undefined"
           :options="referenceOptions"
           :disabled="isReadonlyReference"
           :loading="referenceLoading"
-          placeholder="请选择关联申请"
+          :placeholder="t('common.shared.classReport.reference.applicationPlaceholder')"
           :not-found-content="referenceEmptyText"
           @update:value="(v: number) => update('referenceId', Number(v))"
         />
@@ -35,11 +35,11 @@
     <!-- 基础课程分支：base_course -->
     <template v-else-if="courseType === 'base_course'">
       <div class="form-group">
-        <label class="form-label">基础课程类别 <span class="required">*</span></label>
+        <label class="form-label">{{ t('common.shared.classReport.reference.baseCategoryLabel') }} <span class="required">*</span></label>
         <a-select
           :value="form.baseCourseCategory || undefined"
           :options="baseCategoryOptions"
-          placeholder="请选择基础课程类别"
+          :placeholder="t('common.shared.classReport.reference.baseCategoryPlaceholder')"
           @update:value="(v: BaseCategory) => update('baseCourseCategory', v)"
         />
       </div>
@@ -48,7 +48,7 @@
         v-if="form.baseCourseCategory === 'tech' || form.baseCourseCategory === 'behavior'"
         class="form-group"
       >
-        <label class="form-label">主题选择</label>
+        <label class="form-label">{{ t('common.shared.classReport.reference.topicLabel') }}</label>
         <BaseCourseTopicPicker
           :model-value="form.baseCourseTopics || []"
           :category="(form.baseCourseCategory as 'tech' | 'behavior')"
@@ -68,9 +68,12 @@
  * - readonlyFields 含 'reference' 时 reference select disabled
  */
 import { computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   BASE_CATEGORY_OPTIONS,
 } from '../../constants/classReport'
+
+const { t } = useI18n()
 import { useReferenceFinder } from '../../composables/useReferenceFinder'
 import type { ClassReportEnd } from '../../api/class-records'
 import type {
@@ -115,11 +118,11 @@ const isReferenceBranch = computed(() =>
 const referenceTypeOptions = computed<{ value: ReferenceType; label: string }[]>(() => {
   switch (props.courseType) {
     case 'job_coaching':
-      return [{ value: 'job_coaching', label: '求职辅导申请' }]
+      return [{ value: 'job_coaching', label: 'common.shared.classReport.reference.types.jobCoaching' }]
     case 'mock_interview':
-      return [{ value: 'mock_interview', label: '模拟面试' }]
+      return [{ value: 'mock_interview', label: 'common.shared.classReport.reference.types.mockInterview' }]
     case 'communication_test':
-      return [{ value: 'communication_test', label: '沟通测评' }]
+      return [{ value: 'communication_test', label: 'common.shared.classReport.reference.types.communication' }]
     default:
       return []
   }
@@ -131,7 +134,7 @@ const referenceTypeFromCourse = computed<ReferenceType | undefined>(() => {
 })
 
 const baseCategoryOptions = computed(() =>
-  BASE_CATEGORY_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+  BASE_CATEGORY_OPTIONS.map((o) => ({ value: o.value, label: t(o.label) })),
 )
 
 const {
@@ -149,8 +152,8 @@ const referenceOptions = computed(() =>
 )
 
 const referenceEmptyText = computed(() => {
-  if (!props.studentId || props.studentId <= 0) return '请先选择学员'
-  return '暂无可关联的申请'
+  if (!props.studentId || props.studentId <= 0) return t('common.shared.classReport.reference.emptySelectStudent')
+  return t('common.shared.classReport.reference.emptyNoApplications')
 })
 
 function update<K extends keyof ClassReportPayload>(

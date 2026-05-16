@@ -7,7 +7,7 @@
   >
     <!-- D: 'resume' 类目下二级 radio（新简历制作 / 简历更新） -->
     <div v-if="isResumeCategory" class="form-group">
-      <label class="form-label">简历类型 <span class="required">*</span></label>
+      <label class="form-label">{{ t('common.shared.classReport.baseCourse.resumeTypeLabel') }} <span class="required">*</span></label>
       <a-radio-group
         :value="resumeSubType || undefined"
         @update:value="(v: ResumeSubType) => emit('update:resumeSubType', v)"
@@ -16,12 +16,12 @@
           v-for="opt in resumeSubTypeOptions"
           :key="opt.value"
           :value="opt.value"
-        >{{ opt.label }}</a-radio>
+        >{{ t(opt.label) }}</a-radio>
       </a-radio-group>
     </div>
 
     <div class="form-group">
-      <label class="form-label">课程反馈</label>
+      <label class="form-label">{{ t('common.shared.classReport.baseCourse.feedbackLabel') }}</label>
       <a-textarea
         :value="payload.narrative"
         :rows="3"
@@ -33,10 +33,10 @@
     <!-- D: 简历更新 → 双槽位（原 + 新）；新简历制作 → 单槽位（新简历） -->
     <div v-if="showResumeSlots" class="resume-slots" :data-slot-mode="resumeSlotMode">
       <div v-if="resumeSlotMode === 'update'" class="form-group" data-slot="original-resume">
-        <label class="form-label">上传原简历</label>
+        <label class="form-label">{{ t('common.shared.classReport.baseCourse.uploadOriginal') }}</label>
         <ResumeUpload
           :model-value="payload.originalResumeUrl"
-          slot-label="原简历"
+          :slot-label="t('common.shared.classReport.baseCourse.slotOriginal')"
           :max-size-mb="10"
           accept=".pdf,.doc,.docx"
           @update:model-value="update('originalResumeUrl', $event ?? '')"
@@ -44,10 +44,10 @@
       </div>
 
       <div class="form-group" data-slot="updated-resume">
-        <label class="form-label">{{ resumeSlotMode === 'new' ? '上传新简历' : '上传修改后简历' }}</label>
+        <label class="form-label">{{ resumeSlotMode === 'new' ? t('common.shared.classReport.baseCourse.uploadNew') : t('common.shared.classReport.baseCourse.uploadUpdated') }}</label>
         <ResumeUpload
           :model-value="payload.updatedResumeUrl"
-          :slot-label="resumeSlotMode === 'new' ? '新简历' : '修改后简历'"
+          :slot-label="resumeSlotMode === 'new' ? t('common.shared.classReport.baseCourse.slotNew') : t('common.shared.classReport.baseCourse.slotUpdated')"
           :max-size-mb="10"
           accept=".pdf,.doc,.docx"
           @update:model-value="update('updatedResumeUrl', $event ?? '')"
@@ -59,7 +59,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { BaseCategory, ResumeSubType } from '../../../types/classReport'
+
+const { t } = useI18n()
 import { RESUME_SUBTYPE_OPTIONS } from '../../../constants/classReport'
 import ResumeUpload from '../widgets/ResumeUpload.vue'
 
@@ -122,11 +125,11 @@ const showResumeSlots = computed(() => resumeSlotMode.value !== '')
 
 const narrativePlaceholder = computed(() => {
   // 优先看 resumeSubType / 旧 enum
-  if (resumeSlotMode.value === 'update') return '请描述简历修改的主要内容和建议...'
-  if (resumeSlotMode.value === 'new') return '请描述新简历的撰写要点...'
-  if (props.baseCourseCategory === 'resume') return '请先选择简历类型（新简历制作 / 简历更新）'
-  if (props.baseCourseCategory === 'case_study') return '请描述本次案例分析的主要内容...'
-  return '请详细描述本次课程内容和学员表现...'
+  if (resumeSlotMode.value === 'update') return t('common.shared.classReport.baseCourse.placeholders.resumeUpdate')
+  if (resumeSlotMode.value === 'new') return t('common.shared.classReport.baseCourse.placeholders.resumeNew')
+  if (props.baseCourseCategory === 'resume') return t('common.shared.classReport.baseCourse.placeholders.resumePick')
+  if (props.baseCourseCategory === 'case_study') return t('common.shared.classReport.baseCourse.placeholders.caseStudy')
+  return t('common.shared.classReport.baseCourse.placeholders.default')
 })
 
 function update<K extends keyof BaseCourseFeedbackPayload>(

@@ -1,35 +1,35 @@
 <template>
   <div class="step-basic-info osg-modal-form" data-step="basic-info">
     <div class="form-group">
-      <label class="form-label">学员 <span class="required">*</span></label>
+      <label class="form-label">{{ t('common.shared.classReport.basic.studentLabel') }} <span class="required">*</span></label>
       <a-select
         :value="form.studentId || undefined"
         :options="studentOptions"
         :disabled="disabledStudent || isReadonlyStudent"
         :loading="loading"
-        placeholder="请选择学员"
-        :not-found-content="emptyText"
+        :placeholder="t('common.shared.classReport.basic.studentPlaceholder')"
+        :not-found-content="resolvedEmptyText"
         @update:value="(v: number) => update('studentId', Number(v))"
       />
       <div v-if="isStudentEmpty && !loading" class="step-basic-info__empty">
-        {{ emptyText }}
+        {{ resolvedEmptyText }}
       </div>
     </div>
 
     <div class="form-group">
-      <label class="form-label">上课日期 <span class="required">*</span></label>
+      <label class="form-label">{{ t('common.shared.classReport.basic.dateLabel') }} <span class="required">*</span></label>
       <a-date-picker
         :value="form.classDate || undefined"
         value-format="YYYY-MM-DD"
         format="YYYY-MM-DD"
-        placeholder="请选择上课日期"
+        :placeholder="t('common.shared.classReport.basic.datePlaceholder')"
         style="width: 100%"
         @update:value="(v: string) => update('classDate', v || '')"
       />
     </div>
 
     <div class="form-group">
-      <label class="form-label">课时时长（小时） <span class="required">*</span></label>
+      <label class="form-label">{{ t('common.shared.classReport.basic.durationLabel') }} <span class="required">*</span></label>
       <a-input-number
         :value="form.durationHours"
         :min="0.5"
@@ -51,6 +51,7 @@
  * - readonlyFields 包含 'student' 时学员选择器 disabled
  */
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { ClassReportPayload, StudentOption } from '../../types/classReport'
 
 interface Props {
@@ -65,9 +66,12 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   disabledStudent: false,
   loading: false,
-  emptyText: '当前账号暂无可上报学员',
+  emptyText: '',
   readonlyFields: () => [],
 })
+
+const { t } = useI18n()
+const resolvedEmptyText = computed(() => props.emptyText || t('common.shared.classReport.basic.studentEmpty'))
 
 const emit = defineEmits<{
   'update:modelValue': [value: ClassReportPayload]
@@ -84,9 +88,9 @@ const isStudentEmpty = computed(() => (props.students || []).length === 0)
 
 function buildStudentLabel(s: StudentOption): string {
   const status = s.accountStatus
-  if (status === '1') return `${s.studentName}（冻结，不可申报）`
-  if (status === '3') return `${s.studentName}（已退费，不可申报）`
-  if (status === '2') return `${s.studentName}（已结束）`
+  if (status === '1') return t('common.shared.classReport.basic.studentLabelFrozen', { name: s.studentName })
+  if (status === '3') return t('common.shared.classReport.basic.studentLabelRefunded', { name: s.studentName })
+  if (status === '2') return t('common.shared.classReport.basic.studentLabelEnded', { name: s.studentName })
   return s.studentName
 }
 

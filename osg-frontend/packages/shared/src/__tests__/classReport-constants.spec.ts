@@ -18,9 +18,12 @@ describe('classReport constants', () => {
     expect(COURSE_TYPE.BASE_COURSE).toBe('base_course')
   })
 
-  it('exports five course type options', () => {
+  it('exports five course type options (label is an i18n key for caller t())', () => {
     expect(COURSE_TYPE_OPTIONS).toHaveLength(5)
-    expect(COURSE_TYPE_OPTIONS[0]).toEqual({ value: 'job_coaching', label: '岗位辅导' })
+    expect(COURSE_TYPE_OPTIONS[0]).toEqual({
+      value: 'job_coaching',
+      label: 'common.shared.classReport.constants.courseType.jobCoaching',
+    })
   })
 
   it('exports member status constants', () => {

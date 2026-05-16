@@ -1,7 +1,7 @@
 <template>
   <div class="midterm-feedback osg-modal-form" data-feedback="midterm">
     <div class="form-group">
-      <label class="form-label">该学生得了多少分？（0-100）</label>
+      <label class="form-label">{{ t('common.shared.classReport.midterm.scoreLabel') }}</label>
       <a-input-number
         :value="payload.score"
         :min="0"
@@ -15,17 +15,17 @@
     </div>
 
     <div class="form-group">
-      <label class="form-label">逐题分析</label>
+      <label class="form-label">{{ t('common.shared.classReport.midterm.questionAnalysisLabel') }}</label>
       <a-textarea
         :value="payload.questionAnalysis"
         :rows="4"
-        placeholder="请详细分析学员在每道题目上的表现..."
+        :placeholder="t('common.shared.classReport.midterm.questionAnalysisPlaceholder')"
         @update:value="update('questionAnalysis', $event)"
       />
     </div>
 
     <div class="form-group">
-      <label class="form-label">学生进度评估</label>
+      <label class="form-label">{{ t('common.shared.classReport.midterm.progressLabel') }}</label>
       <a-radio-group
         :value="payload.progress"
         @update:value="update('progress', $event)"
@@ -36,7 +36,7 @@
           :value="opt.value"
           class="progress-option"
         >
-          {{ opt.label }}
+          {{ t(opt.label) }}
         </a-radio>
       </a-radio-group>
     </div>
@@ -45,6 +45,9 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 export type MidtermProgressLevel =
   | 'level1'
@@ -62,11 +65,11 @@ export interface MidtermFeedbackPayload {
 }
 
 const PROGRESS_OPTIONS: Array<{ value: MidtermProgressLevel; label: string }> = [
-  { value: 'level1', label: '远低于预期' },
-  { value: 'level2', label: '低于预期' },
-  { value: 'level3', label: '符合预期' },
-  { value: 'level4', label: '高于预期' },
-  { value: 'level5', label: '远高于预期' },
+  { value: 'level1', label: 'common.shared.classReport.midterm.progress.level1' },
+  { value: 'level2', label: 'common.shared.classReport.midterm.progress.level2' },
+  { value: 'level3', label: 'common.shared.classReport.midterm.progress.level3' },
+  { value: 'level4', label: 'common.shared.classReport.midterm.progress.level4' },
+  { value: 'level5', label: 'common.shared.classReport.midterm.progress.level5' },
 ]
 
 const props = defineProps<{
@@ -109,11 +112,11 @@ function updateScore(value: number | null) {
   }
   const num = Number(value)
   if (Number.isNaN(num)) {
-    scoreError.value = '请输入有效数字'
+    scoreError.value = t('common.shared.classReport.midterm.errors.invalidNumber')
     return
   }
   if (num < 0 || num > 100) {
-    scoreError.value = '分数必须在 0-100 之间'
+    scoreError.value = t('common.shared.classReport.midterm.errors.scoreRange')
     return
   }
   scoreError.value = ''
@@ -124,7 +127,7 @@ watch(
   () => payload.value.score,
   (val) => {
     if (val !== null && val !== undefined && (val < 0 || val > 100)) {
-      scoreError.value = '分数必须在 0-100 之间'
+      scoreError.value = t('common.shared.classReport.midterm.errors.scoreRange')
     } else {
       scoreError.value = ''
     }

@@ -144,6 +144,226 @@
         "baseCourse": "基础课程"
       }
     },
+    "classReport": {
+      "title": "上报课程记录",
+      "submitLoading": "提交中...",
+      "submitAbsent": "提交旷课",
+      "submitSuccess": "上报成功",
+      "submitFailed": "上报失败",
+      "rate": {
+        "label": "评分",
+        "placeholder": "请填写评分（不限分制）",
+        "required": "请填写评分"
+      },
+      "basic": {
+        "studentLabel": "学员",
+        "studentPlaceholder": "请选择学员",
+        "studentEmpty": "当前账号暂无可上报学员",
+        "studentLabelFrozen": "{name}（冻结，不可申报）",
+        "studentLabelRefunded": "{name}（已退费，不可申报）",
+        "studentLabelEnded": "{name}（已结束）",
+        "dateLabel": "上课日期",
+        "datePlaceholder": "请选择上课日期",
+        "durationLabel": "课时时长（小时）"
+      },
+      "courseType": {
+        "label": "课程类型"
+      },
+      "memberStatus": {
+        "label": "学员状态",
+        "normal": "正常上课",
+        "absent": "旷课未到场",
+        "absentRemarkLabel": "旷课说明",
+        "absentRemarkPlaceholder": "请说明本次旷课原因 / 是否提前请假..."
+      },
+      "reference": {
+        "typeLabel": "关联类型",
+        "applicationLabel": "关联申请",
+        "applicationPlaceholder": "请选择关联申请",
+        "baseCategoryLabel": "基础课程类别",
+        "baseCategoryPlaceholder": "请选择基础课程类别",
+        "topicLabel": "主题选择",
+        "emptySelectStudent": "请先选择学员",
+        "emptyNoApplications": "暂无可关联的申请",
+        "types": {
+          "jobCoaching": "求职辅导申请",
+          "mockInterview": "模拟面试",
+          "communication": "沟通测评"
+        }
+      },
+      "baseCourse": {
+        "resumeTypeLabel": "简历类型",
+        "feedbackLabel": "课程反馈",
+        "uploadOriginal": "上传原简历",
+        "uploadNew": "上传新简历",
+        "uploadUpdated": "上传修改后简历",
+        "slotOriginal": "原简历",
+        "slotNew": "新简历",
+        "slotUpdated": "修改后简历",
+        "placeholders": {
+          "resumeUpdate": "请描述简历修改的主要内容和建议...",
+          "resumeNew": "请描述新简历的撰写要点...",
+          "resumePick": "请先选择简历类型（新简历制作 / 简历更新）",
+          "caseStudy": "请描述本次案例分析的主要内容...",
+          "default": "请详细描述本次课程内容和学员表现..."
+        }
+      },
+      "jobCoaching": {
+        "purposeLabel": "本次岗位辅导的目的是什么？",
+        "purposePlaceholder": "请描述本次岗位辅导的目的...",
+        "conceptsLabel": "本次课程主要研究了哪些概念和主题？",
+        "conceptsPlaceholder": "请列出本次课程涉及的概念和主题...",
+        "improvementsLabel": "这名学生哪些方面需要改进？",
+        "improvementsPlaceholder": "请描述学员需要改进的方面...",
+        "performanceLabel": "您如何评价这名学生的表现？",
+        "narrativeLabel": "补充说明（narrative）",
+        "narrativePlaceholder": "可选：进一步补充本次课程反馈...",
+        "performance": {
+          "disappointing": "令人失望",
+          "good": "好的",
+          "great": "伟大的",
+          "amazing": "真棒"
+        }
+      },
+      "mockInterview": {
+        "purposeLabel": "模拟面试的目的是什么？",
+        "purposePlaceholder": "请描述本次模拟面试的目的...",
+        "conceptsLabel": "这次课程主要研究了哪些概念和主题？",
+        "conceptsPlaceholder": "请列出本次课程涉及的概念和主题...",
+        "improvementsLabel": "这名学生哪科考的不好？",
+        "improvementsPlaceholder": "请描述学员需要改进的方面...",
+        "performanceLabel": "您如何评价这名学生的表现？",
+        "wishedToDoLabel": "希望做但没做的事情",
+        "wishedToDoPlaceholder": "请描述本次模拟面试中希望做但没有做的事情...",
+        "narrativeLabel": "补充说明（narrative）",
+        "narrativePlaceholder": "可选：进一步补充本次课程反馈...",
+        "performance": {
+          "disappointing": "令人失望",
+          "good": "好的",
+          "great": "伟大的",
+          "amazing": "真棒"
+        }
+      },
+      "midterm": {
+        "scoreLabel": "该学生得了多少分？（0-100）",
+        "questionAnalysisLabel": "逐题分析",
+        "questionAnalysisPlaceholder": "请详细分析学员在每道题目上的表现...",
+        "progressLabel": "学生进度评估",
+        "progress": {
+          "level1": "远低于预期",
+          "level2": "低于预期",
+          "level3": "符合预期",
+          "level4": "高于预期",
+          "level5": "远高于预期"
+        },
+        "errors": {
+          "invalidNumber": "请输入有效数字",
+          "scoreRange": "分数必须在 0-100 之间"
+        }
+      },
+      "relation": {
+        "maxScoreSuffix": "（1-{max}分）",
+        "recommendLabel": "是否推荐这位学生？",
+        "recommend": {
+          "yes": "是",
+          "maybe": "或许",
+          "no": "否"
+        },
+        "screenshotLabel": "截图证据",
+        "narrativeLabel": "补充说明（narrative）",
+        "narrativePlaceholder": "可选：进一步补充本次课程反馈..."
+      },
+      "topicPicker": {
+        "techRequiredTitle": "必修主题（T01-T19）",
+        "techRequiredPlaceholder": "请选择必修主题",
+        "techOptionalTitle": "选修主题（T20-T24）",
+        "techOptionalPlaceholder": "请选择选修主题",
+        "behaviorTitle": "行为主题（B0-B7）",
+        "behaviorPlaceholder": "请选择行为主题",
+        "fallbackLabel": "未识别项："
+      },
+      "ratingInput": {
+        "placeholder": "请输入评分",
+        "errorEmpty": "评分不能为空"
+      },
+      "resumeUpload": {
+        "selectFile": "选择文件",
+        "hint": "支持 pdf/doc/docx，单文件 ≤ {mb}MB",
+        "errors": {
+          "unsupported": "仅支持 {exts} 文件",
+          "tooLarge": "单文件不能超过 {mb}MB"
+        }
+      },
+      "screenshotUpload": {
+        "dragHint": "点击或拖拽文件到此区域上传",
+        "spec": "支持 png/jpg/pdf，单文件 ≤ {mb}MB，最多 {count} 张",
+        "errors": {
+          "unsupported": "仅支持 {exts} 文件",
+          "tooLarge": "单文件不能超过 {mb}MB",
+          "tooMany": "最多上传 {count} 张"
+        }
+      },
+      "constants": {
+        "courseType": {
+          "jobCoaching": "岗位辅导",
+          "mockInterview": "模拟面试",
+          "relation": "人际关系",
+          "midtermMock": "模拟期中考试",
+          "baseCourse": "基础课程"
+        },
+        "baseCategory": {
+          "tech": "技术",
+          "behavior": "行为训练",
+          "resume": "简历",
+          "caseStudy": "咨询案例准备",
+          "other": "其它"
+        },
+        "resumeSubtype": {
+          "new": "新简历制作",
+          "update": "简历更新"
+        },
+        "relationRating": {
+          "emailQuality": {
+            "label": "电子邮件质量",
+            "description": "主题清晰、问候得当、自我介绍简洁、诉求明确、署名规范，整体格式与措辞专业度。"
+          },
+          "etiquette": {
+            "label": "礼仪",
+            "description": "准时到达、着装得体、举止专业、积极的肢体语言与眼神交流，互动中体现尊重。"
+          },
+          "smallTalk": {
+            "label": "闲聊",
+            "description": "寒暄自然顺畅、能快速找到共同话题、控制时长得当，能在闲聊中建立信任与连接。"
+          },
+          "callQuality": {
+            "label": "通话",
+            "description": "提问有深度与针对性、积极倾听并回应、回答清晰有重点、整体节奏把控得当。"
+          },
+          "thankYouEmail": {
+            "label": "感谢邮件",
+            "description": "24 小时内发送、内容精准回顾对话亮点、表达后续跟进意向，体现专业度与诚意。"
+          }
+        },
+        "recommendation": {
+          "yes": "强烈推荐",
+          "no": "不推荐",
+          "maybe": "视情况"
+        },
+        "midtermProgress": {
+          "level1": "远超预期",
+          "level2": "超预期",
+          "level3": "达预期",
+          "level4": "落后",
+          "level5": "严重落后"
+        },
+        "performance": {
+          "great": "非常好",
+          "good": "好",
+          "neutral": "一般",
+          "poor": "较差"
+        }
+      }
+    },
     "positions": {
       "uncategorized": "未归类",
       "col": {

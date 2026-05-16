@@ -2,12 +2,12 @@
   <div class="rating-input osg-modal-form" :class="{ 'rating-input--error': showError }">
     <a-input
       :value="modelValue ?? ''"
-      :placeholder="placeholder"
+      :placeholder="resolvedPlaceholder"
       :disabled="disabled"
       allow-clear
       @update:value="onUpdate"
     />
-    <div v-if="showError" class="rating-input__error">评分不能为空</div>
+    <div v-if="showError" class="rating-input__error">{{ t('common.shared.classReport.ratingInput.errorEmpty') }}</div>
   </div>
 </template>
 
@@ -20,9 +20,10 @@
  *
  * - props: modelValue?:string、required?:boolean、disabled?:boolean、placeholder?:string
  * - emits: update:modelValue
- * - 暴露 validate(): boolean，required=true 且 trim(modelValue)=="" 时返回 false 并展示「评分不能为空」
+ * - 暴露 validate(): boolean，required=true 且 trim(modelValue)=="" 时返回 false 并展示错误
  */
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(
   defineProps<{
@@ -35,9 +36,12 @@ const props = withDefaults(
     modelValue: '',
     required: false,
     disabled: false,
-    placeholder: '请输入评分',
+    placeholder: '',
   },
 )
+
+const { t } = useI18n()
+const resolvedPlaceholder = computed(() => props.placeholder || t('common.shared.classReport.ratingInput.placeholder'))
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]

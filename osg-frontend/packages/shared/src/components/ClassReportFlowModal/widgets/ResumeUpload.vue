@@ -15,10 +15,10 @@
         <template #icon>
           <upload-outlined />
         </template>
-        选择文件
+        {{ t('common.shared.classReport.resumeUpload.selectFile') }}
       </a-button>
       <span class="resume-upload__hint">
-        支持 pdf/doc/docx，单文件 ≤ {{ maxSizeMb }}MB
+        {{ t('common.shared.classReport.resumeUpload.hint', { mb: maxSizeMb }) }}
       </span>
     </a-upload>
   </div>
@@ -37,6 +37,9 @@ import { computed } from 'vue'
 import { Upload, message } from 'ant-design-vue'
 import type { UploadFile } from 'ant-design-vue'
 import { UploadOutlined } from '@ant-design/icons-vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -97,13 +100,13 @@ function beforeUpload(file: File): boolean | typeof Upload.LIST_IGNORE {
   const mimeOk = !mime || ALLOWED_MIME.includes(mime)
 
   if (!extOk || !mimeOk) {
-    message.error(`仅支持 ${ALLOWED_EXT.join('/')} 文件`)
+    message.error(t('common.shared.classReport.resumeUpload.errors.unsupported', { exts: ALLOWED_EXT.join('/') }))
     return Upload.LIST_IGNORE
   }
 
   const maxBytes = props.maxSizeMb * 1024 * 1024
   if (file.size > maxBytes) {
-    message.error(`单文件不能超过 ${props.maxSizeMb}MB`)
+    message.error(t('common.shared.classReport.resumeUpload.errors.tooLarge', { mb: props.maxSizeMb }))
     return Upload.LIST_IGNORE
   }
 

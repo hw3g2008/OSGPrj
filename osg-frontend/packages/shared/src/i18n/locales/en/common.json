@@ -144,6 +144,226 @@
         "baseCourse": "Base session"
       }
     },
+    "classReport": {
+      "title": "Report session record",
+      "submitLoading": "Submitting...",
+      "submitAbsent": "Submit absence",
+      "submitSuccess": "Report submitted",
+      "submitFailed": "Report failed",
+      "rate": {
+        "label": "Rating",
+        "placeholder": "Enter rating (any scale)",
+        "required": "Please enter a rating"
+      },
+      "basic": {
+        "studentLabel": "Student",
+        "studentPlaceholder": "Please select a student",
+        "studentEmpty": "No reportable students for this account",
+        "studentLabelFrozen": "{name} (frozen, not reportable)",
+        "studentLabelRefunded": "{name} (refunded, not reportable)",
+        "studentLabelEnded": "{name} (ended)",
+        "dateLabel": "Class date",
+        "datePlaceholder": "Please pick a class date",
+        "durationLabel": "Duration (hours)"
+      },
+      "courseType": {
+        "label": "Session type"
+      },
+      "memberStatus": {
+        "label": "Student status",
+        "normal": "Attended",
+        "absent": "Absent",
+        "absentRemarkLabel": "Absence note",
+        "absentRemarkPlaceholder": "Please explain the absence / leave-of-absence..."
+      },
+      "reference": {
+        "typeLabel": "Reference type",
+        "applicationLabel": "Linked application",
+        "applicationPlaceholder": "Please select an application",
+        "baseCategoryLabel": "Base session category",
+        "baseCategoryPlaceholder": "Please select a category",
+        "topicLabel": "Topics",
+        "emptySelectStudent": "Please select a student first",
+        "emptyNoApplications": "No applications available",
+        "types": {
+          "jobCoaching": "Job Coaching application",
+          "mockInterview": "Mock Interview",
+          "communication": "Communication assessment"
+        }
+      },
+      "baseCourse": {
+        "resumeTypeLabel": "Resume type",
+        "feedbackLabel": "Session feedback",
+        "uploadOriginal": "Upload original resume",
+        "uploadNew": "Upload new resume",
+        "uploadUpdated": "Upload updated resume",
+        "slotOriginal": "Original resume",
+        "slotNew": "New resume",
+        "slotUpdated": "Updated resume",
+        "placeholders": {
+          "resumeUpdate": "Describe the main edits and suggestions...",
+          "resumeNew": "Describe the highlights of the new resume...",
+          "resumePick": "Please pick a resume type (new / update)",
+          "caseStudy": "Describe the main content of this case study...",
+          "default": "Describe the session content and student performance in detail..."
+        }
+      },
+      "jobCoaching": {
+        "purposeLabel": "What was the purpose of this Position Coaching?",
+        "purposePlaceholder": "Describe the purpose of this Position Coaching...",
+        "conceptsLabel": "Which concepts and topics did this session cover?",
+        "conceptsPlaceholder": "List the concepts and topics covered...",
+        "improvementsLabel": "What does this Student need to improve?",
+        "improvementsPlaceholder": "Describe the areas the Student needs to improve...",
+        "performanceLabel": "How would you rate this Student's performance?",
+        "narrativeLabel": "Additional notes (narrative)",
+        "narrativePlaceholder": "Optional: further notes on this session...",
+        "performance": {
+          "disappointing": "Disappointing",
+          "good": "Good",
+          "great": "Great",
+          "amazing": "Amazing"
+        }
+      },
+      "mockInterview": {
+        "purposeLabel": "What was the purpose of this Mock Interview?",
+        "purposePlaceholder": "Describe the purpose of this Mock Interview...",
+        "conceptsLabel": "Which concepts and topics did this session cover?",
+        "conceptsPlaceholder": "List the concepts and topics covered...",
+        "improvementsLabel": "Which areas did this Student perform poorly in?",
+        "improvementsPlaceholder": "Describe the areas the Student needs to improve...",
+        "performanceLabel": "How would you rate this Student's performance?",
+        "wishedToDoLabel": "Things you wanted to do but didn't",
+        "wishedToDoPlaceholder": "Describe what you wanted to cover but didn't in this Mock Interview...",
+        "narrativeLabel": "Additional notes (narrative)",
+        "narrativePlaceholder": "Optional: further notes on this session...",
+        "performance": {
+          "disappointing": "Disappointing",
+          "good": "Good",
+          "great": "Great",
+          "amazing": "Amazing"
+        }
+      },
+      "midterm": {
+        "scoreLabel": "What was the Student's score? (0-100)",
+        "questionAnalysisLabel": "Per-question analysis",
+        "questionAnalysisPlaceholder": "Analyze the Student's performance on each question...",
+        "progressLabel": "Student progress assessment",
+        "progress": {
+          "level1": "Far below expectations",
+          "level2": "Below expectations",
+          "level3": "Meets expectations",
+          "level4": "Above expectations",
+          "level5": "Far above expectations"
+        },
+        "errors": {
+          "invalidNumber": "Please enter a valid number",
+          "scoreRange": "Score must be between 0 and 100"
+        }
+      },
+      "relation": {
+        "maxScoreSuffix": " (1-{max} pts)",
+        "recommendLabel": "Do you recommend this Student?",
+        "recommend": {
+          "yes": "Yes",
+          "maybe": "Maybe",
+          "no": "No"
+        },
+        "screenshotLabel": "Screenshot evidence",
+        "narrativeLabel": "Additional notes (narrative)",
+        "narrativePlaceholder": "Optional: further notes on this session..."
+      },
+      "topicPicker": {
+        "techRequiredTitle": "Required topics (T01-T19)",
+        "techRequiredPlaceholder": "Please pick required topics",
+        "techOptionalTitle": "Optional topics (T20-T24)",
+        "techOptionalPlaceholder": "Please pick optional topics",
+        "behaviorTitle": "Behavior topics (B0-B7)",
+        "behaviorPlaceholder": "Please pick behavior topics",
+        "fallbackLabel": "Unrecognized:"
+      },
+      "ratingInput": {
+        "placeholder": "Please enter a rating",
+        "errorEmpty": "Rating is required"
+      },
+      "resumeUpload": {
+        "selectFile": "Select file",
+        "hint": "Supports pdf/doc/docx; single file ≤ {mb}MB",
+        "errors": {
+          "unsupported": "Only {exts} files supported",
+          "tooLarge": "Single file must be ≤ {mb}MB"
+        }
+      },
+      "screenshotUpload": {
+        "dragHint": "Click or drag files here to upload",
+        "spec": "Supports png/jpg/pdf; ≤ {mb}MB per file; up to {count} files",
+        "errors": {
+          "unsupported": "Only {exts} files supported",
+          "tooLarge": "Single file must be ≤ {mb}MB",
+          "tooMany": "Up to {count} files only"
+        }
+      },
+      "constants": {
+        "courseType": {
+          "jobCoaching": "Position Coaching",
+          "mockInterview": "Mock Interview",
+          "relation": "Interpersonal",
+          "midtermMock": "Mock Midterm",
+          "baseCourse": "Base session"
+        },
+        "baseCategory": {
+          "tech": "Technical",
+          "behavior": "Behavioral training",
+          "resume": "Resume",
+          "caseStudy": "Consulting case prep",
+          "other": "Other"
+        },
+        "resumeSubtype": {
+          "new": "New resume",
+          "update": "Resume update"
+        },
+        "relationRating": {
+          "emailQuality": {
+            "label": "Email quality",
+            "description": "Clear subject, proper greeting, concise intro, explicit ask, proper sign-off; overall professionalism in format and tone."
+          },
+          "etiquette": {
+            "label": "Etiquette",
+            "description": "On time, well-dressed, professional demeanor, positive body language and eye contact; respect throughout the interaction."
+          },
+          "smallTalk": {
+            "label": "Small talk",
+            "description": "Natural rapport, quickly finds common ground, paces duration well, builds trust and connection through casual chat."
+          },
+          "callQuality": {
+            "label": "Call",
+            "description": "Deep, targeted questions; active listening and response; clear, focused answers; well-paced overall."
+          },
+          "thankYouEmail": {
+            "label": "Thank-you email",
+            "description": "Sent within 24 hours; precisely revisits highlights; signals follow-up intent; conveys professionalism and sincerity."
+          }
+        },
+        "recommendation": {
+          "yes": "Strongly recommend",
+          "no": "Do not recommend",
+          "maybe": "Depends"
+        },
+        "midtermProgress": {
+          "level1": "Far above expectations",
+          "level2": "Above expectations",
+          "level3": "Meets expectations",
+          "level4": "Behind",
+          "level5": "Far behind"
+        },
+        "performance": {
+          "great": "Excellent",
+          "good": "Good",
+          "neutral": "Average",
+          "poor": "Below average"
+        }
+      }
+    },
     "positions": {
       "uncategorized": "Uncategorized",
       "col": {

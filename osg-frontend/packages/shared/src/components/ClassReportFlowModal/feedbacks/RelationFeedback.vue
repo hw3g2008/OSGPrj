@@ -8,8 +8,8 @@
         :data-rating-key="item.key"
       >
         <div class="rating-row__head">
-          <span class="rating-row__label">{{ item.label }}</span>
-          <span class="rating-row__max">（1-{{ item.max }}分）</span>
+          <span class="rating-row__label">{{ t(item.label) }}</span>
+          <span class="rating-row__max">{{ t('common.shared.classReport.relation.maxScoreSuffix', { max: item.max }) }}</span>
         </div>
         <a-input-number
           :value="payload.scores[item.key]"
@@ -21,26 +21,26 @@
           @update:value="updateScore(item.key, $event)"
         />
         <!-- T-517: description 始终渲染（占位 "TBD" 也正常显示，不报错），不用 v-if -->
-        <div class="rating-row__desc">{{ item.description }}</div>
+        <div class="rating-row__desc">{{ t(item.description) }}</div>
       </div>
     </div>
 
     <div class="form-group">
-      <label class="form-label">是否推荐这位学生？</label>
+      <label class="form-label">{{ t('common.shared.classReport.relation.recommendLabel') }}</label>
       <a-radio-group
         :value="payload.recommendation"
         @update:value="update('recommendation', $event)"
       >
-        <a-radio value="yes">是</a-radio>
-        <a-radio value="maybe">或许</a-radio>
-        <a-radio value="no">否</a-radio>
+        <a-radio value="yes">{{ t('common.shared.classReport.relation.recommend.yes') }}</a-radio>
+        <a-radio value="maybe">{{ t('common.shared.classReport.relation.recommend.maybe') }}</a-radio>
+        <a-radio value="no">{{ t('common.shared.classReport.relation.recommend.no') }}</a-radio>
       </a-radio-group>
     </div>
 
     <!-- T-508: 截图上传 — ScreenshotUpload widget，png/jpg/pdf，≤10MB，≤10张 -->
     <!-- screenshotUrls 落 osg_class_record.screenshot_urls 列，不进 feedbackContent JSON -->
     <div class="form-group">
-      <label class="form-label">截图证据</label>
+      <label class="form-label">{{ t('common.shared.classReport.relation.screenshotLabel') }}</label>
       <ScreenshotUpload
         :model-value="screenshotUrls"
         :max-count="10"
@@ -51,11 +51,11 @@
     </div>
 
     <div class="form-group">
-      <label class="form-label">补充说明（narrative）</label>
+      <label class="form-label">{{ t('common.shared.classReport.relation.narrativeLabel') }}</label>
       <a-textarea
         :value="payload.narrative"
         :rows="3"
-        placeholder="可选：进一步补充本次课程反馈..."
+        :placeholder="t('common.shared.classReport.relation.narrativePlaceholder')"
         @update:value="update('narrative', $event)"
       />
     </div>
@@ -64,7 +64,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { RELATION_RATING_ITEMS } from '../../../constants/classReport'
+
+const { t } = useI18n()
 import ScreenshotUpload from '../widgets/ScreenshotUpload.vue'
 
 export type RelationRatingKey =

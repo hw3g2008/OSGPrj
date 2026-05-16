@@ -1,7 +1,7 @@
 <template>
   <div class="step-course-type osg-modal-form" data-step="course-type">
     <div class="form-group">
-      <label class="form-label">课程类型 <span class="required">*</span></label>
+      <label class="form-label">{{ t('common.shared.classReport.courseType.label') }} <span class="required">*</span></label>
       <a-radio-group
         :value="modelValue"
         :disabled="disabled || readonly"
@@ -13,7 +13,7 @@
           :value="opt.value"
           :data-course-type="opt.value"
         >
-          {{ opt.label }}
+          {{ t(opt.label) }}
         </a-radio>
       </a-radio-group>
     </div>
@@ -28,8 +28,11 @@
  * - readonly/disabled 时 RadioGroup 禁用但仍显示已选值
  * - emit change(next, prev) 给父组件清理不适用 reference/baseCourse 字段
  */
+import { useI18n } from 'vue-i18n'
 import { COURSE_TYPE_OPTIONS } from '../../constants/classReport'
 import type { CourseType } from '../../types/classReport'
+
+const { t } = useI18n()
 
 interface Props {
   modelValue?: CourseType

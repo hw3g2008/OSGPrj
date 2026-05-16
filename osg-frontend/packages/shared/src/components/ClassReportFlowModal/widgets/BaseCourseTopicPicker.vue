@@ -2,41 +2,41 @@
   <div class="base-course-topic-picker osg-modal-form">
     <template v-if="category === 'tech'">
       <div class="base-course-topic-picker__group">
-        <div class="base-course-topic-picker__title">必修主题（T01-T19）</div>
+        <div class="base-course-topic-picker__title">{{ t('common.shared.classReport.topicPicker.techRequiredTitle') }}</div>
         <MultiSelect
           :value="selected"
           :options="techRequiredOptions"
           :disabled="disabled"
-          placeholder="请选择必修主题"
+          :placeholder="t('common.shared.classReport.topicPicker.techRequiredPlaceholder')"
           @update:value="onUpdate"
         />
       </div>
       <div class="base-course-topic-picker__group">
-        <div class="base-course-topic-picker__title">选修主题（T20-T24）</div>
+        <div class="base-course-topic-picker__title">{{ t('common.shared.classReport.topicPicker.techOptionalTitle') }}</div>
         <MultiSelect
           :value="selected"
           :options="techOptionalOptions"
           :disabled="disabled"
-          placeholder="请选择选修主题"
+          :placeholder="t('common.shared.classReport.topicPicker.techOptionalPlaceholder')"
           @update:value="onUpdate"
         />
       </div>
     </template>
     <template v-else>
       <div class="base-course-topic-picker__group">
-        <div class="base-course-topic-picker__title">行为主题（B0-B7）</div>
+        <div class="base-course-topic-picker__title">{{ t('common.shared.classReport.topicPicker.behaviorTitle') }}</div>
         <MultiSelect
           :value="selected"
           :options="behaviorOptions"
           :disabled="disabled"
-          placeholder="请选择行为主题"
+          :placeholder="t('common.shared.classReport.topicPicker.behaviorPlaceholder')"
           @update:value="onUpdate"
         />
       </div>
     </template>
     <div v-if="fallbackTags.length > 0" class="base-course-topic-picker__fallback">
-      <span class="base-course-topic-picker__fallback-label">未识别项：</span>
-      <a-tag v-for="t in fallbackTags" :key="t">{{ t }}</a-tag>
+      <span class="base-course-topic-picker__fallback-label">{{ t('common.shared.classReport.topicPicker.fallbackLabel') }}</span>
+      <a-tag v-for="tag in fallbackTags" :key="tag">{{ tag }}</a-tag>
     </div>
   </div>
 </template>
@@ -52,7 +52,10 @@
  * - dictValue → dictLabel；找不到回退 dictValue
  */
 import { computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { MultiSelect } from '../../../components'
+
+const { t } = useI18n()
 import { useBaseCourseTopic } from '../../../composables/useBaseCourseTopic'
 
 const props = withDefaults(
