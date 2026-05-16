@@ -2,19 +2,19 @@
   <div class="login-page">
     <div class="login-left">
       <h1>OSG Admin</h1>
-      <p>后台管理系统</p>
+      <p>{{ t('admin.login.brand.systemName') }}</p>
       <div class="features">
         <div class="feature-item">
           <i class="mdi mdi-check-circle" aria-hidden="true"></i>
-          <span>学员与导师管理</span>
+          <span>{{ t('admin.login.brand.feature.studentMentor') }}</span>
         </div>
         <div class="feature-item">
           <i class="mdi mdi-check-circle" aria-hidden="true"></i>
-          <span>课程与财务结算</span>
+          <span>{{ t('admin.login.brand.feature.courseFinance') }}</span>
         </div>
         <div class="feature-item">
           <i class="mdi mdi-check-circle" aria-hidden="true"></i>
-          <span>岗位与资源管理</span>
+          <span>{{ t('admin.login.brand.feature.positionResource') }}</span>
         </div>
       </div>
     </div>
@@ -26,8 +26,8 @@
           </div>
           <span>OSG Admin</span>
         </div>
-        <h2 class="login-title">管理员登录</h2>
-        <p class="login-subtitle">请输入您的账号信息</p>
+        <h2 class="login-title">{{ t('admin.login.title') }}</h2>
+        <p class="login-subtitle">{{ t('admin.login.subtitle') }}</p>
 
         <a-form
           ref="formRef"
@@ -38,7 +38,7 @@
           <a-form-item name="username" class="login-form-item">
             <a-input
               v-model:value="formState.username"
-              placeholder="请输入用户名"
+              :placeholder="t('admin.login.placeholder.username')"
               size="large"
               :maxlength="50"
             >
@@ -51,7 +51,7 @@
           <a-form-item name="password" class="login-form-item">
             <a-input-password
               v-model:value="formState.password"
-              placeholder="请输入密码"
+              :placeholder="t('admin.login.placeholder.password')"
               size="large"
               :maxlength="20"
               :icon-render="renderPasswordIcon"
@@ -67,7 +67,7 @@
               <a-input
                 class="captcha-input"
                 v-model:value="formState.code"
-                placeholder="请输入验证码"
+                :placeholder="t('admin.login.placeholder.code')"
                 size="large"
                 :maxlength="4"
               >
@@ -75,9 +75,9 @@
                   <i class="mdi mdi-shield-check-outline login-input-icon" aria-hidden="true"></i>
                 </template>
               </a-input>
-              <div class="captcha-code" :class="{ 'has-image': !!captchaImg }" @click="refreshCaptcha" title="点击刷新">
+              <div class="captcha-code" :class="{ 'has-image': !!captchaImg }" @click="refreshCaptcha" :title="t('admin.login.captcha.refresh')">
                 <div v-if="captchaImg" class="captcha-code-frame">
-                  <img :src="captchaSrc" alt="验证码" />
+                  <img :src="captchaSrc" :alt="t('admin.login.captcha.alt')" />
                 </div>
                 <span v-else>----</span>
               </div>
@@ -86,12 +86,12 @@
 
           <a-form-item class="login-links-item">
             <div class="login-links">
-              <a-checkbox v-model:checked="formState.rememberMe">记住我（7天）</a-checkbox>
+              <a-checkbox v-model:checked="formState.rememberMe">{{ t('admin.login.rememberMe') }}</a-checkbox>
               <a
                 class="forgot-link"
                 data-surface-trigger="modal-forgot-password"
                 @click="forgotPasswordVisible = true"
-              >忘记密码？</a>
+              >{{ t('admin.login.forgotLink') }}</a>
             </div>
           </a-form-item>
 
@@ -105,7 +105,7 @@
               :loading="loading"
               :disabled="loading"
             >
-              <span>{{ loading ? '登录中...' : '登录' }}</span>
+              <span>{{ loading ? t('admin.login.submitting') : t('admin.login.submit') }}</span>
             </a-button>
           </a-form-item>
         </a-form>
@@ -119,12 +119,14 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, h } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { getCaptchaImage } from '@osg/shared/api/auth'
 import ForgotPasswordModal from '@/components/ForgotPasswordModal.vue'
 
+const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
@@ -158,9 +160,9 @@ const formState = reactive({
 })
 
 const rules = computed(() => ({
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
-  code: [{ required: captchaEnabled.value, message: '请输入验证码', trigger: 'blur' }]
+  username: [{ required: true, message: t('admin.login.validation.username'), trigger: 'blur' }],
+  password: [{ required: true, message: t('admin.login.validation.password'), trigger: 'blur' }],
+  code: [{ required: captchaEnabled.value, message: t('admin.login.validation.code'), trigger: 'blur' }]
 }))
 
 const handleSubmit = async () => {
@@ -173,11 +175,11 @@ const handleSubmit = async () => {
       uuid: formState.uuid,
       rememberMe: formState.rememberMe
     })
-    message.success('登录成功')
+    message.success(t('admin.login.message.success'))
     const redirect = route.query.redirect as string
     router.push(redirect || '/dashboard')
   } catch (error: any) {
-    message.error(error.message || '登录失败')
+    message.error(error.message || t('admin.login.message.failure'))
     refreshCaptcha()
   } finally {
     loading.value = false

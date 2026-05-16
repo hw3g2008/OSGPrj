@@ -1,1 +1,88 @@
-{}
+{
+  "login": {
+    "title": "管理员登录",
+    "subtitle": "请输入您的账号信息",
+    "brand": {
+      "systemName": "后台管理系统",
+      "feature": {
+        "studentMentor": "学员与导师管理",
+        "courseFinance": "课程与财务结算",
+        "positionResource": "岗位与资源管理"
+      }
+    },
+    "placeholder": {
+      "username": "请输入用户名",
+      "password": "请输入密码",
+      "code": "请输入验证码"
+    },
+    "captcha": {
+      "refresh": "点击刷新",
+      "alt": "验证码"
+    },
+    "rememberMe": "记住我（7天）",
+    "forgotLink": "忘记密码？",
+    "submit": "登录",
+    "submitting": "登录中...",
+    "message": {
+      "success": "登录成功",
+      "failure": "登录失败"
+    },
+    "validation": {
+      "username": "请输入用户名",
+      "password": "请输入密码",
+      "code": "请输入验证码"
+    }
+  },
+  "forgotPassword": {
+    "title": "找回密码",
+    "step1": {
+      "prompt": "请输入您的注册邮箱，我们将发送验证码",
+      "emailLabel": "邮箱地址",
+      "emailPlaceholder": "请输入注册邮箱",
+      "sendCode": "发送验证码"
+    },
+    "step2": {
+      "sentTo": "验证码已发送至",
+      "codeLabel": "验证码",
+      "codePlaceholder": "请输入6位验证码",
+      "verify": "验证"
+    },
+    "step3": {
+      "prompt": "请设置您的新密码",
+      "newPasswordLabel": "新密码",
+      "newPasswordPlaceholder": "8-20位，包含字母和数字",
+      "confirmLabel": "确认密码",
+      "confirmPlaceholder": "请再次输入新密码",
+      "resetButton": "重置密码",
+      "rules": {
+        "length": "8-20位字符",
+        "letter": "包含字母",
+        "digit": "包含数字"
+      }
+    },
+    "step4": {
+      "title": "密码重置成功",
+      "prompt": "您的密码已成功重置，请使用新密码登录",
+      "backToLogin": "返回登录"
+    },
+    "resend": "重新发送",
+    "errors": {
+      "emailRequired": "请输入邮箱地址",
+      "emailInvalid": "请输入正确的邮箱格式",
+      "codeRequired": "请输入验证码",
+      "codeLength": "验证码为6位",
+      "newPasswordEmpty": "请输入新密码",
+      "passwordLength": "密码长度需为8-20字符",
+      "passwordNeedLetters": "密码需包含字母",
+      "passwordNeedDigits": "密码需包含数字",
+      "confirmMismatch": "两次输入的密码不一致",
+      "confirmRequired": "请再次输入新密码",
+      "sendFailed": "发送失败",
+      "verifyFailed": "验证失败",
+      "resetFailed": "重置失败"
+    },
+    "success": {
+      "codeSent": "我们会往您的注册邮箱发送验证码，请查收"
+    }
+  }
+}

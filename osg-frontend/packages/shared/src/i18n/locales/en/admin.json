@@ -1,1 +1,88 @@
-{}
+{
+  "login": {
+    "title": "Admin Sign In",
+    "subtitle": "Please enter your credentials",
+    "brand": {
+      "systemName": "Admin System",
+      "feature": {
+        "studentMentor": "Student & Mentor Management",
+        "courseFinance": "Session & Financial Settlement",
+        "positionResource": "Position & Resource Management"
+      }
+    },
+    "placeholder": {
+      "username": "Please enter username",
+      "password": "Please enter password",
+      "code": "Please enter captcha"
+    },
+    "captcha": {
+      "refresh": "Click to refresh",
+      "alt": "Captcha"
+    },
+    "rememberMe": "Remember me (7 days)",
+    "forgotLink": "Forgot password?",
+    "submit": "Sign in",
+    "submitting": "Signing in...",
+    "message": {
+      "success": "Sign in successful",
+      "failure": "Sign in failed"
+    },
+    "validation": {
+      "username": "Please enter username",
+      "password": "Please enter password",
+      "code": "Please enter captcha"
+    }
+  },
+  "forgotPassword": {
+    "title": "Reset Password",
+    "step1": {
+      "prompt": "Please enter your registered email and we will send a verification code",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "Please enter your registered email",
+      "sendCode": "Send code"
+    },
+    "step2": {
+      "sentTo": "Verification code sent to",
+      "codeLabel": "Verification code",
+      "codePlaceholder": "Please enter 6-digit code",
+      "verify": "Verify"
+    },
+    "step3": {
+      "prompt": "Please set your new password",
+      "newPasswordLabel": "New password",
+      "newPasswordPlaceholder": "8-20 chars, must contain letters and digits",
+      "confirmLabel": "Confirm password",
+      "confirmPlaceholder": "Please re-enter the new password",
+      "resetButton": "Reset password",
+      "rules": {
+        "length": "8-20 characters",
+        "letter": "Contains letters",
+        "digit": "Contains digits"
+      }
+    },
+    "step4": {
+      "title": "Password reset successful",
+      "prompt": "Your password has been reset. Please sign in with the new password",
+      "backToLogin": "Back to sign in"
+    },
+    "resend": "Resend",
+    "errors": {
+      "emailRequired": "Please enter an email address",
+      "emailInvalid": "Please enter a valid email format",
+      "codeRequired": "Please enter the verification code",
+      "codeLength": "Verification code must be 6 digits",
+      "newPasswordEmpty": "Please enter a new password",
+      "passwordLength": "Password must be 8-20 characters",
+      "passwordNeedLetters": "Password must contain letters",
+      "passwordNeedDigits": "Password must contain digits",
+      "confirmMismatch": "The two passwords do not match",
+      "confirmRequired": "Please re-enter the new password",
+      "sendFailed": "Send failed",
+      "verifyFailed": "Verification failed",
+      "resetFailed": "Reset failed"
+    },
+    "success": {
+      "codeSent": "A verification code will be sent to your registered email, please check"
+    }
+  }
+}
