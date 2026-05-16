@@ -11,37 +11,37 @@
         <div class="cdm-header__avatar">{{ avatarInitials }}</div>
         <div class="cdm-header__info">
           <span class="cdm-header__name">{{ modalTitle }}</span>
-          <div class="cdm-header__meta">ID: {{ studentId }} · {{ contracts.length }}份合同</div>
+          <div class="cdm-header__meta">ID: {{ studentId }} · {{ t('admin.users.contracts.detail.contractCount', { count: contracts.length }) }}</div>
         </div>
       </div>
     </template>
 
     <div v-if="loading" class="contract-detail-modal__state">
       <span class="mdi mdi-loading mdi-spin" aria-hidden="true"></span>
-      <span>正在加载合同记录...</span>
+      <span>{{ t('admin.users.contracts.detail.loading') }}</span>
     </div>
 
     <div v-else-if="loadError" class="contract-detail-modal__state contract-detail-modal__state--error">
-      <strong>合同详情加载失败</strong>
+      <strong>{{ t('admin.users.contracts.detail.loadError') }}</strong>
       <p>{{ loadError }}</p>
     </div>
 
     <template v-else>
       <section class="contract-detail-modal__summary">
         <article class="contract-detail-modal__summary-card">
-          <span>合同总金额</span>
+          <span>{{ t('admin.users.contracts.detail.summaryTotal') }}</span>
           <strong>{{ formatCurrency(summary.totalAmount) }}</strong>
         </article>
         <article class="contract-detail-modal__summary-card">
-          <span>剩余课时</span>
+          <span>{{ t('admin.users.contracts.detail.summaryRemaining') }}</span>
           <strong>{{ summary.remainingHours }}h</strong>
         </article>
         <article class="contract-detail-modal__summary-card">
-          <span>已用课时</span>
+          <span>{{ t('admin.users.contracts.detail.summaryUsed') }}</span>
           <strong>{{ summary.usedHours }}h</strong>
         </article>
         <article class="contract-detail-modal__summary-card">
-          <span>总课时</span>
+          <span>{{ t('admin.users.contracts.detail.summaryHours') }}</span>
           <strong>{{ summary.totalHours }}h</strong>
         </article>
       </section>
@@ -50,15 +50,15 @@
         <table class="contract-detail-modal__table">
           <thead>
             <tr>
-              <th>合同ID</th>
-              <th>类型</th>
-              <th>金额</th>
-              <th>课时</th>
-              <th>有效期</th>
-              <th>续签原因</th>
-              <th>附件</th>
-              <th>更新时间</th>
-              <th>操作</th>
+              <th>{{ t('admin.users.contracts.detail.tableContractId') }}</th>
+              <th>{{ t('admin.users.contracts.detail.tableType') }}</th>
+              <th>{{ t('admin.users.contracts.detail.tableAmount') }}</th>
+              <th>{{ t('admin.users.contracts.detail.tableHours') }}</th>
+              <th>{{ t('admin.users.contracts.detail.tableValidity') }}</th>
+              <th>{{ t('admin.users.contracts.detail.tableRenewal') }}</th>
+              <th>{{ t('admin.users.contracts.detail.tableAttachment') }}</th>
+              <th>{{ t('admin.users.contracts.detail.tableUpdated') }}</th>
+              <th>{{ t('admin.users.contracts.detail.tableAction') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -74,7 +74,7 @@
               <td>
                 <template v-if="contract.currency === 'GBP'">
                   <div><strong>£{{ (contract.amountGbp || 0).toLocaleString() }}</strong></div>
-                  <div style="color: #9ca3af; font-size: 12px">${{ (contract.amountUsd || 0).toLocaleString() }} 等值</div>
+                  <div style="color: #9ca3af; font-size: 12px">${{ (contract.amountUsd || 0).toLocaleString() }} {{ t('admin.users.contracts.detail.equivalent') }}</div>
                 </template>
                 <template v-else>
                   <strong>${{ (contract.amountUsd || contract.contractAmount || 0).toLocaleString() }}</strong>
@@ -84,7 +84,7 @@
               <td>{{ formatDateRange(contract.startDate, contract.endDate) }}</td>
               <td>{{ formatRenewalReason(contract.renewalReason) || '—' }}</td>
               <td>
-                <a v-if="contract.attachmentPath" :href="contract.attachmentPath" target="_blank" rel="noreferrer">查看附件</a>
+                <a v-if="contract.attachmentPath" :href="contract.attachmentPath" target="_blank" rel="noreferrer">{{ t('admin.users.contracts.detail.viewAttachment') }}</a>
                 <span v-else>—</span>
               </td>
               <td>{{ formatDate(contract.updateTime || contract.endDate) }}</td>
@@ -95,7 +95,7 @@
                   :data-surface-sample-key="`contract-${contract.contractId}-renew`"
                   @click="emit('request-renew')"
                 >
-                  续签合同
+                  {{ t('admin.users.contracts.detail.renewBtn') }}
                 </a-button>
               </td>
             </tr>
@@ -103,18 +103,18 @@
         </table>
       </div>
 
-      <div v-else class="contract-detail-modal__empty">暂无合同记录。</div>
+      <div v-else class="contract-detail-modal__empty">{{ t('admin.users.contracts.detail.empty') }}</div>
     </template>
 
     <template #footer>
-      <a-button @click="handleClose">关闭</a-button>
+      <a-button @click="handleClose">{{ t('admin.users.contracts.detail.close') }}</a-button>
       <a-button
         type="primary"
         data-surface-trigger="modal-contract-renew"
         data-surface-sample-key="contract-detail-renew"
         @click="emit('request-renew')"
       >
-        <span class="mdi mdi-refresh" aria-hidden="true" style="margin-right:4px"></span>续签合同
+        <span class="mdi mdi-refresh" aria-hidden="true" style="margin-right:4px"></span>{{ t('admin.users.contracts.detail.footerRenew') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -122,9 +122,12 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 import { getStudentContractDetail, type ContractDetailPayload, type ContractListItem } from '@osg/shared/api/admin/contract'
 import { getAdminDictOptions } from '@/api/adminDict'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   visible: boolean
@@ -166,7 +169,9 @@ const summary = computed(() => detail.value?.summary || {
 })
 
 const contracts = computed<ContractListItem[]>(() => detail.value?.contracts || [])
-const modalTitle = computed(() => `${props.studentName || '学员'}的合同记录`)
+const modalTitle = computed(() => t('admin.users.contracts.detail.title', {
+  name: props.studentName || t('admin.users.contracts.detail.defaultStudent')
+}))
 
 const avatarInitials = computed(() => {
   const name = props.studentName?.trim()
@@ -186,7 +191,7 @@ const loadDetail = async () => {
     detail.value = await getStudentContractDetail(props.studentId)
   } catch (error) {
     detail.value = null
-    loadError.value = error instanceof Error ? error.message : '合同详情加载失败'
+    loadError.value = error instanceof Error ? error.message : t('admin.users.contracts.detail.loadError')
   } finally {
     loading.value = false
   }
@@ -203,12 +208,13 @@ const formatCurrency = (value?: number, currency: string = 'USD') => {
 }
 
 const formatDate = (value?: string) => value ? value.slice(0, 10) : '-'
-const formatDateRange = (startDate?: string, endDate?: string) => `${formatDate(startDate)} 至 ${formatDate(endDate)}`
+const formatDateRange = (startDate?: string, endDate?: string) =>
+  `${formatDate(startDate)} ${t('admin.users.contracts.detail.dateSeparator')} ${formatDate(endDate)}`
 
 const formatType = (type?: string) => {
-  if (type === 'renew') return '续签'
-  if (type === 'supplement') return '补充'
-  return '首签'
+  if (type === 'renew') return t('admin.users.contracts.types.renew')
+  if (type === 'supplement') return t('admin.users.contracts.types.supplement')
+  return t('admin.users.contracts.types.initial')
 }
 
 const typeBadgeClass = (type?: string) => {

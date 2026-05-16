@@ -2651,5 +2651,167 @@
         "resetSuccess": "Password reset to default: {password}"
       }
     }
+  },
+  "users": {
+    "contracts": {
+      "pageTitle": "Contract Management",
+      "add": "New Contract",
+      "filter": {
+        "dateLabel": "Date",
+        "dateStart": "Start Date",
+        "dateEnd": "End Date",
+        "studentKeyword": "Name or Student ID",
+        "contractTypePlaceholder": "Contract Type",
+        "contractTypes": {
+          "initial": "Initial",
+          "renew": "Renewal"
+        },
+        "contractStatusPlaceholder": "Status",
+        "contractStatuses": {
+          "active": "Active",
+          "expiring": "Expiring",
+          "expired": "Ended",
+          "cancelled": "Cancelled"
+        },
+        "leadMentorPlaceholder": "Lead Mentor",
+        "search": "Search",
+        "reset": "Reset",
+        "export": "Export"
+      },
+      "table": {
+        "empty": "No contracts found",
+        "footer": {
+          "total": "Total",
+          "hours": "Hours",
+          "used": "Used",
+          "remaining": "Remaining"
+        },
+        "showTotal": "{total} records"
+      },
+      "columns": {
+        "contractNo": "Contract No.",
+        "studentId": "Student ID",
+        "studentName": "Student Name",
+        "leadMentorName": "Lead Mentor",
+        "contractType": "Type",
+        "amountUsd": "USD Amount",
+        "amountGbp": "GBP Amount",
+        "totalHours": "Total Hours",
+        "usedHours": "Used Hours",
+        "remainingHours": "Remaining",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "renewalReason": "Renewal Reason",
+        "contractStatus": "Status",
+        "action": "Action"
+      },
+      "stats": {
+        "total": "Total Contracts",
+        "active": "Active",
+        "expiring": "Expiring",
+        "ended": "Ended",
+        "amount": "Total Amount"
+      },
+      "types": {
+        "initial": "Initial",
+        "renew": "Renewal",
+        "supplement": "Supplement"
+      },
+      "statuses": {
+        "active": "Active",
+        "expiring": "Expiring",
+        "expired": "Ended",
+        "cancelled": "Cancelled"
+      },
+      "action": {
+        "detail": "Detail",
+        "renew": "Renew"
+      },
+      "messages": {
+        "exportSuccess": "Export successful",
+        "exportFail": "Export failed",
+        "exportAuthFail": "Auth failed, please log in again"
+      },
+      "detail": {
+        "title": "{name}'s Contracts",
+        "defaultStudent": "Student",
+        "contractCount": "{count} contract(s)",
+        "loading": "Loading contracts...",
+        "loadError": "Failed to load contract detail",
+        "summaryTotal": "Total Amount",
+        "summaryRemaining": "Remaining Hours",
+        "summaryUsed": "Used Hours",
+        "summaryHours": "Total Hours",
+        "tableContractId": "Contract ID",
+        "tableType": "Type",
+        "tableAmount": "Amount",
+        "tableHours": "Hours",
+        "tableValidity": "Validity",
+        "tableRenewal": "Renewal Reason",
+        "tableAttachment": "Attachment",
+        "tableUpdated": "Updated At",
+        "tableAction": "Action",
+        "equivalent": "equiv.",
+        "viewAttachment": "View",
+        "renewBtn": "Renew",
+        "empty": "No contracts found.",
+        "close": "Close",
+        "footerRenew": "Renew Contract",
+        "dateSeparator": "to"
+      },
+      "renew": {
+        "titleReactivate": "Re-join · Renew Contract",
+        "titleNew": "New / Renew Contract",
+        "studentLabel": "Student",
+        "studentRemaining": "Remaining {hours}h",
+        "studentSearchPlaceholder": "Search student by name",
+        "studentSearching": "Searching…",
+        "studentNotFound": "No students found",
+        "sectionAmountTitle": "Contract Amount",
+        "sectionAmountDesc": "Select currency and enter amount",
+        "currencyLabel": "Currency",
+        "amountGbpLabel": "GBP Amount",
+        "amountUsdLabel": "Amount (USD)",
+        "amountUsdEquivLabel": "USD Equivalent",
+        "currencyUsd": "USD",
+        "currencyGbp": "GBP",
+        "amountGbpPlaceholder": "£ Enter GBP amount",
+        "amountUsdEquivPlaceholder": "$ Enter USD equivalent",
+        "amountUsdPlaceholder": "$ Enter USD amount",
+        "hoursLabel": "New Hours",
+        "hoursPlaceholder": "e.g. 50",
+        "sectionDateTitle": "Contract Period & Reason",
+        "sectionDateDesc": "Set validity period and renewal reason",
+        "startDateLabel": "Start Date",
+        "endDateLabel": "End Date",
+        "renewalReasonLabel": "Renewal Reason",
+        "renewalReasonPlaceholder": "Select renewal reason",
+        "otherReasonLabel": "Other Reason",
+        "otherReasonPlaceholder": "Describe the reason",
+        "attachmentLabel": "Attachment",
+        "attachmentDrag": "Click or drag contract file here (PDF / JPG / PNG)",
+        "attachmentHint": "Attachment is required",
+        "remarkLabel": "Note",
+        "remarkPlaceholder": "Optional notes",
+        "cancel": "Cancel",
+        "saveBtnRenew": "Save Renewal",
+        "saveBtnCreate": "Create Contract",
+        "validationStudent": "Please select a student",
+        "validationAmountUsd": "Please enter USD amount",
+        "validationAmountUsdEquiv": "Please enter USD equivalent",
+        "validationAmountGbp": "Please enter GBP amount",
+        "validationDates": "Please select contract dates",
+        "validationReason": "Please select renewal reason",
+        "validationOtherReason": "Please describe the other reason",
+        "validationAttachment": "Please upload attachment",
+        "uploadSuccess": "Attachment uploaded",
+        "uploadFail": "Upload failed",
+        "uploadTypeFail": "Only PDF / JPG / PNG allowed",
+        "uploadSizeFail": "File must be under 150MB",
+        "uploadCountFail": "Only 1 attachment allowed",
+        "successReactivate": "Student re-joined via contract renewal",
+        "successRenew": "Contract renewed successfully"
+      }
+    }
   }
 }
