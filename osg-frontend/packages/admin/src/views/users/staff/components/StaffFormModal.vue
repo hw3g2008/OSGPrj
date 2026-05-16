@@ -11,45 +11,45 @@
         <div v-if="isEditing" class="staff-form-modal__avatar">{{ avatarText }}</div>
         <span class="staff-form-modal__title-text">
           <span v-if="!isEditing" class="mdi mdi-account-plus" aria-hidden="true" style="margin-right:8px"></span>
-          {{ isEditing ? `编辑导师 - ${staff?.staffName || ''}（ID: ${staff?.staffId ?? '-'}）` : '新增导师' }}
+          {{ isEditing ? t('admin.users.staff.form.titleEdit', { name: staff?.staffName || '', id: staff?.staffId ?? '-' }) : t('admin.users.staff.form.titleAdd') }}
         </span>
       </div>
     </template>
 
     <div class="staff-form-modal__grid">
-    <!-- Section 1: 核心信息 -->
+    <!-- Section 1 -->
     <section class="staff-form-modal__section">
-      <div class="staff-form-modal__badge staff-form-modal__badge--primary">核心信息</div>
+      <div class="staff-form-modal__badge staff-form-modal__badge--primary">{{ t('admin.users.staff.form.sections.core') }}</div>
       <a-form layout="vertical">
         <a-row :gutter="[20, 0]">
           <a-col :span="12">
-            <a-form-item label="姓名">
+            <a-form-item :label="t('admin.users.staff.form.fields.staffName')">
               <a-input
                 ref="staffNameInputRef"
                 v-model:value="form.staffName"
-                placeholder="请输入英文名"
+                :placeholder="t('admin.users.staff.form.placeholders.staffName')"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="邮箱">
-              <a-input v-model:value="form.email" placeholder="请输入邮箱" />
+            <a-form-item :label="t('admin.users.staff.form.fields.email')">
+              <a-input v-model:value="form.email" :placeholder="t('admin.users.staff.form.placeholders.email')" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="类型">
-              <a-select v-model:value="form.staffType" placeholder="请选择">
-                <a-select-option value="mentor">导师</a-select-option>
-                <a-select-option value="lead_mentor">班主任</a-select-option>
-                <a-select-option value="assistant">助教</a-select-option>
+            <a-form-item :label="t('admin.users.staff.form.fields.staffType')">
+              <a-select v-model:value="form.staffType" :placeholder="t('admin.users.staff.form.placeholders.typeSelect')">
+                <a-select-option value="mentor">{{ t('admin.users.staff.staffTypes.mentor') }}</a-select-option>
+                <a-select-option value="lead_mentor">{{ t('admin.users.staff.staffTypes.lead_mentor') }}</a-select-option>
+                <a-select-option value="assistant">{{ t('admin.users.staff.staffTypes.assistant') }}</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="性别">
-              <a-select v-model:value="form.gender" placeholder="请选择">
-                <a-select-option value="0">男</a-select-option>
-                <a-select-option value="1">女</a-select-option>
+            <a-form-item :label="t('admin.users.staff.form.fields.gender')">
+              <a-select v-model:value="form.gender" :placeholder="t('admin.users.staff.form.placeholders.typeSelect')">
+                <a-select-option value="0">{{ t('admin.users.staff.form.genders.male') }}</a-select-option>
+                <a-select-option value="1">{{ t('admin.users.staff.form.genders.female') }}</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
@@ -57,15 +57,15 @@
       </a-form>
     </section>
 
-    <!-- Section 2: 联系方式 -->
+    <!-- Section 2 -->
     <section class="staff-form-modal__section">
       <div class="staff-form-modal__badge staff-form-modal__badge--green">
-        <span class="mdi mdi-phone" aria-hidden="true" /> 联系方式
+        <span class="mdi mdi-phone" aria-hidden="true" /> {{ t('admin.users.staff.form.sections.contact') }}
       </div>
       <a-form layout="vertical">
         <a-row :gutter="[20, 0]">
           <a-col :span="12">
-            <a-form-item label="手机号">
+            <a-form-item :label="t('admin.users.staff.form.fields.phone')">
               <div class="phone-input-group">
                 <a-select
                   v-model:value="form.phoneCountryCode"
@@ -77,32 +77,32 @@
                 <a-input
                   v-model:value="form.phone"
                   class="phone-input-group__number"
-                  placeholder="请输入手机号"
+                  :placeholder="t('admin.users.staff.form.placeholders.phone')"
                 />
               </div>
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="微信">
-              <a-input v-model:value="form.wechatId" placeholder="请输入微信号" />
+            <a-form-item :label="t('admin.users.staff.form.fields.wechat')">
+              <a-input v-model:value="form.wechatId" :placeholder="t('admin.users.staff.form.placeholders.wechat')" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="地区">
+            <a-form-item :label="t('admin.users.staff.form.fields.region')">
               <MultiSelect
                 v-model:value="form.regions"
                 :options="regionItems"
-                placeholder="请选择，可多选"
+                :placeholder="t('admin.users.staff.form.placeholders.multiSelect')"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="城市">
+            <a-form-item :label="t('admin.users.staff.form.fields.city')">
               <a-select
                 v-model:value="form.city"
                 :options="filteredCityOptions"
                 :field-names="{ label: 'label', value: 'value' }"
-                :placeholder="form.regions.length ? '请选择（选填）' : '请先选择地区'"
+                :placeholder="form.regions.length ? t('admin.users.staff.form.placeholders.cityReady') : t('admin.users.staff.form.placeholders.cityWait')"
                 :disabled="!form.regions.length"
                 allow-clear
               />
@@ -112,53 +112,53 @@
       </a-form>
     </section>
 
-    <!-- Section 3: 专业方向 -->
+    <!-- Section 3 -->
     <section class="staff-form-modal__section">
       <div class="staff-form-modal__badge staff-form-modal__badge--amber">
-        <span class="mdi mdi-target" aria-hidden="true" /> 专业方向
+        <span class="mdi mdi-target" aria-hidden="true" /> {{ t('admin.users.staff.form.sections.specialty') }}
       </div>
       <a-form layout="vertical">
         <a-row :gutter="[20, 0]">
           <a-col :span="12">
-            <a-form-item label="主攻方向">
+            <a-form-item :label="t('admin.users.staff.form.fields.majorDirection')">
               <MultiSelect
                 v-model:value="form.majorDirections"
                 :options="majorItems"
-                placeholder="请选择，可多选"
+                :placeholder="t('admin.users.staff.form.placeholders.multiSelect')"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="子方向">
+            <a-form-item :label="t('admin.users.staff.form.fields.subDirection')">
               <MultiSelect
                 v-model:value="form.subDirections"
                 :options="filteredSubOptions"
-                :placeholder="form.majorDirections.length ? '请选择，可多选' : '请先选择主攻方向'"
+                :placeholder="form.majorDirections.length ? t('admin.users.staff.form.placeholders.multiSelect') : t('admin.users.staff.form.placeholders.subDirectionWait')"
                 :disabled="!form.majorDirections.length"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="可授课程类型">
+            <a-form-item :label="t('admin.users.staff.form.fields.courseType')">
               <MultiSelect
                 v-model:value="form.courseTypes"
                 :options="courseItems"
-                placeholder="请选择，可多选"
+                :placeholder="t('admin.users.staff.form.placeholders.multiSelect')"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="擅长">
+            <a-form-item :label="t('admin.users.staff.form.fields.specialty')">
               <MultiSelect
                 v-model:value="form.specialties"
                 :options="specialtyItems"
-                placeholder="请选择，可多选"
+                :placeholder="t('admin.users.staff.form.placeholders.multiSelect')"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="课时单价（USD/h）">
-              <a-input-number v-model:value="form.hourlyRate" :min="0" :max="MAX_AMOUNT" placeholder="如 200" style="width:100%">
+            <a-form-item :label="t('admin.users.staff.form.fields.hourlyRate')">
+              <a-input-number v-model:value="form.hourlyRate" :min="0" :max="MAX_AMOUNT" :placeholder="t('admin.users.staff.form.placeholders.hourlyRate')" style="width:100%">
                 <template #prefix>$</template>
               </a-input-number>
             </a-form-item>
@@ -167,19 +167,19 @@
       </a-form>
     </section>
 
-    <!-- Section 4: 职业背景 -->
+    <!-- Section 4 -->
     <section class="staff-form-modal__section">
       <div class="staff-form-modal__badge staff-form-modal__badge--purple">
-        <span class="mdi mdi-briefcase" aria-hidden="true" /> 职业背景
+        <span class="mdi mdi-briefcase" aria-hidden="true" /> {{ t('admin.users.staff.form.sections.career') }}
       </div>
       <a-form layout="vertical">
         <a-row :gutter="[20, 0]">
           <a-col :span="24">
-            <a-form-item label="任职公司">
+            <a-form-item :label="t('admin.users.staff.form.fields.companies')">
               <MultiSelect
                 v-model:value="form.companies"
                 :options="allCompanyOptions"
-                placeholder="请选择或搜索公司，可多选"
+                :placeholder="t('admin.users.staff.form.placeholders.companies')"
               />
             </a-form-item>
           </a-col>
@@ -187,31 +187,31 @@
       </a-form>
     </section>
 
-    <section class="staff-form-modal__section" v-if="isSuperAdmin">
+    <section v-if="isSuperAdmin" class="staff-form-modal__section">
       <div class="staff-form-modal__badge staff-form-modal__badge--orange">
-        <span class="mdi mdi-star" aria-hidden="true" /> 内部评估
+        <span class="mdi mdi-star" aria-hidden="true" /> {{ t('admin.users.staff.form.sections.internal') }}
       </div>
       <a-form layout="vertical">
         <a-row :gutter="[20, 0]">
           <a-col :span="12">
-            <a-form-item label="评级">
+            <a-form-item :label="t('admin.users.staff.form.fields.rating')">
               <a-select
                 v-model:value="form.rating"
                 :options="ratingItems"
                 :field-names="{ label: 'label', value: 'value' }"
-                placeholder="请选择评级"
+                :placeholder="t('admin.users.staff.form.placeholders.rating')"
                 allow-clear
               />
             </a-form-item>
           </a-col>
           <a-col :span="24">
-            <a-form-item label="评语">
+            <a-form-item :label="t('admin.users.staff.form.fields.ratingRemark')">
               <a-textarea
                 v-model:value="form.ratingRemark"
                 :rows="3"
                 :maxlength="500"
                 show-count
-                placeholder="请输入评语（选填，仅超管可见可写）"
+                :placeholder="t('admin.users.staff.form.placeholders.ratingRemark')"
               />
             </a-form-item>
           </a-col>
@@ -221,25 +221,25 @@
 
     <section class="staff-form-modal__section">
       <div class="staff-form-modal__badge staff-form-modal__badge--blue">
-        <span class="mdi mdi-shield-account" aria-hidden="true" /> 账号信息
+        <span class="mdi mdi-shield-account" aria-hidden="true" /> {{ t('admin.users.staff.form.sections.account') }}
       </div>
       <a-form layout="vertical">
         <a-row :gutter="[20, 0]">
           <a-col :span="12">
-            <a-form-item label="登录账号">
+            <a-form-item :label="t('admin.users.staff.form.fields.loginAccount')">
               <a-input
                 v-model:value="form.loginAccount"
                 :disabled="isEditing"
-                placeholder="请输入登录账号"
+                :placeholder="t('admin.users.staff.form.placeholders.loginAccount')"
               />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="初始密码">
+            <a-form-item :label="t('admin.users.staff.form.fields.initialPassword')">
               <a-input
                 v-model:value="form.initialPassword"
                 :disabled="isEditing"
-                placeholder="请输入初始密码"
+                :placeholder="t('admin.users.staff.form.placeholders.initialPassword')"
               />
             </a-form-item>
           </a-col>
@@ -249,9 +249,9 @@
     </div>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
+      <a-button @click="handleClose">{{ t('admin.users.staff.form.footer.cancel') }}</a-button>
       <a-button type="primary" :loading="submitting" @click="handleSubmit">
-        {{ isEditing ? '保存修改' : '确定添加' }}
+        {{ isEditing ? t('admin.users.staff.form.footer.save') : t('admin.users.staff.form.footer.add') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -260,6 +260,7 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 import { MultiSelect } from '@osg/shared/components'
 import type { StaffListItem, StaffPayload } from '@osg/shared/api/admin/staff'
@@ -271,6 +272,8 @@ import {
 } from '@osg/shared/utils'
 import { useDictFacade } from '@osg/shared/composables'
 import { useUserStore } from '@/stores/user'
+
+const { t } = useI18n()
 
 const userStore = useUserStore()
 const isSuperAdmin = computed(() => userStore.permissions.includes('*:*:*'))
@@ -297,7 +300,6 @@ const loadAllDicts = () => {
   void loadCompany()
 }
 
-/** 把后端逗号分隔的字典 value 串解析为数组（兼容历史中文 label：原样保留） */
 const splitCsv = (val: unknown): string[] => {
   if (Array.isArray(val)) return val.filter((v): v is string => typeof v === 'string' && v.length > 0)
   if (typeof val === 'string' && val.trim()) return val.split(',').map((s) => s.trim()).filter(Boolean)
@@ -317,7 +319,6 @@ const emit = defineEmits<{
 
 const DEFAULT_INITIAL_PASSWORD = 'Osg@2026'
 
-/** 国际电话区号下拉选项（从字典加载，区号取自 extra.callingCode） */
 const phoneCountryOptions = computed(() => {
   const items = countryCodeItems.value
     .map((item) => ({
@@ -325,7 +326,7 @@ const phoneCountryOptions = computed(() => {
       label: `${item.extra?.callingCode ?? ''} ${item.label}`.trim(),
     }))
     .filter((opt) => opt.value)
-  return items.length ? items : [{ value: '+1', label: '+1 美国/加拿大' }]
+  return items.length ? items : [{ value: '+1', label: t('admin.users.staff.form.defaultCountryCode') }]
 })
 
 const filterPhoneCountryOption = (input: string, option: { label: string; value: string }) => {
@@ -340,7 +341,7 @@ const form = reactive({
   staffName: '',
   email: '',
   phone: '',
-  phoneCountryCode: '+1', // 默认美国/加拿大
+  phoneCountryCode: '+1',
   staffType: undefined as string | undefined,
   gender: undefined as string | undefined,
   wechatId: '',
@@ -361,19 +362,16 @@ const form = reactive({
 const isEditing = computed(() => Boolean(props.staff?.staffId))
 const surfaceId = computed(() => (isEditing.value ? 'modal-edit-staff' : 'modal-add-staff'))
 
-/** 城市按所有选中的 region 联合过滤；未选 region 时为空 */
 const filteredCityOptions = computed(() => {
   if (!form.regions.length) return []
   return cityItems.value.filter((c) => c.parentValue && form.regions.includes(c.parentValue))
 })
 
-/** 子方向按已选主攻方向（多个）联合过滤 */
 const filteredSubOptions = computed(() => {
   if (!form.majorDirections.length) return []
   return subItems.value.filter((s) => s.parentValue && form.majorDirections.includes(s.parentValue))
 })
 
-/** 任职公司全量：osg_company_name 字典 */
 const allCompanyOptions = computed(() => companyItems.value)
 
 const avatarText = computed(() => {
@@ -383,9 +381,7 @@ const avatarText = computed(() => {
 })
 
 const syncAccountDefaults = () => {
-  if (isEditing.value) {
-    return
-  }
+  if (isEditing.value) return
   form.loginAccount = form.email.trim()
   form.initialPassword = DEFAULT_INITIAL_PASSWORD
 }
@@ -394,7 +390,6 @@ const resetForm = () => {
   form.staffName = props.staff?.staffName || ''
   form.email = props.staff?.email || ''
   const parsedPhone = splitPhone(props.staff?.phone)
-  // 编辑时：复用已有区号；新建时：默认 +1 美国/加拿大
   form.phoneCountryCode = isEditing.value ? parsedPhone.countryCode : '+1'
   form.phone = parsedPhone.number
   form.staffType = props.staff?.staffType || undefined
@@ -434,9 +429,6 @@ watch(
   { immediate: true }
 )
 
-/** 主攻方向变化 → 过滤掉不再合法的子方向。
- *  仅清理「字典内已知子方向」中 parent 不匹配的；字典查不到的视为历史数据原样保留，
- *  避免编辑旧导师时把历史的英文缩写（'IB'/'PE' 等）误删。 */
 watch(
   () => form.majorDirections,
   (newDirs) => {
@@ -449,8 +441,6 @@ watch(
   }
 )
 
-/** 地区变化 → 若已选 city 不在剩余 region 范围内则清掉（避免脏值）。
- *  仅在 prev 非空且发生缩减时清，避免 resetForm 期间误清。 */
 watch(
   () => form.regions,
   (next, prev) => {
@@ -478,41 +468,39 @@ const handleClose = () => {
 const handleSubmit = () => {
   const hourlyRateText = String(form.hourlyRate ?? '').trim()
   if (!form.staffName.trim()) {
-    message.error('请填写导师姓名')
+    message.error(t('admin.users.staff.form.validation.staffName'))
     return
   }
   if (!form.email.trim()) {
-    message.error('请填写邮箱')
+    message.error(t('admin.users.staff.form.validation.email'))
     return
   }
   if (!form.staffType) {
-    message.error('请选择导师类型')
+    message.error(t('admin.users.staff.form.validation.staffType'))
     return
   }
   if (!form.majorDirections.length) {
-    message.error('请选择主攻方向')
+    message.error(t('admin.users.staff.form.validation.majorDirection'))
     return
   }
   if (!form.regions.length) {
-    message.error('请选择地区')
+    message.error(t('admin.users.staff.form.validation.region'))
     return
   }
   if (!hourlyRateText) {
-    message.error('请填写课时单价')
+    message.error(t('admin.users.staff.form.validation.hourlyRate'))
     return
   }
   if (Number(hourlyRateText) > MAX_AMOUNT) {
     message.error(MAX_AMOUNT_MESSAGE)
     return
   }
-  // 前端校验：擅长最多 20 项
   if (form.specialties.length > 20) {
-    message.error('擅长最多选择 20 项')
+    message.error(t('admin.users.staff.form.validation.specialtyMax'))
     return
   }
-  // 前端校验：任职公司最多 10 家
   if (form.companies.length > 10) {
-    message.error('任职公司最多选择 10 家')
+    message.error(t('admin.users.staff.form.validation.companiesMax'))
     return
   }
 
@@ -587,10 +575,6 @@ const handleSubmit = () => {
   font-weight: 700;
 }
 
-/* OverlaySurfaceModal 的 body 是子组件渲染的，本组件 scoped class 选不到它，
-   只能依赖 OverlaySurfaceModal 自身 padding。section 间距交给本组件渲染的 grid wrapper 控制。 */
-
-/* ── Section cards ── */
 .staff-form-modal__grid {
   display: flex;
   flex-direction: column;
@@ -604,7 +588,6 @@ const handleSubmit = () => {
   padding: 22px 24px 4px;
 }
 
-/* ── Section badges ── */
 .staff-form-modal__badge {
   display: inline-flex;
   align-items: center;
@@ -646,10 +629,6 @@ const handleSubmit = () => {
   color: #9A3412;
 }
 
-/* ── 控件纵向节奏 ──
-   父组件 OverlaySurfaceModal 里有 `.ant-form-item:last-child { margin-bottom: 0 }`
-   而本表单中每个 form-item 在 a-col 里都是唯一子元素，会命中 :last-child；
-   `.ant-form-item-label { padding-bottom: 0 }` 同理。需要 !important 才能覆盖。 */
 :global([data-surface-id="modal-add-staff"] .staff-form-modal__section .ant-form-item),
 :global([data-surface-id="modal-edit-staff"] .staff-form-modal__section .ant-form-item) {
   margin-bottom: 20px !important;
@@ -660,11 +639,6 @@ const handleSubmit = () => {
   padding-bottom: 8px !important;
 }
 
-/* 控件尺寸/圆角/边框由公共 .osg-modal-form 接管（body-class 已注入）。
-   见 docs/modal-form-style-guide.md §1-§3 与 packages/shared/src/styles/index.scss。
-   本组件只保留布局类样式（手机号区号 + 号码分组）。 */
-
-/* ── 手机号：区号 + 号码 分离布局 ── */
 .phone-input-group {
   display: flex;
   align-items: center;
@@ -679,5 +653,4 @@ const handleSubmit = () => {
   flex: 1 1 auto;
   min-width: 0;
 }
-
 </style>

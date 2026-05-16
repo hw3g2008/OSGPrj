@@ -1,10 +1,10 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="导师列表" title-en="Mentor List">
+    <PageHeader :title-zh="t('admin.users.staff.pageTitle')" title-en="Mentor List">
       <template #actions>
         <a-button type="primary" data-surface-trigger="modal-add-staff" @click="openCreateModal">
           <template #icon><PlusOutlined /></template>
-          新增导师
+          {{ t('admin.users.staff.addBtn') }}
         </a-button>
       </template>
     </PageHeader>
@@ -13,48 +13,48 @@
       v-if="pendingReviewCount > 0"
       type="warning"
       show-icon
-      :message="`有 ${pendingReviewCount} 位导师的个人信息变更待审核`"
-      description="导师提交的银行信息、联系方式等变更需要您审核确认"
+      :message="t('admin.users.staff.pendingAlert.message', { count: pendingReviewCount })"
+      :description="t('admin.users.staff.pendingAlert.description')"
     >
       <template #action>
         <a-button type="primary" size="small" data-surface-trigger="modal-mentor-info-change" @click="handlePendingReviewEntry">
-          立即处理
+          {{ t('admin.users.staff.pendingAlert.action') }}
         </a-button>
       </template>
     </a-alert>
 
     <a-card :bordered="false">
-      <a-form layout="inline" style="gap: var(--osg-space-3); flex-wrap: wrap" data-field-name="导师管理页">
+      <a-form layout="inline" style="gap: var(--osg-space-3); flex-wrap: wrap" data-field-name="导师管理页"> <!-- i18n-skip-line: playwright selector -->
         <a-form-item>
-          <a-input v-model:value="filters.staffName" placeholder="搜索姓名/ID" allow-clear style="width: 180px" data-field-name="搜索框" @pressEnter="handleSearch" />
+          <a-input v-model:value="filters.staffName" :placeholder="t('admin.users.staff.filter.searchPlaceholder')" allow-clear style="width: 180px" data-field-name="搜索框" @pressEnter="handleSearch" /> <!-- i18n-skip-line: playwright selector -->
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.staffType" placeholder="全部类型" allow-clear style="width: 120px">
-            <a-select-option value="lead_mentor">班主任</a-select-option>
-            <a-select-option value="mentor">导师</a-select-option>
-            <a-select-option value="assistant">助教</a-select-option>
+          <a-select v-model:value="filters.staffType" :placeholder="t('admin.users.staff.filter.allTypes')" allow-clear style="width: 120px">
+            <a-select-option value="lead_mentor">{{ t('admin.users.staff.staffTypes.lead_mentor') }}</a-select-option>
+            <a-select-option value="mentor">{{ t('admin.users.staff.staffTypes.mentor') }}</a-select-option>
+            <a-select-option value="assistant">{{ t('admin.users.staff.staffTypes.assistant') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.majorDirection" placeholder="全部方向" allow-clear style="width: 130px">
+          <a-select v-model:value="filters.majorDirection" :placeholder="t('admin.users.staff.filter.allDirections')" allow-clear style="width: 130px">
             <a-select-option v-for="opt in majorDirectionOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.accountStatus" placeholder="全部状态" allow-clear style="width: 110px" data-field-name="状态">
-            <a-select-option value="0">正常</a-select-option>
-            <a-select-option value="1">冻结</a-select-option>
+          <a-select v-model:value="filters.accountStatus" :placeholder="t('admin.users.staff.filter.allStatus')" allow-clear style="width: 110px" data-field-name="状态"> <!-- i18n-skip-line: playwright selector -->
+            <a-select-option value="0">{{ t('admin.users.staff.filter.statusNormal') }}</a-select-option>
+            <a-select-option value="1">{{ t('admin.users.staff.filter.statusFrozen') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
           <a-space>
             <a-button type="primary" @click="handleSearch">
               <template #icon><SearchOutlined /></template>
-              搜索
+              {{ t('admin.users.staff.filter.search') }}
             </a-button>
             <a-button :loading="exporting" @click="handleExport">
               <template #icon><ExportOutlined /></template>
-              {{ exporting ? '导出中...' : '导出' }}
+              {{ exporting ? t('admin.users.staff.export.loading') : t('admin.users.staff.export.idle') }}
             </a-button>
           </a-space>
         </a-form-item>
@@ -77,8 +77,8 @@
         show-icon
         style="margin-bottom: var(--osg-space-4)"
       >
-        <template #message><strong>黑名单导师限制说明</strong></template>
-        <template #description>黑名单中的导师<strong>无法登录系统</strong>，且无法访问任何业务模块</template>
+        <template #message><strong>{{ t('admin.users.staff.blacklistAlert.message') }}</strong></template>
+        <template #description>{{ t('admin.users.staff.blacklistAlert.descPre') }}<strong>{{ t('admin.users.staff.blacklistAlert.descStrong') }}</strong>{{ t('admin.users.staff.blacklistAlert.descPost') }}</template>
       </a-alert>
 
       <a-table
@@ -176,18 +176,18 @@
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <a-space :size="4" wrap>
-              <a-button type="link" size="small" data-surface-trigger="modal-staff-detail" :data-surface-sample-key="`staff-${record.staffId}`" @click="openStaffDetail(record)">详情</a-button>
-              <a-button type="link" size="small" data-surface-trigger="modal-edit-staff" :data-surface-sample-key="`staff-${record.staffId}`" @click="openEditModal(record)">编辑</a-button>
+              <a-button type="link" size="small" data-surface-trigger="modal-staff-detail" :data-surface-sample-key="`staff-${record.staffId}`" @click="openStaffDetail(record)">{{ t('admin.users.staff.action.detail') }}</a-button>
+              <a-button type="link" size="small" data-surface-trigger="modal-edit-staff" :data-surface-sample-key="`staff-${record.staffId}`" @click="openEditModal(record)">{{ t('admin.users.staff.action.edit') }}</a-button>
               <a-dropdown :trigger="['click']" placement="bottomRight">
-                <a-button type="link" size="small">更多 <DownOutlined /></a-button>
+                <a-button type="link" size="small">{{ t('admin.users.staff.action.more') }} <DownOutlined /></a-button>
                 <template #overlay>
                   <a-menu @click="({ key }: { key: string }) => handleActionSelect(key as StaffActionKey, record)">
-                    <a-menu-item key="resetPassword">重置密码</a-menu-item>
+                    <a-menu-item key="resetPassword">{{ t('admin.users.staff.action.resetPassword') }}</a-menu-item>
                     <a-menu-item :key="record.accountStatus === '1' ? 'restore' : 'freeze'">
-                      <span :style="{ color: record.accountStatus === '1' ? '#15803d' : '#b45309' }">{{ record.accountStatus === '1' ? '解冻' : '冻结' }}</span>
+                      <span :style="{ color: record.accountStatus === '1' ? '#15803d' : '#b45309' }">{{ record.accountStatus === '1' ? t('admin.users.staff.action.restore') : t('admin.users.staff.action.freeze') }}</span>
                     </a-menu-item>
                     <a-menu-item :key="isBlacklisted(record) ? 'remove' : 'blacklist'">
-                      <span style="color: #b91c1c">{{ isBlacklisted(record) ? '移出黑名单' : '加入黑名单' }}</span>
+                      <span style="color: #b91c1c">{{ isBlacklisted(record) ? t('admin.users.staff.action.removeBlacklist') : t('admin.users.staff.action.blacklist') }}</span>
                     </a-menu-item>
                   </a-menu>
                 </template>
@@ -232,17 +232,17 @@
       @cancel="closeResetPasswordModal"
     >
       <template #title>
-        <span style="font-weight: 700; color: var(--text)">重置密码成功</span>
+        <span style="font-weight: 700; color: var(--text)">{{ t('admin.users.staff.resetPassword.title') }}</span>
       </template>
 
       <div style="display: flex; flex-direction: column; gap: 10px; color: var(--text)">
-        <p style="margin: 0">登录账号：{{ resetPasswordResult?.loginAccount || '-' }}</p>
-        <p style="margin: 0">默认密码：{{ resetPasswordResult?.defaultPassword || '-' }}</p>
+        <p style="margin: 0">{{ t('admin.users.staff.resetPassword.account', { account: resetPasswordResult?.loginAccount || '-' }) }}</p>
+        <p style="margin: 0">{{ t('admin.users.staff.resetPassword.password', { password: resetPasswordResult?.defaultPassword || '-' }) }}</p>
       </div>
 
       <template #footer>
         <a-button type="primary" @click="closeResetPasswordModal">
-          知道了
+          {{ t('admin.users.staff.resetPassword.ok') }}
         </a-button>
       </template>
     </OverlaySurfaceModal>
@@ -251,6 +251,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { DownOutlined, ExportOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import {
@@ -273,8 +274,9 @@ import MentorStudentsModal from './components/MentorStudentsModal.vue'
 import StaffDetailModal from './components/StaffDetailModal.vue'
 import StaffFormModal from './components/StaffFormModal.vue'
 import StaffStatusModal from './components/StaffStatusModal.vue'
-import { staffColumns, staffBlacklistColumns, staffColumnsWithRating } from './columns'
+import { staffColumnDefs, staffBlacklistColumnDefs, staffColumnDefsWithRating } from './columns'
 
+const { t } = useI18n()
 const userStore = useUserStore()
 const isSuperAdmin = computed(() => userStore.permissions.includes('*:*:*'))
 
@@ -285,11 +287,9 @@ const { items: subItems, load: loadSub } = useDictFacade('osg_sub_direction')
 const { items: ratingItems, load: loadRating } = useDictFacade('osg_rating')
 const { items: companyItems, load: loadCompany } = useDictFacade('osg_company_name')
 
-/** value→label 查询；查不到（历史中文数据）原样返回，保证旧数据可读 */
 const dictLabel = (items: DictFacadeOption[], val?: string) =>
   val ? (items.find((i) => i.value === val)?.label ?? val) : '-'
 
-/** 把后端逗号分隔串拆数组；空值返回 [] */
 const splitField = (val?: string): string[] =>
   val ? val.split(',').map((s) => s.trim()).filter(Boolean) : []
 
@@ -297,10 +297,20 @@ type StaffTabKey = 'normal' | 'blacklist'
 type StaffActionKey = 'detail' | 'edit' | 'resetPassword' | 'freeze' | 'restore' | 'blacklist' | 'remove'
 type StatusAction = Extract<StaffActionKey, 'freeze' | 'restore' | 'blacklist' | 'remove'>
 
-const tabs: { key: StaffTabKey; label: string }[] = [
-  { key: 'normal', label: '正常列表' },
-  { key: 'blacklist', label: '黑名单' }
-]
+const tabs = computed<{ key: StaffTabKey; label: string }[]>(() => [
+  { key: 'normal', label: t('admin.users.staff.tabs.normal') },
+  { key: 'blacklist', label: t('admin.users.staff.tabs.blacklist') }
+])
+
+const staffColumns = computed(() =>
+  staffColumnDefs.map(def => ({ ...def, title: t(`admin.users.staff.columns.${def.dataIndex}` as never) }))
+)
+const staffColumnsWithRating = computed(() =>
+  staffColumnDefsWithRating.map(def => ({ ...def, title: t(`admin.users.staff.columns.${def.dataIndex}` as never) }))
+)
+const staffBlacklistColumns = computed(() =>
+  staffBlacklistColumnDefs.map(def => ({ ...def, title: t(`admin.users.staff.columns.${def.dataIndex}` as never) }))
+)
 
 const rows = ref<StaffListItem[]>([])
 const pendingReviewCount = ref(0)
@@ -338,21 +348,25 @@ const visibleRows = computed(() =>
 
 const blacklistedCount = computed(() => rows.value.filter((row) => isBlacklisted(row)).length)
 const normalCount = computed(() => Math.max(pagination.total - blacklistedCount.value, 0))
-const emptyStateText = computed(() => (selectedTab.value === 'blacklist' ? '暂无黑名单导师' : '暂无导师数据'))
+const emptyStateText = computed(() =>
+  selectedTab.value === 'blacklist'
+    ? t('admin.users.staff.table.emptyBlacklist')
+    : t('admin.users.staff.table.empty')
+)
 const tablePagination = computed(() => ({
   current: pagination.current,
   pageSize: pagination.pageSize,
   total: pagination.total,
   simple: false,
   showSizeChanger: false,
-  showTotal: (total: number) => `共 ${total} 条记录`
+  showTotal: (total: number) => t('admin.users.staff.table.showTotal', { total })
 }))
 const majorDirectionOptions = computed(() => majorItems.value)
 
 const activeColumns = computed(() =>
   selectedTab.value === 'blacklist'
-    ? staffBlacklistColumns
-    : (isSuperAdmin.value ? staffColumnsWithRating : staffColumns)
+    ? staffBlacklistColumns.value
+    : (isSuperAdmin.value ? staffColumnsWithRating.value : staffColumns.value)
 )
 
 const loadRows = async () => {
@@ -370,7 +384,7 @@ const loadRows = async () => {
     pendingReviewCount.value = response.pendingReviewCount || 0
   } catch (error) {
     console.error(error)
-    message.error('导师列表加载失败')
+    message.error(t('admin.users.staff.messages.loadError'))
   }
 }
 
@@ -405,9 +419,9 @@ const handleExport = async () => {
       accountStatus: filters.accountStatus || undefined,
       tab: selectedTab.value
     })
-    message.success('导师列表导出成功')
+    message.success(t('admin.users.staff.messages.exportSuccess'))
   } catch (_error) {
-    message.error('导师列表导出失败')
+    message.error(t('admin.users.staff.messages.exportFail'))
   } finally {
     exporting.value = false
   }
@@ -494,10 +508,10 @@ const handleFormSubmit = async (payload: StaffPayload) => {
   try {
     if (payload.staffId) {
       await updateStaff(payload)
-      message.success('导师信息已更新')
+      message.success(t('admin.users.staff.messages.updateSuccess'))
     } else {
       await createStaff(payload)
-      message.success('导师已新增')
+      message.success(t('admin.users.staff.messages.createSuccess'))
     }
     formModalVisible.value = false
     editingStaff.value = null
@@ -505,7 +519,7 @@ const handleFormSubmit = async (payload: StaffPayload) => {
     await loadRows()
   } catch (error) {
     console.error(error)
-    message.error(payload.staffId ? '导师更新失败' : '导师新增失败')
+    message.error(payload.staffId ? t('admin.users.staff.messages.updateFail') : t('admin.users.staff.messages.createFail'))
   } finally {
     formSubmitting.value = false
   }
@@ -517,27 +531,22 @@ const handleDetailReviewUpdated = () => {
 
 const isBlacklisted = (row: StaffListItem) => Boolean(row.isBlacklisted)
 
-/** 列表公司列预览：前 2 家 + 等 N 家 */
 const formatCompaniesPreview = (companies?: string) => {
   const arr = splitField(companies)
   if (!arr.length) return ''
   const previews = arr.slice(0, 2).map((v) => dictLabel(companyItems.value, v))
   const label = previews.join('、')
-  return arr.length > 2 ? `${label} 等${arr.length}家` : label
+  return arr.length > 2 ? t('admin.users.staff.companiesMore', { label, count: arr.length }) : label
 }
 
-/** 列表公司列 Tooltip：全量公司名称 */
 const formatCompaniesTooltip = (companies?: string) => {
   const arr = splitField(companies)
   if (!arr.length) return ''
   return arr.map((v) => dictLabel(companyItems.value, v)).join('、')
 }
 
-const formatType = (staffType?: string) => {
-  if (staffType === 'lead_mentor') return '班主任'
-  if (staffType === 'assistant') return '助教'
-  return '导师'
-}
+const formatType = (staffType?: string) =>
+  t(`admin.users.staff.staffTypes.${staffType || 'mentor'}` as never)
 
 const getTypeColor = (staffType?: string) => {
   if (staffType === 'lead_mentor') return 'blue'
@@ -545,40 +554,30 @@ const getTypeColor = (staffType?: string) => {
   return 'purple'
 }
 
-/** 字典 value 优先匹配，不命中再按中文兜底（兼容历史数据） */
 const getDirectionColor = (direction?: string) => {
   if (!direction) return 'cyan'
-  if (direction === 'quant' || direction.includes('量化')) return 'purple'
-  if (direction === 'consulting' || direction.includes('咨询')) return 'blue'
-  if (direction === 'tech' || direction.includes('科技')) return 'orange'
+  if (direction === 'quant' || direction.includes('量化')) return 'purple' // i18n-skip-line: backend values
+  if (direction === 'consulting' || direction.includes('咨询')) return 'blue' // i18n-skip-line: backend values
+  if (direction === 'tech' || direction.includes('科技')) return 'orange' // i18n-skip-line: backend values
   if (direction === 'computer_science') return 'magenta'
   return 'cyan'
 }
 
-
 const formatHourlyRate = (hourlyRate?: number) => {
-  if (hourlyRate == null) {
-    return '-'
-  }
+  if (hourlyRate == null) return '-'
   return `$${hourlyRate}/h`
 }
 
-const formatStudentCount = (studentCount?: number) => {
-  return `${studentCount ?? 0} 学员`
-}
+const formatStudentCount = (studentCount?: number) =>
+  t('admin.users.staff.studentCount', { count: studentCount ?? 0 })
 
-const formatStatus = (accountStatus?: string) => {
-  return accountStatus === '1' ? '冻结' : '正常'
-}
+const formatStatus = (accountStatus?: string) =>
+  accountStatus === '1' ? t('admin.users.staff.statusText.frozen') : t('admin.users.staff.statusText.normal')
 
 const getStatusNote = (row: StaffListItem) => {
-  if (row.accountStatus === '1') {
-    return '账号已冻结'
-  }
-  if (isBlacklisted(row)) {
-    return '已加入黑名单'
-  }
-  return '账号正常'
+  if (row.accountStatus === '1') return t('admin.users.staff.statusNote.frozen')
+  if (isBlacklisted(row)) return t('admin.users.staff.statusNote.blacklisted')
+  return t('admin.users.staff.statusNote.normal')
 }
 
 const openStaffDetail = (row: StaffListItem) => {
@@ -592,40 +591,33 @@ const openFirstPendingReview = async () => {
     const response = await getStaffChangeRequestList(undefined, 'pending')
     const firstPending = response.rows?.[0]
     if (!firstPending) {
-      message.info('当前没有可处理的导师记录')
+      message.info(t('admin.users.staff.messages.pendingEmpty'))
       return
     }
 
     const existingRow = rows.value.find((row) => row.staffId === firstPending.staffId)
     selectedStaff.value = existingRow ?? {
       staffId: firstPending.staffId,
-      staffName: firstPending.staffName || `导师 ${firstPending.staffId}`,
+      staffName: firstPending.staffName || `${t('admin.users.staff.staffTypes.mentor')} ${firstPending.staffId}`,
     }
     detailModalVisible.value = true
   } catch (error) {
     console.error(error)
-    message.error('待审核导师信息加载失败')
+    message.error(t('admin.users.staff.messages.pendingError'))
   }
 }
 
 const resolveSuccessMessage = (action: StatusAction) => {
-  if (action === 'freeze') {
-    return '导师账号已冻结'
-  }
-  if (action === 'restore') {
-    return '导师账号已解冻'
-  }
-  if (action === 'blacklist') {
-    return '导师已加入黑名单'
-  }
-  return '导师已移出黑名单'
+  if (action === 'freeze') return t('admin.users.staff.messages.freezeSuccess')
+  if (action === 'restore') return t('admin.users.staff.messages.restoreSuccess')
+  if (action === 'blacklist') return t('admin.users.staff.messages.blacklistSuccess')
+  return t('admin.users.staff.messages.removeSuccess')
 }
 
 const closeResetPasswordModal = () => {
   resetPasswordVisible.value = false
   resetPasswordResult.value = null
 }
-
 </script>
 
 <style scoped>

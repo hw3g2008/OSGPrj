@@ -13,8 +13,8 @@
       </span>
     </template>
 
-    <div v-if="loading" class="mentor-students-modal__state">加载中...</div>
-    <div v-else-if="!rows.length" class="mentor-students-modal__state">暂无关联学员</div>
+    <div v-if="loading" class="mentor-students-modal__state">{{ t('admin.users.staff.students.loading') }}</div>
+    <div v-else-if="!rows.length" class="mentor-students-modal__state">{{ t('admin.users.staff.students.empty') }}</div>
     <div v-else class="mentor-students-modal__table-wrap">
       <table class="mentor-students-modal__table">
         <thead>
@@ -41,15 +41,18 @@
     </div>
 
     <template #footer>
-      <a-button @click="handleClose">关闭</a-button>
+      <a-button @click="handleClose">{{ t('admin.users.staff.students.close') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getStudentList, type StudentListItem } from '@osg/shared/api/admin/student'
 import { OverlaySurfaceModal } from '@osg/shared/components'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   visible: boolean
@@ -67,9 +70,9 @@ const rows = ref<StudentListItem[]>([])
 
 const modalTitle = computed(() => {
   if (props.staffName) {
-    return `${props.staffName} 的学员`
+    return t('admin.users.staff.students.title', { name: props.staffName })
   }
-  return '导师学员列表'
+  return t('admin.users.staff.students.titleDefault')
 })
 
 const surfaceId = computed(() => props.surfaceId || 'modal-mentor-students')

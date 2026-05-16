@@ -10,7 +10,7 @@
       <div class="sfdm-header">
         <div class="sfdm-header__avatar">{{ avatarText }}</div>
         <div class="sfdm-header__info">
-          <span class="sfdm-header__name">{{ detail?.staffName || staffName || '导师详情' }}</span>
+          <span class="sfdm-header__name">{{ detail?.staffName || staffName || t('admin.users.staff.detail.defaultTitle') }}</span>
           <div class="sfdm-header__meta">
             ID: {{ detail?.staffId ?? '-' }} · {{ formatType(detail?.staffType) }}
             · <span class="sfdm-header__status-pill">{{ formatStatus(detail?.accountStatus) }}</span>
@@ -21,11 +21,11 @@
 
     <div v-if="loading" class="staff-detail-modal__state">
       <span class="mdi mdi-loading mdi-spin" aria-hidden="true"></span>
-      <span>正在加载导师详情...</span>
+      <span>{{ t('admin.users.staff.detail.loading') }}</span>
     </div>
 
     <div v-else-if="loadError" class="staff-detail-modal__state staff-detail-modal__state--error">
-      <strong>导师详情加载失败</strong>
+      <strong>{{ t('admin.users.staff.detail.loadError') }}</strong>
       <p>{{ loadError }}</p>
     </div>
 
@@ -36,9 +36,9 @@
           :key="tab.key"
           type="button"
           :class="['staff-detail-modal__tab', { 'staff-detail-modal__tab--active': detailTab === tab.key }]"
-          :aria-label="`导师详情弹窗${tab.label}`"
+          :aria-label="`导师详情弹窗${tab.zhLabel}`" <!-- i18n-skip-line: playwright selector -->
           :data-tab="tab.key"
-          :data-tab-text="tab.label"
+          :data-tab-text="tab.zhLabel" <!-- i18n-skip-line: playwright selector -->
           @click="detailTab = tab.key"
         >
           {{ tab.label }}
@@ -48,19 +48,19 @@
       <div v-if="detailTab === 'profile'">
       <div class="staff-detail-modal__grid">
         <article class="staff-detail-modal__card">
-          <span>邮箱</span>
+          <span>{{ t('admin.users.staff.detail.cards.email') }}</span>
           <strong>{{ detail?.email || '-' }}</strong>
         </article>
         <article class="staff-detail-modal__card">
-          <span>手机号</span>
+          <span>{{ t('admin.users.staff.detail.cards.phone') }}</span>
           <strong>{{ detail?.phone || '-' }}</strong>
         </article>
         <article class="staff-detail-modal__card">
-          <span>主攻方向</span>
+          <span>{{ t('admin.users.staff.detail.cards.majorDirection') }}</span>
           <strong>{{ renderCsvLabels(detail?.majorDirection, majorItems) }}</strong>
         </article>
         <article class="staff-detail-modal__card">
-          <span>当前学员数</span>
+          <span>{{ t('admin.users.staff.detail.cards.studentCount') }}</span>
           <strong>{{ detail?.studentCount ?? 0 }}</strong>
         </article>
       </div>
@@ -68,33 +68,33 @@
       <section class="staff-detail-modal__panel">
         <header>
           <div class="staff-detail-modal__badge staff-detail-modal__badge--blue">
-            <i class="mdi mdi-account" aria-hidden="true"></i> 基本资料
+            <i class="mdi mdi-account" aria-hidden="true"></i> {{ t('admin.users.staff.detail.sections.basic') }}
           </div>
-          <span>交付阶段使用真实后端数据展示导师账户和所在城市。</span>
+          <span>{{ t('admin.users.staff.detail.sections.basicDesc') }}</span>
         </header>
         <dl class="staff-detail-modal__detail-grid">
           <div class="staff-detail-modal__detail-cell">
-            <dt>导师 ID</dt>
+            <dt>{{ t('admin.users.staff.detail.fields.staffId') }}</dt>
             <dd>{{ detail?.staffId ?? '-' }}</dd>
           </div>
           <div class="staff-detail-modal__detail-cell">
-            <dt>姓名</dt>
+            <dt>{{ t('admin.users.staff.detail.fields.staffName') }}</dt>
             <dd>{{ detail?.staffName || '-' }}</dd>
           </div>
           <div class="staff-detail-modal__detail-cell">
-            <dt>地区</dt>
+            <dt>{{ t('admin.users.staff.detail.fields.region') }}</dt>
             <dd>{{ renderCsvLabels(detail?.region, regionItems) }}</dd>
           </div>
           <div class="staff-detail-modal__detail-cell">
-            <dt>城市</dt>
+            <dt>{{ t('admin.users.staff.detail.fields.city') }}</dt>
             <dd>{{ dictLabel(cityItems, detail?.city) }}</dd>
           </div>
           <div class="staff-detail-modal__detail-cell">
-            <dt>子方向</dt>
+            <dt>{{ t('admin.users.staff.detail.fields.subDirection') }}</dt>
             <dd>{{ renderCsvLabels(detail?.subDirection, subItems) }}</dd>
           </div>
           <div class="staff-detail-modal__detail-cell">
-            <dt>课时单价</dt>
+            <dt>{{ t('admin.users.staff.detail.fields.hourlyRate') }}</dt>
             <dd>{{ formatHourlyRate(detail?.hourlyRate) }}</dd>
           </div>
         </dl>
@@ -103,12 +103,12 @@
       <section class="staff-detail-modal__panel">
         <header>
           <div class="staff-detail-modal__badge staff-detail-modal__badge--amber">
-            <i class="mdi mdi-target" aria-hidden="true"></i> 专业能力
+            <i class="mdi mdi-target" aria-hidden="true"></i> {{ t('admin.users.staff.detail.sections.specialty') }}
           </div>
         </header>
         <dl class="staff-detail-modal__detail-grid">
           <div class="staff-detail-modal__detail-cell" style="grid-column: 1 / -1">
-            <dt>擅长</dt>
+            <dt>{{ t('admin.users.staff.detail.fields.specialty') }}</dt>
             <dd>
               <template v-if="splitField(detail?.specialty).length">
                 <a-tag
@@ -120,7 +120,7 @@
                   {{ dictLabel(specialtyItems, v) }}
                 </a-tag>
               </template>
-              <span v-else style="color: #94a3b8">暂无</span>
+              <span v-else style="color: #94a3b8">{{ t('admin.users.staff.detail.noData') }}</span>
             </dd>
           </div>
         </dl>
@@ -129,12 +129,12 @@
       <section class="staff-detail-modal__panel">
         <header>
           <div class="staff-detail-modal__badge staff-detail-modal__badge--purple">
-            <i class="mdi mdi-briefcase" aria-hidden="true"></i> 职业背景
+            <i class="mdi mdi-briefcase" aria-hidden="true"></i> {{ t('admin.users.staff.detail.sections.career') }}
           </div>
         </header>
         <dl class="staff-detail-modal__detail-grid">
           <div class="staff-detail-modal__detail-cell" style="grid-column: 1 / -1">
-            <dt>任职公司</dt>
+            <dt>{{ t('admin.users.staff.detail.fields.companies') }}</dt>
             <dd>
               <template v-if="Object.keys(groupedCompanies).length">
                 <div v-for="(companies, industry) in groupedCompanies" :key="industry" style="margin-bottom: 8px">
@@ -148,7 +148,7 @@
                   </span>
                 </div>
               </template>
-              <span v-else style="color: #94a3b8">暂无</span>
+              <span v-else style="color: #94a3b8">{{ t('admin.users.staff.detail.noData') }}</span>
             </dd>
           </div>
         </dl>
@@ -157,22 +157,22 @@
       <section v-if="isSuperAdmin" class="staff-detail-modal__panel">
         <header>
           <div class="staff-detail-modal__badge staff-detail-modal__badge--orange">
-            <i class="mdi mdi-star" aria-hidden="true"></i> 内部评估
+            <i class="mdi mdi-star" aria-hidden="true"></i> {{ t('admin.users.staff.detail.sections.internal') }}
           </div>
         </header>
         <dl class="staff-detail-modal__detail-grid">
           <div class="staff-detail-modal__detail-cell">
-            <dt>评级</dt>
+            <dt>{{ t('admin.users.staff.detail.fields.rating') }}</dt>
             <dd>
               <a-tag v-if="detail?.rating" color="gold">{{ dictLabel(ratingItems, detail.rating) }}</a-tag>
-              <span v-else style="color: #94a3b8">未评级</span>
+              <span v-else style="color: #94a3b8">{{ t('admin.users.staff.detail.unrated') }}</span>
             </dd>
           </div>
           <div class="staff-detail-modal__detail-cell" style="grid-column: 1 / -1">
-            <dt>评语</dt>
+            <dt>{{ t('admin.users.staff.detail.fields.ratingRemark') }}</dt>
             <dd>
               <span v-if="detail?.ratingRemark" style="white-space: pre-wrap">{{ detail.ratingRemark }}</span>
-              <span v-else style="color: #94a3b8">暂无</span>
+              <span v-else style="color: #94a3b8">{{ t('admin.users.staff.detail.noData') }}</span>
             </dd>
           </div>
         </dl>
@@ -182,13 +182,13 @@
       <section v-else class="staff-detail-modal__panel">
         <header>
           <div class="staff-detail-modal__badge staff-detail-modal__badge--amber">
-            <i class="mdi mdi-clipboard-text-clock-outline" aria-hidden="true"></i> 待审核变更
+            <i class="mdi mdi-clipboard-text-clock-outline" aria-hidden="true"></i> {{ t('admin.users.staff.detail.sections.changes') }}
           </div>
-          <span>导师提交的资料变更会在这里完成审核，审核完成后会刷新列表待处理数量。</span>
+          <span>{{ t('admin.users.staff.detail.sections.changesDesc') }}</span>
         </header>
 
         <div v-if="pendingRequests.length === 0" class="staff-detail-modal__empty">
-          当前没有待审核的资料变更。
+          {{ t('admin.users.staff.detail.changesEmpty') }}
         </div>
 
         <div v-else class="staff-detail-modal__review-list">
@@ -198,15 +198,15 @@
                 <strong>{{ request.fieldLabel }}</strong>
                 <p>{{ request.beforeValue || '-' }} -> {{ request.afterValue || '-' }}</p>
               </div>
-              <span class="staff-detail-modal__review-pill">待审核</span>
+              <span class="staff-detail-modal__review-pill">{{ t('admin.users.staff.detail.changesPending') }}</span>
             </div>
 
-            <div class="staff-detail-modal__review-field" data-field-name="驳回说明">
-              <span>驳回说明</span>
+            <div class="staff-detail-modal__review-field" data-field-name="驳回说明"> <!-- i18n-skip-line: playwright selector -->
+              <span>{{ t('admin.users.staff.detail.rejectReasonLabel') }}</span>
               <a-textarea
                 v-model:value="reviewReasons[request.requestId]"
                 :rows="2"
-                placeholder="选填：输入驳回原因后再执行驳回"
+                :placeholder="t('admin.users.staff.detail.rejectReasonPlaceholder')"
               />
             </div>
 
@@ -215,14 +215,14 @@
                 :disabled="reviewingRequestId === request.requestId"
                 @click="handleReject(request.requestId)"
               >
-                驳回
+                {{ t('admin.users.staff.detail.rejectBtn') }}
               </a-button>
               <a-button
                 type="primary"
                 :disabled="reviewingRequestId === request.requestId"
                 @click="handleApprove(request.requestId)"
               >
-                通过
+                {{ t('admin.users.staff.detail.approveBtn') }}
               </a-button>
             </div>
           </article>
@@ -231,13 +231,14 @@
     </template>
 
     <template #footer>
-      <a-button @click="handleClose">关闭</a-button>
+      <a-button @click="handleClose">{{ t('admin.users.staff.detail.close') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 import {
@@ -251,6 +252,7 @@ import {
 import { useDictFacade, useIndustryMeta, type DictFacadeOption } from '@osg/shared/composables'
 import { useUserStore } from '@/stores/user'
 
+const { t } = useI18n()
 const userStore = useUserStore()
 const isSuperAdmin = computed(() => userStore.permissions.includes('*:*:*'))
 
@@ -263,21 +265,18 @@ const { items: ratingItems, load: loadRating } = useDictFacade('osg_rating')
 const { items: companyItems, load: loadCompany } = useDictFacade('osg_company_name')
 const { meta: industryItems, load: loadIndustry } = useIndustryMeta()
 
-/** value→label；查不到（历史中文）原样返回 */
 const dictLabel = (items: DictFacadeOption[], val?: string) =>
   val ? (items.find((i) => i.value === val)?.label ?? val) : '-'
 
 const splitField = (val?: string): string[] =>
   val ? val.split(',').map((s) => s.trim()).filter(Boolean) : []
 
-/** 把后端 csv 串展示为「中文1、中文2」 */
 const renderCsvLabels = (val: string | undefined, items: DictFacadeOption[]) => {
   const arr = splitField(val)
   if (!arr.length) return '-'
   return arr.map((v) => dictLabel(items, v)).join('、')
 }
 
-/** 按行业分组公司（用于详情展示） */
 const groupedCompanies = computed(() => {
   const companyValues = splitField(detail.value?.companies)
   if (!companyValues.length) return {}
@@ -286,10 +285,9 @@ const groupedCompanies = computed(() => {
   for (const v of companyValues) {
     const company = companyItems.value.find((c) => c.value === v)
     const industryValue = company?.parentValue
-    // parentValue 存的是行业 dictValue（如 "finance"），取其 label
     const industryLabel = industryValue
       ? (industryItems.value.find((i) => i.value === industryValue)?.label ?? industryValue)
-      : '其他'
+      : t('admin.users.staff.detail.industryOther')
     if (!groups[industryLabel]) groups[industryLabel] = []
     const companyLabel = dictLabel(companyItems.value, v)
     if (!groups[industryLabel].includes(companyLabel)) groups[industryLabel].push(companyLabel)
@@ -320,10 +318,13 @@ const loadError = ref('')
 const reviewingRequestId = ref<number | null>(null)
 const reviewReasons = reactive<Record<number, string>>({})
 const detailTab = ref<'profile' | 'changes'>('profile')
-const detailTabs = [
-  { key: 'profile' as const, label: '基本信息' },
-  { key: 'changes' as const, label: '信息变更' }
-] as const
+
+const DETAIL_TAB_ZH = { profile: '基本信息', changes: '信息变更' } // i18n-skip-line: playwright labels
+
+const detailTabs = computed(() => [
+  { key: 'profile' as const, label: t('admin.users.staff.detail.tabs.profile'), zhLabel: DETAIL_TAB_ZH.profile },
+  { key: 'changes' as const, label: t('admin.users.staff.detail.tabs.changes'), zhLabel: DETAIL_TAB_ZH.changes }
+])
 
 const avatarText = computed(() => {
   const name = detail.value?.staffName || props.staffName || ''
@@ -350,7 +351,7 @@ const loadDetail = async () => {
     detail.value = detailResponse
     pendingRequests.value = changeRequestResponse.rows || []
   } catch (error) {
-    loadError.value = error instanceof Error ? error.message : '请稍后重试'
+    loadError.value = error instanceof Error ? error.message : t('admin.users.staff.detail.retryHint')
   } finally {
     loading.value = false
   }
@@ -384,10 +385,10 @@ const handleApprove = async (requestId: number) => {
   try {
     await approveStaffChangeRequest(requestId)
     pendingRequests.value = pendingRequests.value.filter((request) => request.requestId !== requestId)
-    message.success('导师变更申请已通过')
+    message.success(t('admin.users.staff.detail.messages.approveSuccess'))
     emit('review-updated')
   } catch (error) {
-    message.error(error instanceof Error ? error.message : '审核通过失败')
+    message.error(error instanceof Error ? error.message : t('admin.users.staff.detail.messages.approveFail'))
   } finally {
     reviewingRequestId.value = null
   }
@@ -398,29 +399,23 @@ const handleReject = async (requestId: number) => {
   try {
     await rejectStaffChangeRequest(requestId, reviewReasons[requestId] || '')
     pendingRequests.value = pendingRequests.value.filter((request) => request.requestId !== requestId)
-    message.success('导师变更申请已驳回')
+    message.success(t('admin.users.staff.detail.messages.rejectSuccess'))
     emit('review-updated')
   } catch (error) {
-    message.error(error instanceof Error ? error.message : '驳回失败')
+    message.error(error instanceof Error ? error.message : t('admin.users.staff.detail.messages.rejectFail'))
   } finally {
     reviewingRequestId.value = null
   }
 }
 
-const formatType = (staffType?: string) => {
-  if (staffType === 'lead_mentor') return '班主任'
-  if (staffType === 'assistant') return '助教'
-  return '导师'
-}
+const formatType = (staffType?: string) =>
+  t(`admin.users.staff.staffTypes.${staffType || 'mentor'}` as never)
 
-const formatStatus = (accountStatus?: string) => {
-  return accountStatus === '1' ? '冻结' : '正常'
-}
+const formatStatus = (accountStatus?: string) =>
+  accountStatus === '1' ? t('admin.users.staff.statusText.frozen') : t('admin.users.staff.statusText.normal')
 
 const formatHourlyRate = (hourlyRate?: number) => {
-  if (hourlyRate == null) {
-    return '-'
-  }
+  if (hourlyRate == null) return '-'
   return `$${hourlyRate}/h`
 }
 </script>

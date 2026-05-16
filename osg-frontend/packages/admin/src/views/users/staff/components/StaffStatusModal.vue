@@ -17,7 +17,7 @@
       <div class="staff-status-modal__icon-circle" :class="`staff-status-modal__icon-circle--${action}`">
         <span class="mdi" :class="actionIcon" aria-hidden="true"></span>
       </div>
-      <strong>{{ staffName || '当前导师' }}</strong>
+      <strong>{{ staffName || t('admin.users.staff.statusModal.staffFallback') }}</strong>
       <span>{{ modalDescription }}</span>
     </div>
 
@@ -31,7 +31,7 @@
       <label
         v-if="props.action === 'remove'"
         class="staff-status-modal__field"
-        data-field-name="移出原因"
+        data-field-name="移出原因" <!-- i18n-skip-line: playwright selector -->
       >
         <a-form-item name="reason" class="staff-status-modal__form-item">
           <span class="staff-status-modal__label">
@@ -49,7 +49,7 @@
       <label
         v-else-if="requiresReason"
         class="staff-status-modal__field"
-        :data-field-name="reasonFieldName"
+        :data-field-name="reasonFieldNameZH" <!-- i18n-skip-line: playwright selector -->
       >
         <a-form-item name="reason" class="staff-status-modal__form-item">
           <span class="staff-status-modal__label">
@@ -64,41 +64,51 @@
         </a-form-item>
       </label>
 
-      <label v-if="formState.reason === 'other'" class="staff-status-modal__field" data-field-name="其他原因说明">
+      <label
+        v-if="formState.reason === 'other'"
+        class="staff-status-modal__field"
+        data-field-name="其他原因说明" <!-- i18n-skip-line: playwright selector -->
+      >
         <a-form-item name="otherReason" class="staff-status-modal__form-item">
-          <span class="staff-status-modal__label">其他原因说明</span>
+          <span class="staff-status-modal__label">{{ t('admin.users.staff.statusModal.otherReasonLabel') }}</span>
           <a-textarea
             v-model:value="formState.otherReason"
             :rows="3"
             :maxlength="120"
-            placeholder="请补充其他原因"
+            :placeholder="t('admin.users.staff.statusModal.otherReasonPlaceholder')"
           />
         </a-form-item>
       </label>
 
-      <label class="staff-status-modal__field" data-field-name="备注说明">
+      <label
+        class="staff-status-modal__field"
+        data-field-name="备注说明" <!-- i18n-skip-line: playwright selector -->
+      >
         <a-form-item name="remark" class="staff-status-modal__form-item">
-          <span class="staff-status-modal__label">备注说明</span>
+          <span class="staff-status-modal__label">{{ t('admin.users.staff.statusModal.remarkLabel') }}</span>
           <a-textarea
             v-model:value="formState.remark"
             :rows="3"
             :maxlength="120"
-            placeholder="可选，补充本次操作的背景说明"
+            :placeholder="t('admin.users.staff.statusModal.remarkPlaceholder')"
           />
         </a-form-item>
       </label>
     </a-form>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" :loading="submitting" @click="handleSubmit">确认</a-button>
+      <a-button @click="handleClose">{{ t('admin.users.staff.statusModal.footer.cancel') }}</a-button>
+      <a-button type="primary" :loading="submitting" @click="handleSubmit">{{ t('admin.users.staff.statusModal.footer.confirm') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OverlaySurfaceModal } from '@osg/shared/components'
+
+const { t } = useI18n()
 
 type StatusAction = 'freeze' | 'restore' | 'blacklist' | 'remove'
 
@@ -121,106 +131,65 @@ const formState = reactive({
   remark: ''
 })
 
-const reasonOptionMap: Record<'freeze' | 'blacklist', { label: string; value: string }[]> = {
+const REASON_FIELD_NAMES_ZH: Record<string, string> = {
+  remove: '移出原因', // i18n-skip-line: playwright labels
+  blacklist: '原因选择', // i18n-skip-line: playwright labels
+  other: '状态修改原因' // i18n-skip-line: playwright labels
+}
+
+const reasonOptionMap = computed(() => ({
   freeze: [
-    { label: '导师申请暂停', value: 'staff_pause' },
-    { label: '服务质量问题', value: 'service_quality' },
-    { label: '违反服务协议', value: 'policy_violation' },
-    { label: '其他原因', value: 'other' }
+    { label: t('admin.users.staff.statusModal.reasonOptions.freeze.staff_pause'), value: 'staff_pause' },
+    { label: t('admin.users.staff.statusModal.reasonOptions.freeze.service_quality'), value: 'service_quality' },
+    { label: t('admin.users.staff.statusModal.reasonOptions.freeze.policy_violation'), value: 'policy_violation' },
+    { label: t('admin.users.staff.statusModal.reasonOptions.freeze.other'), value: 'other' },
   ],
   blacklist: [
-    { label: '违规联系学员', value: 'contact_violation' },
-    { label: '严重服务投诉', value: 'service_complaint' },
-    { label: '合作终止', value: 'cooperation_end' },
-    { label: '其他原因', value: 'other' }
+    { label: t('admin.users.staff.statusModal.reasonOptions.blacklist.contact_violation'), value: 'contact_violation' },
+    { label: t('admin.users.staff.statusModal.reasonOptions.blacklist.service_complaint'), value: 'service_complaint' },
+    { label: t('admin.users.staff.statusModal.reasonOptions.blacklist.cooperation_end'), value: 'cooperation_end' },
+    { label: t('admin.users.staff.statusModal.reasonOptions.blacklist.other'), value: 'other' },
   ]
-}
+}))
 
 const requiresReason = computed(() => true)
 
 const surfaceId = computed(() => {
-  if (props.action === 'blacklist') {
-    return 'modal-mentor-blacklist'
-  }
-  if (props.action === 'remove') {
-    return 'modal-remove-mentor-blacklist'
-  }
+  if (props.action === 'blacklist') return 'modal-mentor-blacklist'
+  if (props.action === 'remove') return 'modal-remove-mentor-blacklist'
   return 'modal-staff-status-change'
 })
 
-const modalTitle = computed(() => {
-  if (props.action === 'freeze') {
-    return '冻结导师账号'
-  }
-  if (props.action === 'restore') {
-    return '解冻导师账号'
-  }
-  if (props.action === 'blacklist') {
-    return '加入黑名单'
-  }
-  return '移出黑名单'
-})
+const modalTitle = computed(() => t(`admin.users.staff.statusModal.titles.${props.action}` as never))
 
 const reasonLabel = computed(() => {
-  if (props.action === 'remove') {
-    return '移出原因'
-  }
-  if (props.action === 'blacklist') {
-    return '原因选择'
-  }
-  return '状态修改原因'
+  if (props.action === 'remove') return t('admin.users.staff.statusModal.reasonLabels.remove')
+  if (props.action === 'blacklist') return t('admin.users.staff.statusModal.reasonLabels.blacklist')
+  return t('admin.users.staff.statusModal.reasonLabels.other')
 })
 
-const reasonFieldName = computed(() => reasonLabel.value)
+const reasonFieldNameZH = computed(() =>
+  REASON_FIELD_NAMES_ZH[props.action] ?? REASON_FIELD_NAMES_ZH.other
+)
 
-const modalDescription = computed(() => {
-  if (props.action === 'freeze') {
-    return '冻结后该导师账号将无法正常登录系统。'
-  }
-  if (props.action === 'restore') {
-    return '确认后该导师账号将恢复为正常可用状态。'
-  }
-  if (props.action === 'blacklist') {
-    return '加入黑名单后，该导师将被限制使用后续相关模块能力。'
-  }
-  return '确认后将解除该导师的黑名单状态。'
-})
+const modalDescription = computed(() => t(`admin.users.staff.statusModal.descriptions.${props.action}` as never))
 
 const actionIcon = computed(() => {
-  if (props.action === 'freeze') {
-    return 'mdi-account-off'
-  }
-  if (props.action === 'restore') {
-    return 'mdi-account-check'
-  }
-  if (props.action === 'blacklist') {
-    return 'mdi-account-cancel'
-  }
+  if (props.action === 'freeze') return 'mdi-account-off'
+  if (props.action === 'restore') return 'mdi-account-check'
+  if (props.action === 'blacklist') return 'mdi-account-cancel'
   return 'mdi-account-arrow-up'
 })
 
 const reasonOptions = computed(() => {
-  if (props.action === 'blacklist') {
-    return reasonOptionMap.blacklist
-  }
-  return reasonOptionMap.freeze
+  if (props.action === 'blacklist') return reasonOptionMap.value.blacklist
+  return reasonOptionMap.value.freeze
 })
 
-const reasonPlaceholder = computed(() => {
-  if (props.action === 'remove') {
-    return '请选择移出原因'
-  }
-  if (props.action === 'blacklist') {
-    return '请选择黑名单原因'
-  }
-  if (props.action === 'restore') {
-    return '请选择恢复原因'
-  }
-  return '请选择冻结原因'
-})
+const reasonPlaceholder = computed(() => t(`admin.users.staff.statusModal.reasonPlaceholders.${props.action}` as never))
 
 const rules = computed(() => ({
-  reason: requiresReason.value ? [{ required: true, message: '请选择原因', trigger: 'change' }] : []
+  reason: requiresReason.value ? [{ required: true, message: t('admin.users.staff.statusModal.validation.required'), trigger: 'change' }] : []
 }))
 
 const resetForm = () => {
@@ -232,9 +201,7 @@ const resetForm = () => {
 watch(
   () => props.visible,
   (visible) => {
-    if (visible) {
-      resetForm()
-    }
+    if (visible) resetForm()
   }
 )
 
