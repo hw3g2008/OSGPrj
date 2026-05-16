@@ -9,7 +9,7 @@
     <template #title>
       <span class="student-blacklist-modal__title">
         <span class="mdi mdi-account-cancel student-blacklist-modal__title-icon" aria-hidden="true"></span>
-        <span>加入黑名单</span>
+        <span>{{ t('admin.students.blacklistModal.title') }}</span>
       </span>
     </template>
 
@@ -17,10 +17,12 @@
       <span class="mdi mdi-alert-circle-outline student-blacklist-modal__intro-icon" aria-hidden="true"></span>
       <div class="student-blacklist-modal__intro-copy">
         <h3 class="student-blacklist-modal__heading">
-          确定将 <strong>{{ studentName || '当前学员' }}</strong> 加入黑名单？
+          {{ t('admin.students.blacklistModal.headingPre') }}
+          <strong>{{ studentName || t('admin.students.blacklistModal.studentFallback') }}</strong>
+          {{ t('admin.students.blacklistModal.headingPost') }}
         </h3>
         <p class="student-blacklist-modal__desc">
-          加入黑名单后，该学员将<strong>无法查看“求职中心”模块</strong>（包括岗位信息、面试准备等功能）。
+          {{ t('admin.students.blacklistModal.descPre') }}<strong>{{ t('admin.students.blacklistModal.descBold') }}</strong>{{ t('admin.students.blacklistModal.descPost') }}
         </p>
       </div>
     </div>
@@ -33,58 +35,61 @@
         layout="vertical"
         :required-mark="false"
       >
-        <a-form-item name="reason" data-field-name="黑名单原因">
+        <a-form-item name="reason" data-field-name="黑名单原因"> <!-- i18n-skip-line: playwright selector -->
           <template #label>
             <span class="student-blacklist-modal__label">
-              黑名单原因
+              {{ t('admin.students.blacklistModal.reasonLabel') }}
               <span class="student-blacklist-modal__required">*</span>
             </span>
           </template>
           <a-select
             v-model:value="formState.reason"
-            placeholder="请选择原因"
+            :placeholder="t('admin.students.blacklistModal.reasonPlaceholder')"
             :options="reasonOptions"
             @change="handleReasonChange"
           />
         </a-form-item>
 
-        <a-form-item v-if="showOtherInput" name="otherReason" data-field-name="其他原因说明">
+        <a-form-item v-if="showOtherInput" name="otherReason" data-field-name="其他原因说明"> <!-- i18n-skip-line: playwright selector -->
           <template #label>
             <span class="student-blacklist-modal__label">
-              其他原因说明
+              {{ t('admin.students.blacklistModal.otherReasonLabel') }}
               <span class="student-blacklist-modal__required">*</span>
             </span>
           </template>
           <a-input
             v-model:value="formState.otherReason"
-            placeholder="请输入具体原因"
+            :placeholder="t('admin.students.blacklistModal.otherReasonPlaceholder')"
           />
         </a-form-item>
 
-        <a-form-item name="remark" data-field-name="备注说明">
+        <a-form-item name="remark" data-field-name="备注说明"> <!-- i18n-skip-line: playwright selector -->
           <template #label>
-            <span class="student-blacklist-modal__label">备注说明</span>
+            <span class="student-blacklist-modal__label">{{ t('admin.students.blacklistModal.remarkLabel') }}</span>
           </template>
           <a-textarea
             v-model:value="formState.remark"
             :rows="2"
             :maxlength="200"
-            placeholder="选填，可填写详细说明"
+            :placeholder="t('admin.students.blacklistModal.remarkPlaceholder')"
           />
         </a-form-item>
       </a-form>
     </div>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" danger @click="handleSubmit">确认加入黑名单</a-button>
+      <a-button @click="handleClose">{{ t('admin.students.blacklistModal.footer.cancel') }}</a-button>
+      <a-button type="primary" danger @click="handleSubmit">{{ t('admin.students.blacklistModal.footer.confirm') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OverlaySurfaceModal } from '@osg/shared/components'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   visible: boolean
@@ -103,20 +108,20 @@ const formState = reactive({
   remark: ''
 })
 
-const reasonOptions = [
-  { label: '违反服务协议', value: '违反服务协议' },
-  { label: '恶意投诉', value: '恶意投诉' },
-  { label: '不配合辅导', value: '不配合辅导' },
-  { label: '态度恶劣', value: '态度恶劣' },
-  { label: '其他原因', value: 'other' }
-]
+const reasonOptions = computed(() => [
+  { label: t('admin.students.blacklistModal.reasons.serviceViolation'), value: '违反服务协议' }, // i18n-skip-line: backend values
+  { label: t('admin.students.blacklistModal.reasons.maliciousComplaint'), value: '恶意投诉' }, // i18n-skip-line: backend values
+  { label: t('admin.students.blacklistModal.reasons.nonCooperative'), value: '不配合辅导' }, // i18n-skip-line: backend values
+  { label: t('admin.students.blacklistModal.reasons.badAttitude'), value: '态度恶劣' }, // i18n-skip-line: backend values
+  { label: t('admin.students.blacklistModal.reasons.other'), value: 'other' },
+])
 
 const showOtherInput = computed(() => formState.reason === 'other')
 
 const rules = computed(() => ({
-  reason: [{ required: true, message: '请选择原因', trigger: 'change' }],
+  reason: [{ required: true, message: t('admin.students.blacklistModal.validation.reason'), trigger: 'change' }],
   otherReason: showOtherInput.value
-    ? [{ required: true, message: '请输入具体原因', trigger: 'blur' }]
+    ? [{ required: true, message: t('admin.students.blacklistModal.validation.otherReason'), trigger: 'blur' }]
     : []
 }))
 

@@ -811,7 +811,9 @@
         "statusUpdated": "Student status updated",
         "cannotBlacklist": "Student not found. Cannot add to blacklist.",
         "blacklisted": "Added to blacklist",
-        "pleaseRetry": "Please retry"
+        "pleaseRetry": "Please retry",
+        "exportHttpError": "Export request failed (HTTP {status})",
+        "exportAuthFailed": "Export request not authenticated, please log in again"
       }
     },
     "addModal": {
@@ -938,6 +940,395 @@
         "cancel": "Cancel",
         "createAccount": "Create Student Account"
       }
+    },
+    "columns": {
+      "studentId": "ID",
+      "studentName": "Name",
+      "email": "Email",
+      "leadMentorName": "Lead Mentor",
+      "school": "School",
+      "majorDirection": "Major Direction",
+      "positions": "Applications",
+      "totalHours": "Total Hours",
+      "jobCoachingCount": "Job Coaching",
+      "basicCourseCount": "Basic Course",
+      "mockInterviewCount": "Mock Interview",
+      "remainingHours": "Remaining Hours",
+      "reminder": "Reminder",
+      "accountStatus": "Status",
+      "action": "Action",
+      "blacklistReason": "Reason",
+      "blacklistTime": "Blacklisted At",
+      "operator": "Operator"
+    },
+    "actionDropdown": {
+      "more": "More",
+      "freeze": "Freeze",
+      "restore": "Restore",
+      "addToBlacklist": "Blacklist",
+      "refund": "Refund"
+    },
+    "filterBar": {
+      "placeholders": {
+        "name": "Search by name",
+        "leadMentor": "Lead Mentor",
+        "school": "School",
+        "graduationYear": "Grad Year",
+        "recruitmentCycle": "Recruitment Cycle",
+        "majorDirection": "Direction",
+        "accountStatus": "Status"
+      },
+      "status": {
+        "normal": "Normal",
+        "frozen": "Frozen",
+        "ended": "Ended",
+        "refunded": "Refunded"
+      },
+      "buttons": {
+        "search": "Search",
+        "reset": "Reset",
+        "export": "Export"
+      }
+    },
+    "blacklistModal": {
+      "title": "Add to Blacklist",
+      "headingPre": "Confirm adding",
+      "headingPost": "to blacklist?",
+      "studentFallback": "this student",
+      "descPre": "After blacklisting, the student will ",
+      "descBold": "lose access to the Career Center module",
+      "descPost": " (including job postings, interview prep, etc.).",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "Select a reason",
+      "reasonOptions": {
+        "violation": "Violation of service agreement",
+        "complaint": "Malicious complaints",
+        "uncooperative": "Non-cooperation",
+        "attitude": "Poor attitude",
+        "other": "Other"
+      },
+      "otherReasonLabel": "Other reason details",
+      "otherReasonPlaceholder": "Please specify the reason",
+      "remarkLabel": "Remarks",
+      "remarkPlaceholder": "Optional, add detailed notes",
+      "footer": {
+        "cancel": "Cancel",
+        "confirm": "Confirm Blacklist"
+      },
+      "validation": {
+        "reason": "Please select a reason",
+        "otherReason": "Please enter the reason"
+      }
+    },
+    "statusModal": {
+      "title": "Change Student Status",
+      "studentFallback": "Student",
+      "targetStatus": {
+        "freeze": "Frozen",
+        "unfreeze": "Unfrozen",
+        "refund": "Refunded",
+        "end_contract": "Ended",
+        "default": "Normal"
+      },
+      "description": {
+        "freeze": "After freezing, the student account will be suspended and unable to log in. Can be unfrozen anytime.",
+        "unfreeze": "After unfreezing, the student can resume login and course deduction; lifecycle status remains unchanged.",
+        "refund": "After refund, the student account will be deactivated. Can be restored through the \"Rejoin\" flow.",
+        "end_contract": "After ending the contract, the student can still log in but cannot view career information. Mentor can continue course deduction; full permissions restored after contract renewal.",
+        "default": "After restoration, the student can log in and use the system normally."
+      },
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "Select a reason",
+      "remarkLabel": "Remarks",
+      "remarkPlaceholder": "Optional, add details",
+      "footer": {
+        "cancel": "Cancel",
+        "confirm": "Confirm"
+      },
+      "validation": {
+        "reason": "Please select a reason"
+      },
+      "reasonOptions": {
+        "pause": "Student requested pause",
+        "expiredHours": "Hours depleted, pending renewal",
+        "violation": "Violation of service agreement",
+        "refundRequest": "Student requested refund",
+        "other": "Other"
+      }
+    },
+    "changeReviewTab": {
+      "banner": "Review note: Changes to core info, academic info, and career direction require admin review. Contact info changes take effect immediately.",
+      "pending": {
+        "title": "Pending Changes",
+        "empty": "No pending changes."
+      },
+      "history": {
+        "title": "Change History",
+        "empty": "No change history yet."
+      },
+      "comparison": {
+        "before": "Before",
+        "after": "After"
+      },
+      "table": {
+        "headers": {
+          "type": "Type",
+          "field": "Field",
+          "before": "Before",
+          "after": "After",
+          "time": "Time",
+          "status": "Status"
+        }
+      },
+      "action": {
+        "approve": "✓ Approve",
+        "reject": "✗ Reject",
+        "processing": "Processing..."
+      },
+      "status": {
+        "autoApplied": "Auto Applied",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "default": "Recorded"
+      },
+      "category": {
+        "academic": "Academic Info",
+        "jobDirection": "Career Direction",
+        "contact": "Contact Info",
+        "default": "Core Info"
+      },
+      "messages": {
+        "approveSuccess": "Change approved",
+        "rejectSuccess": "Change rejected",
+        "approveFailed": "Failed to approve change",
+        "rejectFailed": "Failed to reject change"
+      }
+    },
+    "contractTab": {
+      "summary": {
+        "totalAmount": "Total Amount",
+        "totalHours": "Total Hours",
+        "usedHours": "Used Hours",
+        "remainingHours": "Remaining Hours"
+      },
+      "table": {
+        "headers": {
+          "contractNo": "Contract No.",
+          "type": "Type",
+          "amount": "Amount",
+          "hours": "Hours",
+          "period": "Period",
+          "status": "Status",
+          "attachment": "Attachment"
+        }
+      },
+      "usdEquivalent": "{amount} equiv.",
+      "hoursRemaining": "{hours}h left",
+      "dateSeparator": " to ",
+      "download": "Download",
+      "status": {
+        "ended": "Ended",
+        "draft": "Draft",
+        "normal": "Normal"
+      },
+      "empty": "No contracts found."
+    },
+    "editModal": {
+      "title": "Edit Student",
+      "studentFallback": "Student Profile",
+      "sections": {
+        "coreInfo": "Core Info",
+        "mentorConfig": "Mentor Configuration",
+        "mentorConfigDesc": "Multiple selection allowed",
+        "academicInfo": "Academic Info",
+        "careerDirection": "Career Direction",
+        "careerDirectionDesc": "Multiple selection; sub-direction follows major direction",
+        "contactAndRemark": "Contact & Remarks",
+        "contract": "Contract",
+        "contractDesc": "Edit active contract"
+      },
+      "fields": {
+        "englishName": "English Name",
+        "gender": "Gender",
+        "email": "Email",
+        "leadMentor": "Lead Mentor",
+        "assistant": "Assistant",
+        "school": "School",
+        "major": "Major",
+        "graduationMonth": "Graduation Month",
+        "highSchool": "High School",
+        "studyPlan": "Study Plan",
+        "visa": "Visa",
+        "targetRegion": "Target Region",
+        "recruitmentCycle": "Recruitment Cycle",
+        "majorDirections": "Major Direction",
+        "subDirections": "Sub Direction",
+        "phone": "Phone",
+        "wechat": "WeChat",
+        "remark": "Remarks",
+        "currency": "Currency",
+        "amountGbp": "GBP Amount",
+        "amountUsd": "USD Amount",
+        "usdEquivalent": "USD Equivalent",
+        "totalHours": "Total Hours",
+        "startDate": "Contract Start Date",
+        "endDate": "Contract End Date",
+        "contractAttachment": "Contract Attachment",
+        "contractRemark": "Remarks"
+      },
+      "placeholders": {
+        "englishName": "e.g. Emily Zhang",
+        "gender": "Please select",
+        "email": "Student email",
+        "school": "Multiple schools allowed (postgrad, dual degree, etc.)",
+        "major": "e.g. Finance",
+        "graduationMonth": "Select graduation month",
+        "highSchool": "Optional",
+        "optional": "Optional",
+        "visa": "Select visa status",
+        "searchMentor": "Search lead mentor by name",
+        "searchAssistant": "Search assistant by name",
+        "targetRegion": "Select target region(s)",
+        "majorDirections": "Select major direction(s)",
+        "subDirections": "Select sub direction(s)",
+        "phone": "Optional",
+        "wechat": "Optional",
+        "remark": "Optional, additional notes",
+        "amountGbp": "£ Enter GBP amount",
+        "amountUsd": "$ Enter USD amount",
+        "usdEquivalent": "$ Enter USD equivalent",
+        "totalHours": "e.g. 40",
+        "startDate": "Select contract start date",
+        "endDate": "Select contract end date",
+        "contractRemark": "Optional, e.g. special terms"
+      },
+      "currency": {
+        "usd": "USD",
+        "gbp": "GBP"
+      },
+      "studyPlan": {
+        "normal": "Normal Graduation",
+        "postgraduate": "Postgraduate",
+        "deferred": "Deferred"
+      },
+      "gender": {
+        "male": "Male",
+        "female": "Female"
+      },
+      "status": {
+        "normal": "Normal",
+        "frozen": "Frozen",
+        "ended": "Ended",
+        "refunded": "Refunded"
+      },
+      "noActiveContract": "No active contract found. Please renew or create a contract in the contract module first.",
+      "currentAttachment": "Current attachment: ",
+      "upload": {
+        "clickOrDrag": "Click or drag file to upload",
+        "replace": "Click or drag to replace attachment",
+        "hint": "PDF / PNG / JPG / JPEG only, max 150MB per file",
+        "unsupportedFormat": "PDF / PNG / JPG / JPEG only",
+        "fileTooLarge": "File exceeds {max}MB (actual {actual}MB)",
+        "success": "Upload successful",
+        "failed": "Upload failed: {reason}",
+        "backendError": "Backend returned an error",
+        "networkError": "Network or server error"
+      },
+      "footer": {
+        "cancel": "Cancel",
+        "save": "Save Changes"
+      },
+      "validation": {
+        "studentId": "Student not found",
+        "email": "Please enter email",
+        "school": "Please enter school",
+        "contractDates": "Contract end date cannot be earlier than start date"
+      },
+      "staffFallback": {
+        "leadMentor": "Lead Mentor",
+        "assistant": "Assistant"
+      },
+      "messages": {
+        "loadStaffFailed": "Failed to load mentor list"
+      }
+    },
+    "detailModal": {
+      "guardTitle": "No permission to view student details",
+      "guardDesc": "Only staff and super admins can open student detail modals. This restriction takes effect once integrated with the list page.",
+      "overview": {
+        "accountStatus": "Account Status",
+        "targetRegion": "Target Region",
+        "recruitmentCycle": "Recruitment Cycle",
+        "remainingHours": "Remaining Hours"
+      },
+      "tabs": {
+        "profile": "Basic Info",
+        "changes": "Change Review",
+        "contracts": "Contracts"
+      },
+      "quickActions": {
+        "renew": "Renew Contract",
+        "changes": "Change Review",
+        "contracts": "View Contracts"
+      },
+      "loading": "Loading student details...",
+      "loadError": {
+        "title": "Failed to load details",
+        "retry": "Please try again later or check the student detail API."
+      },
+      "sections": {
+        "coreInfo": "Core Info",
+        "mentorConfig": "Mentor Configuration",
+        "academicInfo": "Academic Info",
+        "careerDirection": "Career Direction",
+        "contact": "Contact Info"
+      },
+      "fields": {
+        "englishName": "English Name",
+        "gender": "Gender",
+        "email": "Email",
+        "leadMentor": "Lead Mentor",
+        "assistant": "Assistant",
+        "school": "School",
+        "major": "Major",
+        "graduationMonth": "Graduation Month",
+        "highSchool": "High School",
+        "studyPlan": "Study Plan",
+        "visa": "Visa",
+        "targetRegion": "Target Region",
+        "recruitmentCycle": "Recruitment Cycle",
+        "majorDirections": "Major Direction",
+        "subDirections": "Sub Direction",
+        "phone": "Phone",
+        "wechat": "WeChat",
+        "accountStatus": "Account Status",
+        "remark": "Remarks"
+      },
+      "gender": {
+        "male": "Male",
+        "female": "Female"
+      },
+      "accountStatus": {
+        "normal": "Normal",
+        "frozen": "Frozen",
+        "ended": "Ended",
+        "refunded": "Refunded"
+      },
+      "studyPlan": {
+        "normal": "Normal Graduation",
+        "postgraduate": "Postgraduate",
+        "deferred": "Deferred"
+      },
+      "frozen": "Frozen",
+      "directionFallback": "Direction TBD",
+      "fallbackName": "Student Detail",
+      "fieldFallback": "Unnamed field",
+      "requestedBySystem": "System",
+      "footer": {
+        "cancel": "Cancel",
+        "edit": "Edit Student"
+      },
+      "tabAriaLabelPrefix": "Student Detail - "
     }
   },
   "layout": {
@@ -2999,6 +3390,285 @@
         "submit": "Save & Notify",
         "warnNoStaff": "Mentor not found, cannot save",
         "warnNoReason": "Please enter a reason"
+      }
+    },
+    "staff": {
+      "pageTitle": "Mentor List",
+      "addBtn": "Add Mentor",
+      "pendingAlert": {
+        "message": "{count} mentor(s) have pending profile change requests",
+        "description": "Mentor-submitted changes to bank info, contact details etc. need your review",
+        "action": "Review Now"
+      },
+      "tabs": {
+        "normal": "Active",
+        "blacklist": "Blacklist"
+      },
+      "blacklistAlert": {
+        "message": "Blacklist Restrictions",
+        "descPre": "Blacklisted mentors ",
+        "descStrong": "cannot log in",
+        "descPost": " and cannot access any module"
+      },
+      "filter": {
+        "searchPlaceholder": "Search name/ID",
+        "allTypes": "All Types",
+        "allDirections": "All Directions",
+        "allStatus": "All Statuses",
+        "statusNormal": "Active",
+        "statusFrozen": "Frozen",
+        "search": "Search"
+      },
+      "staffTypes": {
+        "lead_mentor": "Lead Mentor",
+        "mentor": "Mentor",
+        "assistant": "Assistant"
+      },
+      "export": {
+        "idle": "Export",
+        "loading": "Exporting..."
+      },
+      "table": {
+        "empty": "No mentors found",
+        "emptyBlacklist": "No blacklisted mentors",
+        "showTotal": "{total} records"
+      },
+      "action": {
+        "detail": "Detail",
+        "edit": "Edit",
+        "more": "More",
+        "resetPassword": "Reset Password",
+        "freeze": "Freeze",
+        "restore": "Restore",
+        "blacklist": "Blacklist",
+        "removeBlacklist": "Remove from Blacklist"
+      },
+      "studentCount": "{count} student(s)",
+      "companiesMore": "{label} and {count} more",
+      "statusText": {
+        "normal": "Active",
+        "frozen": "Frozen"
+      },
+      "statusNote": {
+        "frozen": "Account frozen",
+        "blacklisted": "Blacklisted",
+        "normal": "Account active"
+      },
+      "messages": {
+        "loadError": "Failed to load mentor list",
+        "exportSuccess": "Mentor list exported",
+        "exportFail": "Export failed",
+        "updateSuccess": "Mentor updated",
+        "updateFail": "Update failed",
+        "createSuccess": "Mentor added",
+        "createFail": "Failed to add mentor",
+        "freezeSuccess": "Mentor account frozen",
+        "restoreSuccess": "Mentor account restored",
+        "blacklistSuccess": "Mentor blacklisted",
+        "removeSuccess": "Mentor removed from blacklist",
+        "pendingEmpty": "No pending mentor records",
+        "pendingError": "Failed to load pending mentor info"
+      },
+      "resetPassword": {
+        "title": "Password Reset Successful",
+        "account": "Login account: {account}",
+        "password": "Default password: {password}",
+        "ok": "Got it"
+      },
+      "columns": {
+        "staffId": "ID",
+        "staffName": "Name",
+        "contact": "Contact",
+        "staffType": "Type",
+        "majorDirection": "Major Direction",
+        "subDirection": "Sub Direction",
+        "region": "Region",
+        "companies": "Companies",
+        "rating": "Rating",
+        "hourlyRate": "Rate/h",
+        "studentCount": "Students",
+        "accountStatus": "Status",
+        "action": "Action"
+      },
+      "students": {
+        "title": "{name}'s Students",
+        "titleDefault": "Mentor Students",
+        "loading": "Loading...",
+        "empty": "No students assigned",
+        "close": "Close"
+      },
+      "detail": {
+        "defaultTitle": "Mentor Detail",
+        "loading": "Loading mentor detail...",
+        "loadError": "Failed to load mentor detail",
+        "retryHint": "Please try again later",
+        "tabs": {
+          "profile": "Profile",
+          "changes": "Changes"
+        },
+        "cards": {
+          "email": "Email",
+          "phone": "Phone",
+          "majorDirection": "Major Direction",
+          "studentCount": "Current Students"
+        },
+        "sections": {
+          "basic": "Basic Info",
+          "basicDesc": "Production uses real backend data for mentor account and city.",
+          "specialty": "Expertise",
+          "career": "Career Background",
+          "internal": "Internal Assessment",
+          "changes": "Pending Changes",
+          "changesDesc": "Mentor profile change requests are reviewed here. The pending count refreshes after review."
+        },
+        "fields": {
+          "staffId": "Mentor ID",
+          "staffName": "Name",
+          "region": "Region",
+          "city": "City",
+          "subDirection": "Sub Direction",
+          "hourlyRate": "Rate/h",
+          "specialty": "Specialty",
+          "companies": "Companies",
+          "rating": "Rating",
+          "ratingRemark": "Comment"
+        },
+        "noData": "None",
+        "unrated": "Unrated",
+        "industryOther": "Other",
+        "changesEmpty": "No pending profile changes.",
+        "changesPending": "Pending",
+        "rejectReasonLabel": "Rejection Reason",
+        "rejectReasonPlaceholder": "Optional: enter rejection reason before rejecting",
+        "rejectBtn": "Reject",
+        "approveBtn": "Approve",
+        "close": "Close",
+        "messages": {
+          "approveSuccess": "Change approved",
+          "approveFail": "Approval failed",
+          "rejectSuccess": "Change rejected",
+          "rejectFail": "Rejection failed"
+        }
+      },
+      "form": {
+        "titleEdit": "Edit Mentor - {name} (ID: {id})",
+        "titleAdd": "Add Mentor",
+        "sections": {
+          "core": "Core Info",
+          "contact": "Contact",
+          "specialty": "Specialty",
+          "career": "Career",
+          "internal": "Internal",
+          "account": "Account"
+        },
+        "fields": {
+          "staffName": "Name",
+          "email": "Email",
+          "staffType": "Type",
+          "gender": "Gender",
+          "phone": "Phone",
+          "wechat": "WeChat",
+          "region": "Region",
+          "city": "City",
+          "majorDirection": "Major Direction",
+          "subDirection": "Sub Direction",
+          "courseType": "Course Types",
+          "specialty": "Specialty",
+          "hourlyRate": "Rate (USD/h)",
+          "companies": "Companies",
+          "rating": "Rating",
+          "ratingRemark": "Comment",
+          "loginAccount": "Login Account",
+          "initialPassword": "Initial Password"
+        },
+        "placeholders": {
+          "staffName": "Enter English name",
+          "email": "Enter email",
+          "typeSelect": "Select",
+          "phone": "Enter phone",
+          "wechat": "Enter WeChat ID",
+          "multiSelect": "Select (multiple)",
+          "cityReady": "Select (optional)",
+          "cityWait": "Select region first",
+          "subDirectionWait": "Select major direction first",
+          "hourlyRate": "e.g. 200",
+          "companies": "Search and select companies",
+          "rating": "Select rating",
+          "ratingRemark": "Enter comment (optional, super-admin only)",
+          "loginAccount": "Enter login account",
+          "initialPassword": "Enter initial password"
+        },
+        "genders": {
+          "male": "Male",
+          "female": "Female"
+        },
+        "defaultCountryCode": "+1 US/Canada",
+        "footer": {
+          "save": "Save",
+          "add": "Add",
+          "cancel": "Cancel"
+        },
+        "validation": {
+          "staffName": "Please enter mentor name",
+          "email": "Please enter email",
+          "staffType": "Please select type",
+          "majorDirection": "Please select major direction",
+          "region": "Please select region",
+          "hourlyRate": "Please enter hourly rate",
+          "specialtyMax": "Max 20 specialties",
+          "companiesMax": "Max 10 companies"
+        }
+      },
+      "statusModal": {
+        "staffFallback": "This Mentor",
+        "titles": {
+          "freeze": "Freeze Mentor Account",
+          "restore": "Restore Mentor Account",
+          "blacklist": "Add to Blacklist",
+          "remove": "Remove from Blacklist"
+        },
+        "descriptions": {
+          "freeze": "The mentor account will not be able to log in after freezing.",
+          "restore": "The mentor account will be restored to active status.",
+          "blacklist": "The mentor will be restricted from related modules after blacklisting.",
+          "remove": "The mentor's blacklist status will be lifted."
+        },
+        "reasonLabels": {
+          "remove": "Removal Reason",
+          "blacklist": "Select Reason",
+          "other": "Reason"
+        },
+        "reasonPlaceholders": {
+          "remove": "Select removal reason",
+          "blacklist": "Select blacklist reason",
+          "restore": "Select restore reason",
+          "freeze": "Select freeze reason"
+        },
+        "reasonOptions": {
+          "freeze": {
+            "staff_pause": "Mentor requested pause",
+            "service_quality": "Service quality issue",
+            "policy_violation": "Policy violation",
+            "other": "Other"
+          },
+          "blacklist": {
+            "contact_violation": "Unauthorized student contact",
+            "service_complaint": "Serious service complaint",
+            "cooperation_end": "Cooperation ended",
+            "other": "Other"
+          }
+        },
+        "otherReasonLabel": "Other Reason",
+        "otherReasonPlaceholder": "Enter other reason",
+        "remarkLabel": "Notes",
+        "remarkPlaceholder": "Optional: background notes for this action",
+        "validation": {
+          "required": "Please select a reason"
+        },
+        "footer": {
+          "cancel": "Cancel",
+          "confirm": "Confirm"
+        }
       }
     }
   }

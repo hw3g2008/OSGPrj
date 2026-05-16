@@ -23,27 +23,27 @@
     <div v-if="!canView" class="sdm-guard">
       <span class="mdi mdi-shield-alert-outline" aria-hidden="true"></span>
       <div>
-        <strong>当前角色无权查看学员详情</strong>
-        <p>仅文员与超管允许打开学员详情弹窗。该限制会在组件接入列表页后直接生效。</p>
+        <strong>{{ t('admin.students.detailModal.guardTitle') }}</strong>
+        <p>{{ t('admin.students.detailModal.guardDesc') }}</p>
       </div>
     </div>
 
     <template v-else>
       <div class="sdm-overview" data-content-part="student-detail-overview">
         <article class="sdm-overview__card">
-          <span class="sdm-overview__label">账号状态</span>
+          <span class="sdm-overview__label">{{ t('admin.students.detailModal.overview.accountStatus') }}</span>
           <strong class="sdm-overview__value">{{ formatAccountStatus(detail?.accountStatus) }}</strong>
         </article>
         <article class="sdm-overview__card">
-          <span class="sdm-overview__label">求职地区</span>
+          <span class="sdm-overview__label">{{ t('admin.students.detailModal.overview.targetRegion') }}</span>
           <strong class="sdm-overview__value">{{ targetRegionPills.length ? targetRegionPills.join(' / ') : '-' }}</strong>
         </article>
         <article class="sdm-overview__card">
-          <span class="sdm-overview__label">招聘周期</span>
+          <span class="sdm-overview__label">{{ t('admin.students.detailModal.overview.recruitmentCycle') }}</span>
           <strong class="sdm-overview__value">{{ recruitmentCyclePills.length ? recruitmentCyclePills.join(' / ') : '-' }}</strong>
         </article>
         <article class="sdm-overview__card">
-          <span class="sdm-overview__label">剩余课时</span>
+          <span class="sdm-overview__label">{{ t('admin.students.detailModal.overview.remainingHours') }}</span>
           <strong class="sdm-overview__value">{{ contractSummary.remainingHours }}h</strong>
         </article>
       </div>
@@ -55,7 +55,7 @@
           :key="tab.key"
           type="button"
           :class="['sdm-tabs__item', { 'sdm-tabs__item--active': activeTab === tab.key }]"
-          :aria-label="`学员详情弹窗${tab.label}`"
+          :aria-label="t('admin.students.detailModal.tabAriaLabelPrefix') + tab.label"
           :data-tab="tab.key"
           :data-tab-text="tab.label"
           @click="activeTab = tab.key"
@@ -71,51 +71,51 @@
           :data-surface-sample-key="`student-${detail?.studentId || studentId}-contract-renew`"
           @click="renewVisible = true"
         >
-          合同续签
+          {{ t('admin.students.detailModal.quickActions.renew') }}
         </a-button>
-        <a-button @click="activeTab = 'changes'">信息变更</a-button>
-        <a-button @click="activeTab = 'contracts'">查看合同</a-button>
+        <a-button @click="activeTab = 'changes'">{{ t('admin.students.detailModal.quickActions.changes') }}</a-button>
+        <a-button @click="activeTab = 'contracts'">{{ t('admin.students.detailModal.quickActions.contracts') }}</a-button>
       </div>
 
       <!-- Loading / Error -->
       <div v-if="loading" class="sdm-loading">
         <span class="mdi mdi-loading mdi-spin" aria-hidden="true"></span>
-        <span>正在加载学员详情...</span>
+        <span>{{ t('admin.students.detailModal.loading') }}</span>
       </div>
       <div v-else-if="loadError" class="sdm-error">
-        <strong>详情加载失败</strong>
+        <strong>{{ t('admin.students.detailModal.loadError.title') }}</strong>
         <p>{{ loadError }}</p>
       </div>
 
-      <!-- Tab 1: 基本信息 -->
+      <!-- Tab 1: Profile -->
       <div v-else-if="activeTab === 'profile'" class="sdm-content">
-        <!-- 核心信息 -->
+        <!-- Core Info -->
         <section class="sdm-section sdm-section--primary">
-          <div class="sdm-section__badge sdm-badge--primary">核心信息</div>
+          <div class="sdm-section__badge sdm-badge--primary">{{ t('admin.students.detailModal.sections.coreInfo') }}</div>
           <div class="sdm-grid sdm-grid--4">
             <div class="sdm-field">
-              <span class="sdm-field__label">英文姓名</span>
+              <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.englishName') }}</span>
               <div class="sdm-field__value sdm-field__value--bold">{{ detail?.studentName || '-' }}</div>
             </div>
             <div class="sdm-field">
-              <span class="sdm-field__label">性别</span>
+              <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.gender') }}</span>
               <div class="sdm-field__value">{{ formatGender(detail?.gender) }}</div>
             </div>
             <div class="sdm-field sdm-field--span2">
-              <span class="sdm-field__label">邮箱</span>
+              <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.email') }}</span>
               <div class="sdm-field__value">{{ detail?.email || '-' }}</div>
             </div>
           </div>
         </section>
 
-        <!-- 导师配置 -->
+        <!-- Mentor Config -->
         <section class="sdm-section">
           <div class="sdm-section__badge sdm-badge--indigo">
-            <i class="mdi mdi-account-group" aria-hidden="true"></i> 导师配置
+            <i class="mdi mdi-account-group" aria-hidden="true"></i> {{ t('admin.students.detailModal.sections.mentorConfig') }}
           </div>
           <div class="sdm-grid sdm-grid--2">
-            <div class="sdm-field sdm-field" data-field-name="班主任">
-              <span class="sdm-field__label">班主任</span>
+            <div class="sdm-field sdm-field" data-field-name="班主任"> <!-- i18n-skip-line: playwright selector -->
+              <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.leadMentor') }}</span>
               <div class="sdm-field__pills">
                 <template v-if="leadMentorPillNames.length">
                   <span
@@ -127,8 +127,8 @@
                 <span v-else class="sdm-field__value">-</span>
               </div>
             </div>
-            <div class="sdm-field sdm-field" data-field-name="助教">
-              <span class="sdm-field__label">助教</span>
+            <div class="sdm-field sdm-field" data-field-name="助教"> <!-- i18n-skip-line: playwright selector -->
+              <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.assistant') }}</span>
               <div class="sdm-field__pills">
                 <template v-if="assistantPillNames.length">
                   <span
@@ -143,14 +143,14 @@
           </div>
         </section>
 
-        <!-- 学业信息 -->
+        <!-- Academic Info -->
         <section class="sdm-section">
           <div class="sdm-section__badge sdm-badge--blue">
-            <i class="mdi mdi-school" aria-hidden="true"></i> 学业信息
+            <i class="mdi mdi-school" aria-hidden="true"></i> {{ t('admin.students.detailModal.sections.academicInfo') }}
           </div>
           <div class="sdm-grid sdm-grid--4">
-            <div class="sdm-field sdm-field" data-field-name="学校">
-              <span class="sdm-field__label">学校</span>
+            <div class="sdm-field sdm-field" data-field-name="学校"> <!-- i18n-skip-line: playwright selector -->
+              <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.school') }}</span>
               <div class="sdm-field__pills">
                 <template v-if="schoolPills.length">
                   <span
@@ -162,37 +162,37 @@
                 <span v-else class="sdm-field__value">-</span>
               </div>
             </div>
-            <div class="sdm-field sdm-field" data-field-name="专业">
-              <span class="sdm-field__label">专业</span>
+            <div class="sdm-field sdm-field" data-field-name="专业"> <!-- i18n-skip-line: playwright selector -->
+              <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.major') }}</span>
               <div class="sdm-field__value">{{ detail?.major || '-' }}</div>
             </div>
-            <div class="sdm-field sdm-field" data-field-name="毕业年月">
-              <span class="sdm-field__label">毕业年月</span>
+            <div class="sdm-field sdm-field" data-field-name="毕业年月"> <!-- i18n-skip-line: playwright selector -->
+              <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.graduationMonth') }}</span>
               <div class="sdm-field__value">{{ detail?.graduationMonth || (detail?.graduationYear ? `${detail.graduationYear}-06` : '-') }}</div>
             </div>
             <div class="sdm-field sdm-field">
-              <span class="sdm-field__label">高中</span>
+              <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.highSchool') }}</span>
               <div class="sdm-field__value">{{ detail?.academic?.highSchool || detail?.highSchool || '-' }}</div>
             </div>
             <div class="sdm-field sdm-field">
-              <span class="sdm-field__label">学业状态</span>
+              <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.studyPlan') }}</span>
               <div class="sdm-field__value">{{ formatStudyPlan(detail?.academic?.studyPlan, detail?.academic?.deferredGraduation) }}</div>
             </div>
             <div class="sdm-field sdm-field">
-              <span class="sdm-field__label">签证</span>
+              <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.visa') }}</span>
               <div class="sdm-field__value">{{ visaLabel }}</div>
             </div>
           </div>
         </section>
 
-        <!-- 求职方向 -->
+        <!-- Career Direction -->
         <section class="sdm-section">
           <div class="sdm-section__badge sdm-badge--amber">
-            <i class="mdi mdi-target" aria-hidden="true"></i> 求职方向
+            <i class="mdi mdi-target" aria-hidden="true"></i> {{ t('admin.students.detailModal.sections.careerDirection') }}
           </div>
-          <!-- 求职地区 -->
-          <div class="sdm-field sdm-field" style="margin-bottom:12px" data-field-name="求职地区">
-            <span class="sdm-field__label">求职地区</span>
+          <!-- Target Region -->
+          <div class="sdm-field sdm-field" style="margin-bottom:12px" data-field-name="求职地区"> <!-- i18n-skip-line: playwright selector -->
+            <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.targetRegion') }}</span>
             <div class="sdm-field__pills">
               <template v-if="targetRegionPills.length">
                 <span v-for="(name, idx) in targetRegionPills" :key="`region-${idx}-${name}`" class="sdm-pill sdm-pill--green">{{ name }}</span>
@@ -200,9 +200,9 @@
               <span v-else class="sdm-field__value">-</span>
             </div>
           </div>
-          <!-- 招聘周期 -->
-          <div class="sdm-field sdm-field" style="margin-bottom:12px" data-field-name="招聘周期">
-            <span class="sdm-field__label">招聘周期</span>
+          <!-- Recruitment Cycle -->
+          <div class="sdm-field sdm-field" style="margin-bottom:12px" data-field-name="招聘周期"> <!-- i18n-skip-line: playwright selector -->
+            <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.recruitmentCycle') }}</span>
             <div class="sdm-field__pills">
               <template v-if="recruitmentCyclePills.length">
                 <span v-for="(name, idx) in recruitmentCyclePills" :key="`cycle-${idx}-${name}`" class="sdm-pill sdm-pill--blue">{{ name }}</span>
@@ -210,10 +210,10 @@
               <span v-else class="sdm-field__value">-</span>
             </div>
           </div>
-          <!-- 主攻方向 + 子方向 -->
+          <!-- Major + Sub Directions -->
           <div class="sdm-grid sdm-grid--direction">
-            <div class="sdm-field sdm-field sdm-field--bordered" data-field-name="主攻方向">
-              <span class="sdm-field__label" style="color:var(--primary)">主攻方向</span>
+            <div class="sdm-field sdm-field sdm-field--bordered" data-field-name="主攻方向"> <!-- i18n-skip-line: playwright selector -->
+              <span class="sdm-field__label" style="color:var(--primary)">{{ t('admin.students.detailModal.fields.majorDirections') }}</span>
               <div class="sdm-field__pills">
                 <template v-if="majorDirectionPills.length">
                   <span v-for="(name, idx) in majorDirectionPills" :key="`mdir-${idx}-${name}`" class="sdm-pill sdm-pill--purple">{{ name }}</span>
@@ -221,8 +221,8 @@
                 <span v-else class="sdm-field__value">-</span>
               </div>
             </div>
-            <div class="sdm-field sdm-field sdm-field--bordered" data-field-name="子方向">
-              <span class="sdm-field__label" style="color:var(--primary)">子方向</span>
+            <div class="sdm-field sdm-field sdm-field--bordered" data-field-name="子方向"> <!-- i18n-skip-line: playwright selector -->
+              <span class="sdm-field__label" style="color:var(--primary)">{{ t('admin.students.detailModal.fields.subDirections') }}</span>
               <div class="sdm-field__pills">
                 <template v-if="subDirectionPills.length">
                   <span v-for="(name, idx) in subDirectionPills" :key="`sdir-${idx}-${name}`" class="sdm-pill sdm-pill--sub">{{ name }}</span>
@@ -233,48 +233,43 @@
           </div>
         </section>
 
-        <!-- 联系方式 -->
+        <!-- Contact Info -->
         <section class="sdm-section">
           <div class="sdm-section__badge sdm-badge--green">
-            <i class="mdi mdi-phone" aria-hidden="true"></i> 联系方式
+            <i class="mdi mdi-phone" aria-hidden="true"></i> {{ t('admin.students.detailModal.sections.contact') }}
           </div>
           <div class="sdm-grid sdm-grid--3">
-            <div class="sdm-field sdm-field" data-field-name="电话">
-              <span class="sdm-field__label">电话</span>
+            <div class="sdm-field sdm-field" data-field-name="电话"> <!-- i18n-skip-line: playwright selector -->
+              <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.phone') }}</span>
               <div class="sdm-field__value">{{ detail?.contact?.phone || '-' }}</div>
             </div>
-            <div class="sdm-field sdm-field" data-field-name="微信">
-              <span class="sdm-field__label">微信</span>
+            <div class="sdm-field sdm-field" data-field-name="微信"> <!-- i18n-skip-line: playwright selector -->
+              <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.wechat') }}</span>
               <div class="sdm-field__value">{{ detail?.contact?.wechat || '-' }}</div>
             </div>
-            <div class="sdm-field sdm-field" data-field-name="账号状态">
-              <span class="sdm-field__label">账号状态</span>
+            <div class="sdm-field sdm-field" data-field-name="账号状态"> <!-- i18n-skip-line: playwright selector -->
+              <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.accountStatus') }}</span>
               <div style="display: flex; flex-wrap: wrap; gap: 4px">
                 <span :class="['sdm-status-tag', `sdm-status-tag--${statusColor}`]">
                   {{ formatAccountStatus(detail?.accountStatus) }}
                 </span>
-                <!--
-                  批次 7 + 7.5：frozen 是独立维度，详情页与列表保持一致双 tag 展示。
-                  退费态忽略 frozen（lifecycle 已是终态）。
-                  见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.3
-                -->
                 <span
                   v-if="isFrozenDetail && detail?.accountStatus !== '3'"
                   class="sdm-status-tag sdm-status-tag--blue"
-                  data-field-name="冻结标记"
-                >冻结</span>
+                  data-field-name="冻结标记" <!-- i18n-skip-line: playwright selector -->
+                >{{ t('admin.students.detailModal.frozen') }}</span>
               </div>
             </div>
           </div>
 
-          <div class="sdm-field sdm-field" data-field-name="备注" style="margin-top: 12px">
-            <span class="sdm-field__label">备注</span>
+          <div class="sdm-field sdm-field" data-field-name="备注" style="margin-top: 12px"> <!-- i18n-skip-line: playwright selector -->
+            <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.remark') }}</span>
             <div class="sdm-field__value" style="white-space: pre-wrap">{{ detail?.remark || '-' }}</div>
           </div>
         </section>
       </div>
 
-      <!-- Tab 2: 信息变更 -->
+      <!-- Tab 2: Change Review -->
       <ChangeReviewTab
         v-else-if="activeTab === 'changes'"
         :pending-changes="pendingChanges"
@@ -283,7 +278,7 @@
         @reject="handleChangeDecision('reject', $event)"
       />
 
-      <!-- Tab 3: 合同信息 -->
+      <!-- Tab 3: Contracts -->
       <ContractTab
         v-else
         :summary="contractSummary"
@@ -292,14 +287,14 @@
     </template>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
+      <a-button @click="handleClose">{{ t('admin.students.detailModal.footer.cancel') }}</a-button>
       <a-button
         v-if="canView && studentId"
         type="primary"
         data-surface-trigger="modal-edit-student-new"
         @click="handleRequestEdit"
       >
-        编辑学员
+        {{ t('admin.students.detailModal.footer.edit') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -314,6 +309,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { http } from '@osg/shared/utils/request'
 import {
   getStudentChangeRequestList,
@@ -325,6 +321,8 @@ import ContractTab from './ContractTab.vue'
 import RenewContractModal from '../../contracts/components/RenewContractModal.vue'
 import type { ContractListItem } from '@osg/shared/api/admin/contract'
 import { getAdminDictOptions } from '@/api/adminDict'
+
+const { t } = useI18n()
 
 interface StudentContact {
   email?: string
@@ -373,10 +371,6 @@ interface StudentDetailPayload {
   targetRegion?: string
   subDirection?: string
   accountStatus?: string
-  /**
-   * 批次 7 + 7.5：与 accountStatus 维度正交的独立冻结标记。
-   * 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.2
-   */
   frozen?: number | string
   recruitmentCycles?: string[]
   majorDirections?: string[]
@@ -451,15 +445,15 @@ const emit = defineEmits<{
   'review-updated': []
 }>()
 
-const tabDefs = [
-  { key: 'profile', label: '基本信息', icon: 'mdi-account' },
-  { key: 'changes', label: '信息变更', icon: 'mdi-bell-ring' },
-  { key: 'contracts', label: '合同信息', icon: 'mdi-file-sign' }
-] as const
+type TabKey = 'profile' | 'changes' | 'contracts'
 
-const tabs = tabDefs
+const tabDefs = computed(() => [
+  { key: 'profile' as TabKey, label: t('admin.students.detailModal.tabs.profile'), icon: 'mdi-account' },
+  { key: 'changes' as TabKey, label: t('admin.students.detailModal.tabs.changes'), icon: 'mdi-bell-ring' },
+  { key: 'contracts' as TabKey, label: t('admin.students.detailModal.tabs.contracts'), icon: 'mdi-file-sign' },
+])
 
-const activeTab = ref<(typeof tabs)[number]['key']>('profile')
+const activeTab = ref<TabKey>('profile')
 const loading = ref(false)
 const loadError = ref('')
 const detail = ref<StudentDetailPayload | null>(null)
@@ -467,11 +461,11 @@ const contractPayload = ref<ContractPayload | null>(null)
 const pendingChanges = ref<ChangeItem[]>([])
 const historyChanges = ref<ChangeItem[]>([])
 
-const fallbackStudentName = computed(() => props.studentName || '学员详情')
+const fallbackStudentName = computed(() => props.studentName || t('admin.students.detailModal.fallbackName'))
 const modalTitle = computed(() => detail.value?.studentName || fallbackStudentName.value)
 const firstDirectionLabel = computed(() => {
   const directions = detail.value?.jobDirection?.majorDirections || detail.value?.majorDirections || []
-  return directions[0] || '方向待补充'
+  return directions[0] || t('admin.students.detailModal.directionFallback')
 })
 
 const initials = computed(() => {
@@ -481,7 +475,7 @@ const initials = computed(() => {
   return name.substring(0, 2).toUpperCase()
 })
 
-// ── 字典：key → label 映射（详情显示中文/英文官名而不是 key） ──
+// dict: key → label maps (display official name instead of key)
 type DictMap = Record<string, string>
 const dictMaps = ref<{
   school: DictMap
@@ -547,7 +541,7 @@ const assistantPillNames = computed(() => {
   return []
 })
 
-// 批次 7 + 7.5：frozen 是独立维度
+// i18n-skip-line: dev comment — 批次 7 + 7.5：frozen 是独立维度
 const isFrozenDetail = computed(() => {
   const value = detail.value?.frozen
   return value === 1 || value === '1'
@@ -648,7 +642,7 @@ const loadStudentDetail = async () => {
     contractPayload.value = contractRes
     hydrateChangeRequests(changeRequestRes)
   } catch (error) {
-    loadError.value = '请稍后重试，或检查学员详情接口是否可用。'
+    loadError.value = t('admin.students.detailModal.loadError.retry')
   } finally {
     loading.value = false
   }
@@ -701,11 +695,11 @@ const mapChangeRequestItem = (item: StudentChangeRequestItem): ChangeItem => {
   return {
     id: requestId ?? `${item.fieldKey || 'change'}-${item.requestedAt || 'unknown'}`,
     requestId,
-    field: item.fieldLabel || '未命名字段',
+    field: item.fieldLabel || t('admin.students.detailModal.fieldFallback'),
     before: item.beforeValue || '-',
     after: item.afterValue || '-',
     requestedAt: formatTimestamp(item.requestedAt),
-    requestedBy: item.requestedBy || '系统',
+    requestedBy: item.requestedBy || t('admin.students.detailModal.requestedBySystem'),
     note: item.remark || undefined,
     status: item.status,
     changeType: item.changeType || undefined
@@ -728,42 +722,34 @@ const formatList = (items?: string[]) => {
 
 const formatGender = (gender?: string) => {
   switch (gender) {
-    case '0':
-      return '男'
-    case '1':
-      return '女'
-    default:
-      return '-'
+    case '0': return t('admin.students.detailModal.gender.male')
+    case '1': return t('admin.students.detailModal.gender.female')
+    default: return '-'
   }
 }
 
 const formatAccountStatus = (status?: string) => {
   switch (status) {
-    case '1':
-      return '冻结'
-    case '2':
-      return '已结束'
-    case '3':
-      return '退费'
-    default:
-      return '正常'
+    case '1': return t('admin.students.detailModal.accountStatus.frozen')
+    case '2': return t('admin.students.detailModal.accountStatus.ended')
+    case '3': return t('admin.students.detailModal.accountStatus.refunded')
+    default: return t('admin.students.detailModal.accountStatus.normal')
   }
 }
 
 const formatStudyPlan = (studyPlan?: string, deferredGraduation?: string) => {
   if (deferredGraduation && deferredGraduation !== 'false') {
-    return '延毕'
+    return t('admin.students.detailModal.studyPlan.deferred')
   }
   switch (studyPlan) {
     case 'postgraduate':
     case 'true':
-      return '读研'
+      return t('admin.students.detailModal.studyPlan.postgraduate')
     case 'deferred':
-      return '延毕'
+      return t('admin.students.detailModal.studyPlan.deferred')
     case 'normal':
-      return '正常毕业'
     default:
-      return '正常毕业'
+      return t('admin.students.detailModal.studyPlan.normal')
   }
 }
 
@@ -1136,7 +1122,7 @@ const formatCurrency = (value?: number, currency: string = 'USD') => {
   color: #991B1B;
 }
 
-/* 批次 7 + 7.5：frozen 是独立维度的辅 tag，与 lifecycle tag 并列展示。 */
+/* frozen secondary tag alongside the lifecycle tag */
 .sdm-status-tag--blue {
   background: #DBEAFE;
   color: #1E40AF;

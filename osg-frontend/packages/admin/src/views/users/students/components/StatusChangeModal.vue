@@ -9,7 +9,7 @@
     <template #title>
       <span class="student-status-modal__title">
         <span class="mdi mdi-account-cog student-status-modal__title-icon" aria-hidden="true"></span>
-        <span>修改学员状态</span>
+        <span>{{ t('admin.students.statusModal.title') }}</span>
       </span>
     </template>
 
@@ -17,8 +17,10 @@
       <span class="mdi student-status-modal__intro-icon" :class="actionIcon" aria-hidden="true"></span>
       <div class="student-status-modal__intro-copy">
         <h3 class="student-status-modal__heading">
-          确定将 <span class="student-status-modal__name">{{ studentName || '学员姓名' }}</span> 的状态修改为
-          <span class="student-status-modal__target-status">{{ targetStatusLabel }}</span>？
+          {{ t('admin.students.statusModal.headingPre') }}
+          <span class="student-status-modal__name">{{ studentName || t('admin.students.statusModal.studentFallback') }}</span>
+          {{ t('admin.students.statusModal.headingMid') }}
+          <span class="student-status-modal__target-status">{{ targetStatusLabel }}</span>{{ t('admin.students.statusModal.headingPost') }}
         </h3>
         <p class="student-status-modal__desc">{{ modalDescription }}</p>
       </div>
@@ -32,47 +34,49 @@
         layout="vertical"
         :required-mark="false"
       >
-        <a-form-item v-if="requiresReason" name="reason" data-field-name="修改原因">
+        <a-form-item v-if="requiresReason" name="reason" data-field-name="修改原因"> <!-- i18n-skip-line: playwright selector -->
           <template #label>
             <span class="student-status-modal__label">
-              修改原因
+              {{ t('admin.students.statusModal.reasonLabel') }}
               <span class="student-status-modal__required">*</span>
             </span>
           </template>
           <a-select
             v-model:value="formState.reason"
-            placeholder="请选择原因"
+            :placeholder="t('admin.students.statusModal.reasonPlaceholder')"
             :options="reasonOptions"
           />
         </a-form-item>
 
-        <a-form-item name="remark" data-field-name="备注说明">
+        <a-form-item name="remark" data-field-name="备注说明"> <!-- i18n-skip-line: playwright selector -->
           <template #label>
-            <span class="student-status-modal__label">备注说明</span>
+            <span class="student-status-modal__label">{{ t('admin.students.statusModal.remarkLabel') }}</span>
           </template>
           <a-textarea
             v-model:value="formState.remark"
             :rows="2"
             :maxlength="200"
-            placeholder="选填，可填写详细说明"
+            :placeholder="t('admin.students.statusModal.remarkPlaceholder')"
           />
         </a-form-item>
       </a-form>
     </div>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" @click="handleSubmit">确认修改</a-button>
+      <a-button @click="handleClose">{{ t('admin.students.statusModal.footer.cancel') }}</a-button>
+      <a-button type="primary" @click="handleSubmit">{{ t('admin.students.statusModal.footer.confirm') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 
-// 批次 7 + 7.5：unfreeze 与 restore 等价（仅刷 frozen=0，不动 accountStatus）。
-// 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.4
+const { t } = useI18n()
+
+// i18n-skip-line: dev comment — 批次 7 + 7.5：unfreeze 与 restore 等价（仅刷 frozen=0，不动 accountStatus）。
 type StatusAction = 'freeze' | 'unfreeze' | 'refund' | 'restore' | 'end_contract'
 
 const props = defineProps<{
@@ -92,50 +96,30 @@ const formState = reactive({
   remark: ''
 })
 
-const reasonOptionMap: Record<'freeze' | 'refund', { label: string; value: string }[]> = {
+const reasonOptionMap = computed(() => ({
   freeze: [
-    { label: '学员申请暂停', value: '学员申请暂停' },
-    { label: '课时用完待续费', value: '课时用完待续费' },
-    { label: '违反服务协议', value: '违反服务协议' },
-    { label: '学员申请退费', value: '学员申请退费' },
-    { label: '其他原因', value: '其他原因' }
+    { label: t('admin.students.statusModal.reasonOptions.studentPause'), value: '学员申请暂停' }, // i18n-skip-line: backend values
+    { label: t('admin.students.statusModal.reasonOptions.hoursUsed'), value: '课时用完待续费' }, // i18n-skip-line: backend values
+    { label: t('admin.students.statusModal.reasonOptions.serviceViolation'), value: '违反服务协议' }, // i18n-skip-line: backend values
+    { label: t('admin.students.statusModal.reasonOptions.studentRefund'), value: '学员申请退费' }, // i18n-skip-line: backend values
+    { label: t('admin.students.statusModal.reasonOptions.other'), value: '其他原因' }, // i18n-skip-line: backend values
   ],
   refund: [
-    { label: '学员申请暂停', value: '学员申请暂停' },
-    { label: '课时用完待续费', value: '课时用完待续费' },
-    { label: '违反服务协议', value: '违反服务协议' },
-    { label: '学员申请退费', value: '学员申请退费' },
-    { label: '其他原因', value: '其他原因' }
-  ]
-}
+    { label: t('admin.students.statusModal.reasonOptions.studentPause'), value: '学员申请暂停' }, // i18n-skip-line: backend values
+    { label: t('admin.students.statusModal.reasonOptions.hoursUsed'), value: '课时用完待续费' }, // i18n-skip-line: backend values
+    { label: t('admin.students.statusModal.reasonOptions.serviceViolation'), value: '违反服务协议' }, // i18n-skip-line: backend values
+    { label: t('admin.students.statusModal.reasonOptions.studentRefund'), value: '学员申请退费' }, // i18n-skip-line: backend values
+    { label: t('admin.students.statusModal.reasonOptions.other'), value: '其他原因' }, // i18n-skip-line: backend values
+  ],
+}))
 
 const requiresReason = computed(() => props.action === 'freeze' || props.action === 'refund')
 
 const showFormArea = computed(() => requiresReason.value || props.action === 'end_contract')
 
-const targetStatusLabel = computed(() => {
-  if (props.action === 'freeze') return '冻结'
-  if (props.action === 'unfreeze') return '解冻'
-  if (props.action === 'refund') return '退费'
-  if (props.action === 'end_contract') return '已结束'
-  return '正常'
-})
+const targetStatusLabel = computed(() => t(`admin.students.statusModal.targetStatus.${props.action}` as never))
 
-const modalDescription = computed(() => {
-  if (props.action === 'freeze') {
-    return '冻结后，学员账号将被暂停，无法登录系统。可随时解冻恢复。'
-  }
-  if (props.action === 'unfreeze') {
-    return '解冻后，学员可恢复登录与课消操作；lifecycle 状态保持不变。'
-  }
-  if (props.action === 'refund') {
-    return '退费后，学员账号将被停用，可通过「重新加入」走续签合同流程恢复。'
-  }
-  if (props.action === 'end_contract') {
-    return '结束合同后，学员仍可登录，但无法查看求职信息。导师可继续课消，需续签合同后恢复完整权限。'
-  }
-  return '恢复后，学员可正常登录和使用系统。'
-})
+const modalDescription = computed(() => t(`admin.students.statusModal.description.${props.action}` as never))
 
 const actionIcon = computed(() => {
   if (props.action === 'freeze') return 'mdi-snowflake'
@@ -147,12 +131,12 @@ const actionIcon = computed(() => {
 
 const reasonOptions = computed(() => {
   if (props.action === 'restore' || props.action === 'unfreeze' || props.action === 'end_contract') return []
-  if (props.action === 'freeze' || props.action === 'refund') return reasonOptionMap[props.action]
+  if (props.action === 'freeze' || props.action === 'refund') return reasonOptionMap.value[props.action]
   return []
 })
 
 const rules = computed(() => ({
-  reason: requiresReason.value ? [{ required: true, message: '请选择原因', trigger: 'change' }] : []
+  reason: requiresReason.value ? [{ required: true, message: t('admin.students.statusModal.validation.required'), trigger: 'change' }] : []
 }))
 
 const resetForm = () => {

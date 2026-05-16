@@ -1,24 +1,21 @@
 <template>
   <section class="crt">
-    <!-- Blue Info Banner -->
     <div class="crt-banner">
       <i class="mdi mdi-information crt-banner__icon"></i>
-      <strong>审核说明：</strong>核心信息、学业信息和求职方向的修改需要后台审核，联系方式修改后直接生效。
+      <strong>{{ t('admin.students.changeReviewTab.banner.prefix') }}</strong>{{ t('admin.students.changeReviewTab.banner.text') }}
     </div>
 
-    <!-- Pending Changes Section -->
     <article class="crt-section">
       <header class="crt-section__header">
         <div class="crt-section__title">
           <i class="mdi mdi-clock-alert crt-section__title-icon crt-section__title-icon--warning"></i>
-          <span>待审核的变更</span>
+          <span>{{ t('admin.students.changeReviewTab.pending.title') }}</span>
           <span class="crt-badge crt-badge--danger">{{ pendingChanges.length }}</span>
         </div>
       </header>
 
       <div v-if="pendingChanges.length" class="crt-pending-list">
         <div v-for="item in pendingItems" :key="item.id" class="crt-pending-card">
-          <!-- Header: tags + timestamp -->
           <div class="crt-pending-card__header">
             <div class="crt-pending-card__tags">
               <span :class="['crt-tag', `crt-tag--${getCategoryStyle(item.changeType)}`]">
@@ -29,22 +26,20 @@
             <span class="crt-pending-card__time">{{ formatTime(item.requestedAt) }}</span>
           </div>
 
-          <!-- Value Comparison -->
           <div class="crt-comparison">
             <div class="crt-comparison__col">
-              <label class="crt-comparison__label">变更前</label>
+              <label class="crt-comparison__label">{{ t('admin.students.changeReviewTab.comparison.before') }}</label>
               <span class="crt-comparison__value crt-comparison__value--before">{{ item.before }}</span>
             </div>
             <div class="crt-comparison__arrow">
               <i class="mdi mdi-arrow-right"></i>
             </div>
             <div class="crt-comparison__col">
-              <label class="crt-comparison__label">变更后</label>
+              <label class="crt-comparison__label">{{ t('admin.students.changeReviewTab.comparison.after') }}</label>
               <span class="crt-comparison__value crt-comparison__value--after">{{ item.after }}</span>
             </div>
           </div>
 
-          <!-- Action Buttons -->
           <div class="crt-pending-card__actions">
             <button
               type="button"
@@ -52,7 +47,7 @@
               :disabled="activeRequestId === item.id"
               @click="handleDecision('approve', item)"
             >
-              {{ activeRequestId === item.id ? '处理中...' : '✓ 通过' }}
+              {{ activeRequestId === item.id ? t('admin.students.changeReviewTab.actions.processing') : t('admin.students.changeReviewTab.actions.approve') }}
             </button>
             <button
               type="button"
@@ -60,23 +55,22 @@
               :disabled="activeRequestId === item.id"
               @click="handleDecision('reject', item)"
             >
-              {{ activeRequestId === item.id ? '处理中...' : '✗ 驳回' }}
+              {{ activeRequestId === item.id ? t('admin.students.changeReviewTab.actions.processing') : t('admin.students.changeReviewTab.actions.reject') }}
             </button>
           </div>
         </div>
       </div>
 
       <div v-else class="crt-empty">
-        当前没有待审核的信息变更。
+        {{ t('admin.students.changeReviewTab.pending.empty') }}
       </div>
     </article>
 
-    <!-- History Changes Section -->
     <article class="crt-section">
       <header class="crt-section__header">
         <div class="crt-section__title">
           <i class="mdi mdi-history crt-section__title-icon crt-section__title-icon--muted"></i>
-          <span>历史变更记录</span>
+          <span>{{ t('admin.students.changeReviewTab.history.title') }}</span>
         </div>
       </header>
 
@@ -84,12 +78,12 @@
         <table class="crt-history-table">
           <thead>
             <tr>
-              <th>变更类型</th>
-              <th>变更字段</th>
-              <th>变更前</th>
-              <th>变更后</th>
-              <th>变更时间</th>
-              <th>状态</th>
+              <th>{{ t('admin.students.changeReviewTab.history.table.changeType') }}</th>
+              <th>{{ t('admin.students.changeReviewTab.history.table.field') }}</th>
+              <th>{{ t('admin.students.changeReviewTab.history.table.before') }}</th>
+              <th>{{ t('admin.students.changeReviewTab.history.table.after') }}</th>
+              <th>{{ t('admin.students.changeReviewTab.history.table.time') }}</th>
+              <th>{{ t('admin.students.changeReviewTab.history.table.status') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -115,7 +109,7 @@
       </div>
 
       <div v-else class="crt-empty">
-        还没有历史变更记录。
+        {{ t('admin.students.changeReviewTab.history.empty') }}
       </div>
     </article>
   </section>
@@ -123,11 +117,14 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import {
   approveStudentChangeRequest,
   rejectStudentChangeRequest
 } from '@osg/shared/api/admin/studentChangeRequest'
+
+const { t } = useI18n()
 
 interface ChangeItem {
   id: string | number
@@ -174,14 +171,10 @@ watch(
 
 const formatStatus = (status?: string) => {
   switch (status) {
-    case 'auto_applied':
-      return '自动生效'
-    case 'approved':
-      return '已通过'
-    case 'rejected':
-      return '已驳回'
-    default:
-      return '已记录'
+    case 'auto_applied': return t('admin.students.changeReviewTab.status.autoApplied')
+    case 'approved': return t('admin.students.changeReviewTab.status.approved')
+    case 'rejected': return t('admin.students.changeReviewTab.status.rejected')
+    default: return t('admin.students.changeReviewTab.status.recorded')
   }
 }
 
@@ -199,9 +192,9 @@ const handleDecision = async (action: 'approve' | 'reject', item: ChangeItem) =>
 
     moveToHistory(action, item)
     emit(action, item)
-    message.success(action === 'approve' ? '变更已通过' : '变更已驳回')
+    message.success(action === 'approve' ? t('admin.students.changeReviewTab.messages.approveSuccess') : t('admin.students.changeReviewTab.messages.rejectSuccess'))
   } catch (_error) {
-    message.error(action === 'approve' ? '变更通过失败' : '变更驳回失败')
+    message.error(action === 'approve' ? t('admin.students.changeReviewTab.messages.approveFailed') : t('admin.students.changeReviewTab.messages.rejectFailed'))
   } finally {
     activeRequestId.value = null
   }
@@ -231,33 +224,24 @@ const moveToHistory = (action: 'approve' | 'reject', item: ChangeItem) => {
 
 const getCategoryLabel = (changeType?: string): string => {
   switch (changeType) {
-    case 'academic':
-      return '学业信息'
-    case 'job_direction':
-      return '求职方向'
-    case 'contact':
-      return '联系方式'
-    default:
-      return '核心信息'
+    case 'academic': return t('admin.students.changeReviewTab.category.academic')
+    case 'job_direction': return t('admin.students.changeReviewTab.category.jobDirection')
+    case 'contact': return t('admin.students.changeReviewTab.category.contact')
+    default: return t('admin.students.changeReviewTab.category.core')
   }
 }
 
 const getCategoryStyle = (changeType?: string): string => {
   switch (changeType) {
-    case 'academic':
-      return 'blue'
-    case 'job_direction':
-      return 'amber'
-    case 'contact':
-      return 'green'
-    default:
-      return 'primary'
+    case 'academic': return 'blue'
+    case 'job_direction': return 'amber'
+    case 'contact': return 'green'
+    default: return 'primary'
   }
 }
 
 const formatTime = (raw: string): string => {
   if (!raw) return ''
-  // Try to parse and format as YYYY-MM-DD HH:mm
   try {
     const d = new Date(raw)
     if (isNaN(d.getTime())) return raw
@@ -274,13 +258,11 @@ const formatTime = (raw: string): string => {
 </script>
 
 <style scoped lang="scss">
-/* ── Change Review Tab (crt-) ── */
 .crt {
   display: grid;
   gap: 20px;
 }
 
-/* Blue Info Banner */
 .crt-banner {
   padding: 12px 16px;
   background: #e8f0f8;
@@ -291,11 +273,6 @@ const formatTime = (raw: string): string => {
 
 .crt-banner__icon {
   margin-right: 6px;
-}
-
-/* Section */
-.crt-section {
-  /* no extra wrapper styling needed */
 }
 
 .crt-section__header {
@@ -323,7 +300,6 @@ const formatTime = (raw: string): string => {
   color: #94a3b8;
 }
 
-/* Badge (count) */
 .crt-badge {
   display: inline-flex;
   align-items: center;
@@ -341,7 +317,6 @@ const formatTime = (raw: string): string => {
   color: #fff;
 }
 
-/* Tags */
 .crt-tag {
   display: inline-block;
   padding: 2px 10px;
@@ -376,13 +351,11 @@ const formatTime = (raw: string): string => {
   color: #92400e;
 }
 
-/* Pending list */
 .crt-pending-list {
   display: grid;
   gap: 12px;
 }
 
-/* Pending card */
 .crt-pending-card {
   background: #fffbeb;
   border: 1px solid #fde68a;
@@ -410,7 +383,6 @@ const formatTime = (raw: string): string => {
   white-space: nowrap;
 }
 
-/* Value comparison */
 .crt-comparison {
   display: flex;
   align-items: center;
@@ -456,7 +428,6 @@ const formatTime = (raw: string): string => {
   align-items: center;
 }
 
-/* Action buttons */
 .crt-pending-card__actions {
   display: flex;
   gap: 8px;
@@ -488,7 +459,6 @@ const formatTime = (raw: string): string => {
   color: #fff;
 }
 
-/* History table */
 .crt-history-table-wrap {
   overflow-x: auto;
 }
@@ -530,7 +500,6 @@ const formatTime = (raw: string): string => {
   white-space: nowrap;
 }
 
-/* Status tags in history */
 .crt-status-tag {
   display: inline-flex;
   align-items: center;
@@ -561,7 +530,6 @@ const formatTime = (raw: string): string => {
   color: #6b7280;
 }
 
-/* Empty state */
 .crt-empty {
   border-radius: 8px;
   padding: 18px;

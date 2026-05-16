@@ -1,10 +1,10 @@
 <template>
   <div class="osg-page">
-    <PageHeader title-zh="学员列表" title-en="Student List">
+    <PageHeader :title-zh="t('admin.students.index.title')" title-en="Student List">
       <template #actions>
         <a-button type="primary" data-surface-trigger="modal-add-student" @click="openAddStudentModal">
           <template #icon><PlusOutlined /></template>
-          新增学员
+          {{ t('admin.students.index.addStudent') }}
         </a-button>
       </template>
     </PageHeader>
@@ -13,12 +13,12 @@
       v-if="pendingReviewCount > 0"
       type="warning"
       show-icon
-      :message="`有 ${pendingReviewCount} 位学员的信息变更待审核`"
-      description="学员提交的学业信息、求职方向等信息变更需要您审核，请及时处理"
+      :message="t('admin.students.index.pendingReview', { count: pendingReviewCount })"
+      :description="t('admin.students.index.pendingReviewDesc')"
     >
       <template #action>
         <a-button type="primary" size="small" data-surface-trigger="modal-student-detail-bob" data-surface-sample-key="pending-review" @click="openPendingReviewStudent">
-          立即查看
+          {{ t('admin.students.index.viewNow') }}
         </a-button>
       </template>
     </a-alert>
@@ -53,8 +53,8 @@
         show-icon
         style="margin-bottom: var(--osg-space-4)"
       >
-        <template #message><strong>黑名单限制</strong></template>
-        <template #description>黑名单学员可以正常登录学生端，但<strong>无法查看求职中心模块</strong>（包括岗位信息、面试准备等功能）</template>
+        <template #message><strong>{{ t('admin.students.index.blacklistRestrictions') }}</strong></template>
+        <template #description><span v-html="t('admin.students.index.blacklistDesc')"></span></template>
       </a-alert>
 
       <a-table
@@ -101,85 +101,63 @@
             <strong style="color: var(--primary)">{{ formatHours(record.totalHours) }}</strong>
           </template>
           <template v-else-if="column.dataIndex === 'jobCoachingCount'">
-            <span style="color: #3172f4; font-weight: 700">{{ record.jobCoachingCount || 0 }}次</span>
+            <span style="color: #3172f4; font-weight: 700">{{ t('admin.students.index.timesCount', { count: record.jobCoachingCount || 0 }) }}</span>
           </template>
           <template v-else-if="column.dataIndex === 'basicCourseCount'">
-            <span style="color: #5a63ef; font-weight: 700">{{ record.basicCourseCount || 0 }}次</span>
+            <span style="color: #5a63ef; font-weight: 700">{{ t('admin.students.index.timesCount', { count: record.basicCourseCount || 0 }) }}</span>
           </template>
           <template v-else-if="column.dataIndex === 'mockInterviewCount'">
-            <span style="color: #12a56a; font-weight: 700">{{ record.mockInterviewCount || 0 }}次</span>
+            <span style="color: #12a56a; font-weight: 700">{{ t('admin.students.index.timesCount', { count: record.mockInterviewCount || 0 }) }}</span>
           </template>
           <template v-else-if="column.dataIndex === 'remainingHours'">
             <strong :style="{ color: getRemainingHoursColor(record.remainingHours) }">{{ formatHours(record.remainingHours) }}</strong>
           </template>
           <template v-else-if="column.dataIndex === 'reminder'">
-            <template v-if="getReminderLabel(record) !== '暂无提醒'">
+            <template v-if="hasReminder(record)">
               <a-tag :color="getReminderTagColor(getReminderLabel(record))">{{ getReminderLabel(record) }}</a-tag>
             </template>
             <span v-else style="color: var(--muted)">-</span>
           </template>
           <template v-else-if="column.dataIndex === 'accountStatus'">
-            <!--
-              批次 7 + 7.5 行为矩阵双 tag：accountStatus 与 frozen 维度正交。
-              见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.3
-            -->
             <div style="display: flex; flex-direction: column; gap: 4px">
               <div style="display: flex; flex-wrap: wrap; gap: 4px">
                 <a-tag :color="getLifecycleTagColor(record.accountStatus)">{{ getLifecycleLabel(record.accountStatus) }}</a-tag>
-                <a-tag v-if="isFrozen(record) && !isRefundedStatus(record)" color="blue">冻结</a-tag>
+                <a-tag v-if="isFrozen(record) && !isRefundedStatus(record)" color="blue">{{ t('admin.students.index.frozen') }}</a-tag>
               </div>
               <span style="font-size: var(--osg-font-size-xs); color: #9ca3af">{{ getStatusNote(record) }}</span>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <a-space :size="4" wrap>
-              <a-button type="link" size="small" :data-surface-trigger="getStudentDetailSurfaceId(record)" :data-surface-sample-key="getStudentSurfaceSampleKey(record)" @click="openStudentDetail(record)">详情</a-button>
-              <a-button v-if="!isEndedStatus(record) && !isRefundedStatus(record)" type="link" size="small" data-surface-trigger="modal-edit-student-new" :data-surface-sample-key="getStudentSurfaceSampleKey(record)" @click="openStudentEdit(record)">编辑</a-button>
-              <a-tooltip v-if="!isEndedStatus(record) && !isRefundedStatus(record) && isContractExpiring(record)" title="续签合同">
+              <a-button type="link" size="small" :data-surface-trigger="getStudentDetailSurfaceId(record)" :data-surface-sample-key="getStudentSurfaceSampleKey(record)" @click="openStudentDetail(record)">{{ t('admin.students.index.detail') }}</a-button>
+              <a-button v-if="!isEndedStatus(record) && !isRefundedStatus(record)" type="link" size="small" data-surface-trigger="modal-edit-student-new" :data-surface-sample-key="getStudentSurfaceSampleKey(record)" @click="openStudentEdit(record)">{{ t('admin.students.index.edit') }}</a-button>
+              <a-tooltip v-if="!isEndedStatus(record) && !isRefundedStatus(record) && isContractExpiring(record)" :title="t('admin.students.index.renewContract')">
                 <a-button type="text" size="small" :loading="renewContractLoadingId === record.studentId" style="color: #F59E0B" data-surface-trigger="modal-contract-renew" :data-surface-sample-key="`${getStudentSurfaceSampleKey(record)}-contract-renew`" @click="openStudentRenew(record)">
                   <template #icon><FileTextOutlined /></template>
                 </a-button>
               </a-tooltip>
               <a-dropdown :trigger="['click']" placement="bottomRight">
-                <a-button type="link" size="small">更多 <DownOutlined /></a-button>
+                <a-button type="link" size="small">{{ t('admin.students.index.more') }} <DownOutlined /></a-button>
                 <template #overlay>
-                  <!--
-                    批次 7 + 7.5 操作菜单（§13.4）：
-                      0/0 正常        : 冻结 / 结束合同 / 退费 / 加入黑名单
-                      0/1 正常·冻结   : 解冻 / 结束合同 / 退费
-                      2/0 合同结束     : 再冻结 / 退费
-                      2/1 合同结束·冻结: 解冻 / 退费
-                      3/- 退费        : 重新加入 → 续签合同弹窗
-                  -->
-                  <!--
-                    批次 7 + 7.5 操作菜单（§13.4 修订）：
-                      0/0 正常        : 冻结 / 结束合同 / 退费 / 加入黑名单
-                      0/1 正常·冻结   : 解冻 / 结束合同 / 退费
-                      2/0 合同结束     : 冻结 / 重新加入              ← 续签合同走 reactivateAccount=true 回 0/0
-                      2/1 合同结束·冻结: 解冻（→ 进 2/0 再决定续签/退费）
-                      3/-  退费       : 重新加入
-                    设计取舍：合同结束/退费 学员都走「重新加入」复用同一 RenewContractModal +
-                    reactivateAccount=true 链路；2/1 必须先解冻避免冻结状态下意外续费。
-                  -->
                   <a-menu @click="({ key }: { key: string }) => handleStudentAction(key as StudentActionKey, record)">
-                    <a-menu-item key="resetPassword">重置密码</a-menu-item>
+                    <a-menu-item key="resetPassword">{{ t('admin.students.index.resetPassword') }}</a-menu-item>
                     <template v-if="isRefundedStatus(record)">
-                      <a-menu-item key="rejoin"><span style="color: var(--success)">重新加入</span></a-menu-item>
+                      <a-menu-item key="rejoin"><span style="color: var(--success)">{{ t('admin.students.index.rejoin') }}</span></a-menu-item>
                     </template>
                     <template v-else-if="isFrozen(record)">
-                      <a-menu-item key="unfreeze"><span style="color: var(--success)">解冻</span></a-menu-item>
-                      <a-menu-item v-if="!isEndedStatus(record)" key="end_contract">结束合同</a-menu-item>
-                      <a-menu-item v-if="!isEndedStatus(record)" key="refund"><span style="color: var(--danger)">退费</span></a-menu-item>
+                      <a-menu-item key="unfreeze"><span style="color: var(--success)">{{ t('admin.students.index.unfreeze') }}</span></a-menu-item>
+                      <a-menu-item v-if="!isEndedStatus(record)" key="end_contract">{{ t('admin.students.index.endContract') }}</a-menu-item>
+                      <a-menu-item v-if="!isEndedStatus(record)" key="refund"><span style="color: var(--danger)">{{ t('admin.students.index.refund') }}</span></a-menu-item>
                     </template>
                     <template v-else-if="isEndedStatus(record)">
-                      <a-menu-item key="freeze">冻结</a-menu-item>
-                      <a-menu-item key="rejoin"><span style="color: var(--success)">重新加入</span></a-menu-item>
+                      <a-menu-item key="freeze">{{ t('admin.students.index.freeze') }}</a-menu-item>
+                      <a-menu-item key="rejoin"><span style="color: var(--success)">{{ t('admin.students.index.rejoin') }}</span></a-menu-item>
                     </template>
                     <template v-else>
-                      <a-menu-item key="freeze">冻结</a-menu-item>
-                      <a-menu-item key="end_contract">结束合同</a-menu-item>
-                      <a-menu-item key="blacklist"><span style="color: #92400E">加入黑名单</span></a-menu-item>
-                      <a-menu-item key="refund"><span style="color: var(--danger)">退费</span></a-menu-item>
+                      <a-menu-item key="freeze">{{ t('admin.students.index.freeze') }}</a-menu-item>
+                      <a-menu-item key="end_contract">{{ t('admin.students.index.endContract') }}</a-menu-item>
+                      <a-menu-item key="blacklist"><span style="color: #92400E">{{ t('admin.students.index.addToBlacklist') }}</span></a-menu-item>
+                      <a-menu-item key="refund"><span style="color: var(--danger)">{{ t('admin.students.index.refund') }}</span></a-menu-item>
                     </template>
                   </a-menu>
                 </template>
@@ -235,6 +213,7 @@
 import { computed, h, onMounted, reactive, ref } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import { DownOutlined, FileTextOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import { i18n } from '@osg/shared'
 import {
   getStudentList,
   resetStudentPassword,
@@ -259,7 +238,12 @@ import FilterBar from './components/FilterBar.vue'
 import RenewContractModal from '../contracts/components/RenewContractModal.vue'
 import StatusChangeModal from './components/StatusChangeModal.vue'
 import StudentDetailModal from './components/StudentDetailModal.vue'
-import { studentColumns, blacklistColumns } from './columns'
+import { studentColumnDefs, blacklistColumnDefs } from './columns'
+
+const t = (key: string, named?: Record<string, unknown>) =>
+  named
+    ? (i18n.global.t as unknown as (k: string, n: Record<string, unknown>) => string)(key, named)
+    : (i18n.global.t as unknown as (k: string) => string)(key)
 
 interface FilterOption {
   label: string
@@ -322,8 +306,8 @@ interface AddStudentFormPayload {
   endDate?: string
 }
 
-// 批次 7 + 7.5：拆 frozen 独立维度后菜单结构按 §13.4 重组。
-// rejoin 走「续签合同弹窗 + reactivateAccount=true」路径，不需经 status modal。
+// 批次 7 + 7.5：拆 frozen 独立维度后菜单结构按 §13.4 重组。 // i18n-skip-line: dev comment
+// rejoin 走「续签合同弹窗 + reactivateAccount=true」路径，不需经 status modal。 // i18n-skip-line: dev comment
 type StudentActionKey =
   | 'detail'
   | 'edit'
@@ -352,7 +336,7 @@ const editingStudent = ref(false)
 const renewContractVisible = ref(false)
 const renewContractLoadingId = ref<number | null>(null)
 const renewContractPreset = ref<ContractListItem | null>(null)
-// 批次 7.5：true 时 RenewContractModal 走「重新加入」入口（提交时附 reactivateAccount=true）
+// 批次 7.5：true 时 RenewContractModal 走「重新加入」入口（提交时附 reactivateAccount=true） // i18n-skip-line: dev comment
 const renewContractReactivate = ref(false)
 const renewableStudentIds = ref<Set<number>>(new Set())
 const statusChangeVisible = ref(false)
@@ -377,8 +361,8 @@ const pagination = reactive({
 })
 
 const studentTabs = [
-  { key: 'normal', label: '正常列表' },
-  { key: 'blacklist', label: '黑名单' }
+  { key: 'normal', label: t('admin.students.index.tabs.normal') },
+  { key: 'blacklist', label: t('admin.students.index.tabs.blacklist') }
 ] as const
 
 type StudentTabKey = (typeof studentTabs)[number]['key']
@@ -394,14 +378,15 @@ const tablePagination = computed(() => ({
   total: pagination.total,
   simple: false,
   showSizeChanger: false,
-  showTotal: (total: number) => `共 ${total} 条记录`
+  showTotal: (total: number) => t('admin.students.index.totalRecords', { total })
 }))
 const emptyStateText = computed(() =>
-  selectedTab.value === 'blacklist' ? '暂无黑名单学员' : '暂无学员数据'
+  selectedTab.value === 'blacklist' ? t('admin.students.index.empty.blacklist') : t('admin.students.index.empty.normal')
 )
-const activeStudentColumns = computed(() =>
-  selectedTab.value === 'blacklist' ? blacklistColumns : studentColumns
-)
+const activeStudentColumns = computed(() => {
+  const defs = selectedTab.value === 'blacklist' ? blacklistColumnDefs : studentColumnDefs
+  return defs.map((def) => ({ ...def, title: t(`admin.students.columns.${def.key}` as never) }))
+})
 const pendingReviewCount = computed(() => visibleStudentList.value.filter((record) => isPendingReview(record)).length)
 const canManageStudentDetail = true
 
@@ -425,7 +410,7 @@ const loadStudentList = async () => {
     syncSelectedStudent(rows)
     void hydrateRenewableStudentIds(rows)
   } catch (_error) {
-    message.error('加载学员列表失败')
+    message.error(t('admin.students.index.messages.loadFailed'))
   }
 }
 
@@ -468,13 +453,13 @@ const handleExport = async () => {
     })
 
     if (!response.ok) {
-      throw new Error(`导出请求失败 (HTTP ${response.status})`)
+      throw new Error(t('admin.students.index.messages.exportHttpError', { status: response.status }))
     }
 
     const contentType = response.headers.get('content-type') || ''
     if (contentType.includes('application/json')) {
       const errJson = await response.json().catch(() => null)
-      throw new Error(errJson?.msg || '导出请求未通过认证，请重新登录')
+      throw new Error(errJson?.msg || t('admin.students.index.messages.exportAuthFailed'))
     }
 
     const blob = await response.blob()
@@ -488,11 +473,11 @@ const handleExport = async () => {
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(downloadUrl)
-    message.success('学员列表导出成功')
+    message.success(t('admin.students.index.messages.exportSuccess'))
   } catch (error) {
     console.error('[student export] failed:', error)
     const reason = error instanceof Error && error.message ? error.message : ''
-    message.error('学员列表导出失败' + (reason ? `：${reason}` : ''))
+    message.error(t('admin.students.index.messages.exportFailed', { reason }))
   } finally {
     exporting.value = false
   }
@@ -542,7 +527,7 @@ const openStudentEdit = async (record: StudentListItem) => {
       assistantId: record.assistantId,
       assistantName: record.assistantName,
     }
-    message.warning('学员详情加载失败，已使用列表数据打开编辑弹窗')
+    message.warning(t('admin.students.index.messages.detailLoadFailed'))
   }
   detailStudentVisible.value = false
   editStudentVisible.value = true
@@ -586,22 +571,22 @@ const openStudentRenew = async (record: StudentListItem) => {
     const payload = await getStudentContractDetail(record.studentId)
     const preset = buildRenewPreset(record, payload)
     if (!preset) {
-      message.warning('当前学员暂无可续签的原合同')
+      message.warning(t('admin.students.index.messages.noRenewableContract'))
       return
     }
     renewContractPreset.value = preset
     renewContractReactivate.value = false
     renewContractVisible.value = true
   } catch (_error) {
-    message.error('加载合同续签上下文失败')
+    message.error(t('admin.students.index.messages.renewContextFailed'))
   } finally {
     renewContractLoadingId.value = null
   }
 }
 
-// 批次 7.5「重新加入」：退费学员复用续签合同弹窗，提交时附 reactivateAccount=true。
-// 即便无 active 合同也允许（renewContract 创建 contractType='renew' 新合同）。
-// 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.6
+// 批次 7.5「重新加入」：退费学员复用续签合同弹窗，提交时附 reactivateAccount=true。 // i18n-skip-line: dev comment
+// 即便无 active 合同也允许（renewContract 创建 contractType='renew' 新合同）。 // i18n-skip-line: dev comment
+// 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.6 // i18n-skip-line: dev comment
 const openStudentRejoin = async (record: StudentListItem) => {
   try {
     renewContractLoadingId.value = record.studentId
@@ -613,7 +598,7 @@ const openStudentRejoin = async (record: StudentListItem) => {
     } catch (_) {
       preset = null
     }
-    // 没有任何历史合同也允许重新加入（创建首份续签合同）
+    // 没有任何历史合同也允许重新加入（创建首份续签合同） // i18n-skip-line: dev comment
     renewContractPreset.value =
       preset ?? ({
         contractId: 0,
@@ -656,13 +641,13 @@ const openPendingReviewStudent = () => {
     openStudentDetail(pendingRecord)
     return
   }
-  message.info('当前没有可查看的待审核学员')
+  message.info(t('admin.students.index.messages.noPendingStudent'))
 }
 
 const handleDetailEditRequest = async (studentId: number) => {
   const matchedRecord = studentList.value.find((record) => record.studentId === studentId)
   if (!matchedRecord) {
-    message.warning('未找到学员信息，暂时无法进入编辑弹窗')
+    message.warning(t('admin.students.index.messages.studentNotFound'))
     return
   }
   await openStudentEdit(matchedRecord)
@@ -697,7 +682,7 @@ const handleCreateStudent = async (payload: AddStudentFormPayload) => {
     pagination.current = 1
     resetFilters()
     await loadStudentList()
-    message.success('新增学员成功，列表已刷新')
+    message.success(t('admin.students.index.messages.createSuccess'))
   } finally {
     creatingStudent.value = false
   }
@@ -710,7 +695,7 @@ const handleEditStudentSubmit = async (
   try {
     editingStudent.value = true
     const updated = await updateStudent(payload)
-    // 学员主体保存成功后，再保存合同变更（仅当存在 patch）
+    // 学员主体保存成功后，再保存合同变更（仅当存在 patch） // i18n-skip-line: dev comment
     let contractError: unknown = null
     if (contractPatch) {
       try {
@@ -730,10 +715,10 @@ const handleEditStudentSubmit = async (
     }
     await loadStudentList()
     if (contractError) {
-      const detail = (contractError as { message?: string })?.message || '请重试'
-      message.warning(`学员信息已更新，但合同更新失败：${detail}`)
+      const detail = (contractError as { message?: string })?.message || t('admin.students.index.messages.pleaseRetry')
+      message.warning(t('admin.students.index.messages.contractUpdateFailed', { detail }))
     } else {
-      message.success(contractPatch ? '学员信息与合同已更新' : '学员信息已更新')
+      message.success(contractPatch ? t('admin.students.index.messages.studentAndContractUpdated') : t('admin.students.index.messages.studentUpdated'))
     }
   } finally {
     editingStudent.value = false
@@ -742,7 +727,7 @@ const handleEditStudentSubmit = async (
 
 const handleStatusChangeSubmit = async (payload: { action: StudentStatusAction; reason?: string; remark?: string }) => {
   if (!selectedStudent.value) {
-    message.warning('未找到学员信息，暂时无法变更状态')
+    message.warning(t('admin.students.index.messages.cannotChangeStatus'))
     return
   }
 
@@ -755,12 +740,12 @@ const handleStatusChangeSubmit = async (payload: { action: StudentStatusAction; 
 
   statusChangeVisible.value = false
   await loadStudentList()
-  message.success('学员状态已更新')
+  message.success(t('admin.students.index.messages.statusUpdated'))
 }
 
 const handleBlacklistSubmit = async (payload: { reason: string }) => {
   if (!selectedStudent.value) {
-    message.warning('未找到学员信息，暂时无法加入黑名单')
+    message.warning(t('admin.students.index.messages.cannotBlacklist'))
     return
   }
 
@@ -772,7 +757,7 @@ const handleBlacklistSubmit = async (payload: { reason: string }) => {
 
   blacklistVisible.value = false
   await loadStudentList()
-  message.success('已加入黑名单')
+  message.success(t('admin.students.index.messages.blacklisted'))
 }
 
 const handleTabChange = async (tab: StudentTabKey) => {
@@ -805,7 +790,7 @@ const syncFilterOptions = (rows: StudentListItem[]) => {
       return null
     }
     return {
-      label: row.leadMentorName || `班主任 ${row.leadMentorId}`,
+      label: row.leadMentorName || `${t('admin.students.index.leadMentor')} ${row.leadMentorId}`,
       value: row.leadMentorId
     }
   })
@@ -890,7 +875,7 @@ const countBlacklisted = (rows: StudentListItem[]) => {
 
 const isBlacklisted = (record: StudentListItem) => {
   const extraRecord = record as StudentListItem & Record<string, unknown>
-  return extraRecord.isBlacklisted === true || record.contractStatus === 'blacklist' || `${record.reminder || ''}`.includes('黑名单')
+  return extraRecord.isBlacklisted === true || record.contractStatus === 'blacklist' || `${record.reminder || ''}`.includes('黑名单') // i18n-skip-line: backend values
 }
 
 const isPendingReview = (record: StudentListItem) => {
@@ -899,12 +884,12 @@ const isPendingReview = (record: StudentListItem) => {
     extraRecord.pendingReview === true ||
     extraRecord.reviewStatus === 'pending' ||
     record.contractStatus === 'pending_review' ||
-    `${record.reminder || ''}`.includes('待审核')
+    `${record.reminder || ''}`.includes('待审核') // i18n-skip-line: backend values
   )
 }
 
 const isContractExpiring = (record: StudentListItem) => {
-  return record.contractStatus === 'expiring' || `${record.reminder || ''}`.includes('到期')
+  return record.contractStatus === 'expiring' || `${record.reminder || ''}`.includes('到期') // i18n-skip-line: backend values
 }
 
 const isLowHours = (record: StudentListItem) => {
@@ -920,8 +905,8 @@ const isRefundedStatus = (record: StudentListItem) => {
   return record.accountStatus === '3'
 }
 
-// 批次 7 + 7.5：frozen 是与 accountStatus 维度正交的独立标记。
-// 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.2
+// 批次 7 + 7.5：frozen 是与 accountStatus 维度正交的独立标记。 // i18n-skip-line: dev comment
+// 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.2 // i18n-skip-line: dev comment
 const isFrozen = (record: StudentListItem) => {
   const value = (record as StudentListItem & { frozen?: number }).frozen
   return value === 1 || (value as unknown as string) === '1'
@@ -963,12 +948,12 @@ const handleStudentAction = (action: StudentActionKey, record: StudentListItem) 
 const handleResetStudentPassword = async (record: StudentListItem) => {
   const result = await resetStudentPassword(record.studentId)
   Modal.success({
-    title: '重置密码成功',
+    title: t('admin.students.index.resetPasswordModal.title'),
     content: h('div', { class: 'students-reset-password-result' }, [
-      h('p', `登录账号：${result.loginAccount}`),
-      h('p', `默认密码：${result.defaultPassword}`)
+      h('p', `${t('admin.students.index.resetPasswordModal.loginAccount')}：${result.loginAccount}`),
+      h('p', `${t('admin.students.index.resetPasswordModal.defaultPassword')}：${result.defaultPassword}`)
     ]),
-    okText: '知道了'
+    okText: t('admin.students.index.resetPasswordModal.okText')
   })
 }
 
@@ -978,7 +963,7 @@ const formatHours = (value?: number) => {
 }
 
 const formatJobApplications = (_record: StudentListItem) => {
-  return '暂无投递'
+  return t('admin.students.index.noApplications')
 }
 
 const getRemainingHoursColor = (hours?: number) => {
@@ -989,30 +974,30 @@ const getRemainingHoursColor = (hours?: number) => {
 }
 
 const openJobsModal = (record: StudentListItem) => {
-  // 打开投递岗位详情弹窗
+  // 打开投递岗位详情弹窗 // i18n-skip-line: dev comment
   console.log('Open jobs modal for student:', record.studentId)
 }
 
 const getDirectionColor = (direction?: string) => {
   if (!direction) return 'default'
   const d = direction.toLowerCase()
-  if (d.includes('金融') || d.includes('finance')) return 'purple'
-  if (d.includes('咨询') || d.includes('consulting')) return 'blue'
-  if (d.includes('科技') || d.includes('tech')) return 'orange'
-  if (d.includes('量化') || d.includes('quant')) return 'cyan'
+  if (d.includes('金融') || d.includes('finance')) return 'purple' // i18n-skip-line: backend values
+  if (d.includes('咨询') || d.includes('consulting')) return 'blue' // i18n-skip-line: backend values
+  if (d.includes('科技') || d.includes('tech')) return 'orange' // i18n-skip-line: backend values
+  if (d.includes('量化') || d.includes('quant')) return 'cyan' // i18n-skip-line: backend values
   return 'purple'
 }
 
 const getReminderTagColor = (reminder?: string) => {
-  if (!reminder || reminder === '-' || reminder === '暂无提醒') return 'default'
-  if (reminder.includes('待审核')) return 'red'
-  if (reminder.includes('课时')) return 'red'
-  if (reminder.includes('到期')) return 'orange'
+  if (!reminder || reminder === '-' || reminder === t('admin.students.index.reminder.none')) return 'default'
+  if (reminder.includes('待审核')) return 'red' // i18n-skip-line: backend values
+  if (reminder.includes('课时')) return 'red' // i18n-skip-line: backend values
+  if (reminder.includes('到期')) return 'orange' // i18n-skip-line: backend values
   return 'blue'
 }
 
-// 批次 7 + 7.5：lifecycle 维度只保留 0/2/3。「1 冻结」改用独立 frozen 标记，
-// 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.2 / §13.3
+// 批次 7 + 7.5：lifecycle 维度只保留 0/2/3。「1 冻结」改用独立 frozen 标记， // i18n-skip-line: dev comment
+// 见 docs/plans/stage-coaching-request/09-rule-a-alignment-fix-plan.md §13.2 / §13.3 // i18n-skip-line: dev comment
 const getLifecycleTagColor = (status?: string) => {
   switch (status) {
     case '2': return 'default'
@@ -1023,42 +1008,45 @@ const getLifecycleTagColor = (status?: string) => {
 
 const getLifecycleLabel = (status?: string) => {
   switch (status) {
-    case '2': return '合同结束'
-    case '3': return '退费'
-    default: return '正常'
+    case '2': return t('admin.students.index.lifecycle.ended')
+    case '3': return t('admin.students.index.lifecycle.refunded')
+    default: return t('admin.students.index.lifecycle.normal')
   }
 }
 
 const getStatusNote = (record: StudentListItem) => {
   if (isRefundedStatus(record)) {
-    return '已退费'
+    return t('admin.students.index.statusNote.refunded')
   }
   if (isFrozen(record)) {
-    return isEndedStatus(record) ? '合同结束 · 冻结' : '账号已冻结'
+    return isEndedStatus(record) ? t('admin.students.index.statusNote.endedFrozen') : t('admin.students.index.statusNote.frozen')
   }
   if (isEndedStatus(record)) {
-    return '服务已结束'
+    return t('admin.students.index.statusNote.ended')
   }
   if (isPendingReview(record) || isLowHours(record) || isContractExpiring(record)) {
-    return '需优先跟进'
+    return t('admin.students.index.statusNote.needsFollowUp')
   }
-  return '服务中'
+  return t('admin.students.index.statusNote.active')
 }
+
+const hasReminder = (record: StudentListItem) =>
+  (record.reminder && record.reminder !== '-') || isPendingReview(record) || isLowHours(record) || isContractExpiring(record)
 
 const getReminderLabel = (record: StudentListItem) => {
   if (record.reminder && record.reminder !== '-') {
     return record.reminder
   }
   if (isPendingReview(record)) {
-    return '待审核'
+    return t('admin.students.index.reminder.pendingReview')
   }
   if (isLowHours(record)) {
-    return '课时不足'
+    return t('admin.students.index.reminder.lowHours')
   }
   if (isContractExpiring(record)) {
-    return '合同到期'
+    return t('admin.students.index.reminder.expiring')
   }
-  return '暂无提醒'
+  return t('admin.students.index.reminder.none')
 }
 
 onMounted(() => {

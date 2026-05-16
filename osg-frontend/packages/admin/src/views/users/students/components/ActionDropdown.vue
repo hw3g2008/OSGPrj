@@ -1,7 +1,7 @@
 <template>
   <a-dropdown trigger="click" placement="bottomRight">
     <button type="button" class="btn-text-sm action-more-btn">
-      <span>更多 ▾</span>
+      <span>{{ t('admin.students.actionDropdown.more') }} ▾</span>
     </button>
 
     <template #overlay>
@@ -17,14 +17,19 @@
 </template>
 
 <script setup lang="ts">
-const actionItems = [
-  { key: 'freeze', label: '冻结' },
-  { key: 'restore', label: '恢复', tone: 'success' },
-  { key: 'blacklist', label: '加入黑名单', tone: 'warning' },
-  { key: 'refund', label: '退费', tone: 'danger' }
-] as const
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
-type StudentActionKey = (typeof actionItems)[number]['key']
+const { t } = useI18n()
+
+type StudentActionKey = 'freeze' | 'restore' | 'blacklist' | 'refund'
+
+const actionItems = computed(() => [
+  { key: 'freeze' as const, label: t('admin.students.actionDropdown.freeze') },
+  { key: 'restore' as const, label: t('admin.students.actionDropdown.restore'), tone: 'success' },
+  { key: 'blacklist' as const, label: t('admin.students.actionDropdown.blacklist'), tone: 'warning' },
+  { key: 'refund' as const, label: t('admin.students.actionDropdown.refund'), tone: 'danger' },
+])
 
 const emit = defineEmits<{
   select: [action: StudentActionKey]

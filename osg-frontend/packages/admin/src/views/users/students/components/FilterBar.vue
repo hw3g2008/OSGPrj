@@ -1,11 +1,11 @@
 <template>
-  <div class="students-filter-bar" data-field-name="学员管理页">
+  <div class="students-filter-bar" data-field-name="学员管理页"> <!-- i18n-skip-line: playwright selector -->
     <div class="students-filter-bar__filters">
       <a-input
         v-model:value="draft.studentName"
         class="students-filter-bar__control students-filter-bar__control--name"
-        data-field-name="搜索框"
-        placeholder="搜索姓名"
+        data-field-name="搜索框" <!-- i18n-skip-line: playwright selector -->
+        :placeholder="t('admin.students.filterBar.placeholders.name')"
         allow-clear
         @pressEnter="emitSearch"
         @clear="handleClearText('studentName')"
@@ -13,8 +13,8 @@
       <a-select
         v-model:value="draft.leadMentorId"
         class="students-filter-bar__control students-filter-bar__control--select"
-        data-field-name="班主任"
-        placeholder="班主任"
+        data-field-name="班主任" <!-- i18n-skip-line: playwright selector -->
+        :placeholder="t('admin.students.filterBar.placeholders.leadMentor')"
         allow-clear
         :options="mentorOptions"
         @change="handleSelectChange('leadMentorId', $event)"
@@ -23,8 +23,8 @@
       <a-select
         v-model:value="draft.school"
         class="students-filter-bar__control students-filter-bar__control--school"
-        data-field-name="学校"
-        placeholder="学校"
+        data-field-name="学校" <!-- i18n-skip-line: playwright selector -->
+        :placeholder="t('admin.students.filterBar.placeholders.school')"
         allow-clear
         :options="schoolOptions"
         @change="handleSelectChange('school', $event)"
@@ -33,8 +33,8 @@
       <a-select
         v-model:value="draft.graduationYear"
         class="students-filter-bar__control students-filter-bar__control--select"
-        data-field-name="毕业年份"
-        placeholder="毕业年份"
+        data-field-name="毕业年份" <!-- i18n-skip-line: playwright selector -->
+        :placeholder="t('admin.students.filterBar.placeholders.graduationYear')"
         allow-clear
         :options="graduationYearOptions"
         @change="handleSelectChange('graduationYear', $event)"
@@ -43,8 +43,8 @@
       <a-select
         v-model:value="draft.recruitmentCycle"
         class="students-filter-bar__control students-filter-bar__control--select"
-        data-field-name="项目时间"
-        placeholder="项目时间"
+        data-field-name="项目时间" <!-- i18n-skip-line: playwright selector -->
+        :placeholder="t('admin.students.filterBar.placeholders.recruitmentCycle')"
         allow-clear
         :options="recruitmentCycleOptions"
         @change="handleSelectChange('recruitmentCycle', $event)"
@@ -53,8 +53,8 @@
       <a-select
         v-model:value="draft.majorDirection"
         class="students-filter-bar__control students-filter-bar__control--select"
-        data-field-name="主攻方向"
-        placeholder="主攻方向"
+        data-field-name="主攻方向" <!-- i18n-skip-line: playwright selector -->
+        :placeholder="t('admin.students.filterBar.placeholders.majorDirection')"
         allow-clear
         :options="majorDirectionOptions"
         @change="handleSelectChange('majorDirection', $event)"
@@ -63,8 +63,8 @@
       <a-select
         v-model:value="draft.accountStatus"
         class="students-filter-bar__control students-filter-bar__control--select"
-        data-field-name="账号状态"
-        placeholder="账号状态"
+        data-field-name="账号状态" <!-- i18n-skip-line: playwright selector -->
+        :placeholder="t('admin.students.filterBar.placeholders.accountStatus')"
         allow-clear
         :options="statusOptions"
         @change="handleSelectChange('accountStatus', $event)"
@@ -74,20 +74,23 @@
     <div class="students-filter-bar__actions">
       <a-button type="primary" @click="emitSearch">
         <template #icon><SearchOutlined /></template>
-        搜索
+        {{ t('admin.students.filterBar.buttons.search') }}
       </a-button>
-      <a-button @click="handleReset">重置</a-button>
+      <a-button @click="handleReset">{{ t('admin.students.filterBar.buttons.reset') }}</a-button>
       <a-button :loading="props.exporting" @click="handleExportClick">
         <template #icon><ExportOutlined /></template>
-        导出
+        {{ t('admin.students.filterBar.buttons.export') }}
       </a-button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { SearchOutlined, ExportOutlined } from '@ant-design/icons-vue'
+
+const { t } = useI18n()
 
 type FilterValue = string | number | undefined
 
@@ -134,12 +137,12 @@ const emit = defineEmits<{
 
 const draft = reactive<StudentFilterModel>({})
 
-const statusOptions: FilterOption[] = [
-  { label: '正常', value: '0' },
-  { label: '冻结', value: '1' },
-  { label: '已结束', value: '2' },
-  { label: '退费', value: '3' }
-]
+const statusOptions = computed(() => [
+  { label: t('admin.students.filterBar.status.normal'), value: '0' },
+  { label: t('admin.students.filterBar.status.frozen'), value: '1' },
+  { label: t('admin.students.filterBar.status.ended'), value: '2' },
+  { label: t('admin.students.filterBar.status.refunded'), value: '3' },
+])
 
 const syncDraft = (source: StudentFilterModel) => {
   draft.studentName = source.studentName ?? undefined
@@ -177,7 +180,6 @@ const emitSearch = () => {
 }
 
 const handleSelectChange = (field: keyof StudentFilterModel, value: FilterValue) => {
-  // 仅更新本地草稿；用户点搜索按钮才提交查询，避免多条件场景下连续触发
   draft[field] = value as never
 }
 

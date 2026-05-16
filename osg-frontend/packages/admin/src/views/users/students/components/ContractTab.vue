@@ -2,19 +2,19 @@
   <section class="contract-tab">
     <div class="contract-tab__summary">
       <article class="contract-tab__summary-card">
-        <span>合同总金额</span>
+        <span>{{ t('admin.students.contractTab.summary.totalAmount') }}</span>
         <strong>{{ formatCurrency(summary.totalAmount, 'USD') }}</strong>
       </article>
       <article class="contract-tab__summary-card">
-        <span>总课时</span>
+        <span>{{ t('admin.students.contractTab.summary.totalHours') }}</span>
         <strong>{{ summary.totalHours }}h</strong>
       </article>
       <article class="contract-tab__summary-card">
-        <span>已用课时</span>
+        <span>{{ t('admin.students.contractTab.summary.usedHours') }}</span>
         <strong>{{ summary.usedHours }}h</strong>
       </article>
       <article class="contract-tab__summary-card">
-        <span>剩余课时</span>
+        <span>{{ t('admin.students.contractTab.summary.remainingHours') }}</span>
         <strong>{{ summary.remainingHours }}h</strong>
       </article>
     </div>
@@ -23,13 +23,13 @@
       <table class="contract-tab__table">
         <thead>
           <tr>
-            <th>合同编号</th>
-            <th>类型</th>
-            <th>金额</th>
-            <th>课时</th>
-            <th>有效期</th>
-            <th>状态</th>
-            <th>附件</th>
+            <th>{{ t('admin.students.contractTab.table.contractNo') }}</th>
+            <th>{{ t('admin.students.contractTab.table.type') }}</th>
+            <th>{{ t('admin.students.contractTab.table.amount') }}</th>
+            <th>{{ t('admin.students.contractTab.table.hours') }}</th>
+            <th>{{ t('admin.students.contractTab.table.period') }}</th>
+            <th>{{ t('admin.students.contractTab.table.status') }}</th>
+            <th>{{ t('admin.students.contractTab.table.attachment') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -39,13 +39,13 @@
             <td>
               <template v-if="contract.currency === 'GBP'">
                 <div><strong>£{{ (contract.amountGbp || 0).toLocaleString() }}</strong></div>
-                <div style="color: #9ca3af; font-size: 12px">${{ (contract.amountUsd || 0).toLocaleString() }} 等值</div>
+                <div style="color: #9ca3af; font-size: 12px">${{ (contract.amountUsd || 0).toLocaleString() }} {{ t('admin.students.contractTab.equivalent') }}</div>
               </template>
               <template v-else>
                 <strong>${{ (contract.amountUsd || contract.contractAmount || 0).toLocaleString() }}</strong>
               </template>
             </td>
-            <td>{{ contract.totalHours || 0 }}h / 剩余 {{ contract.remainingHours || 0 }}h</td>
+            <td>{{ contract.totalHours || 0 }}h {{ t('admin.students.contractTab.separator') }} {{ t('admin.students.contractTab.remaining') }} {{ contract.remainingHours || 0 }}h</td>
             <td>{{ formatDateRange(contract.startDate, contract.endDate) }}</td>
             <td>
               <span :class="['contract-tab__status', `contract-tab__status--${contract.contractStatus || 'normal'}`]">
@@ -61,7 +61,7 @@
                 class="contract-tab__attachment-link"
               >
                 <i class="mdi mdi-file-download-outline" aria-hidden="true"></i>
-                下载
+                {{ t('admin.students.contractTab.download') }}
               </a>
               <span v-else class="contract-tab__attachment-empty">-</span>
             </td>
@@ -71,12 +71,16 @@
     </div>
 
     <div v-else class="contract-tab__empty">
-      暂无合同记录。
+      {{ t('admin.students.contractTab.empty') }}
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 interface ContractSummary {
   totalAmount: number
   totalHours: number
@@ -122,17 +126,14 @@ const formatDateRange = (startDate?: string, endDate?: string) => {
     if (isNaN(date.getTime())) return d
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
   }
-  return `${fmt(startDate)} 至 ${fmt(endDate)}`
+  return `${fmt(startDate)} ${t('admin.students.contractTab.dateSeparator')} ${fmt(endDate)}`
 }
 
 const formatStatus = (status?: string) => {
   switch (status) {
-    case 'ended':
-      return '已结束'
-    case 'draft':
-      return '草稿'
-    default:
-      return '正常'
+    case 'ended': return t('admin.students.contractTab.statusLabels.ended')
+    case 'draft': return t('admin.students.contractTab.statusLabels.draft')
+    default: return t('admin.students.contractTab.statusLabels.normal')
   }
 }
 </script>

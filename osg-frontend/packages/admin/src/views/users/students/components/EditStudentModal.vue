@@ -9,7 +9,7 @@
     <template #title>
       <span class="student-form-modal__title">
         <span class="mdi mdi-account-edit student-form-modal__title-icon" aria-hidden="true"></span>
-        <span>编辑学员</span>
+        <span>{{ t('admin.students.editModal.title') }}</span>
       </span>
     </template>
 
@@ -18,56 +18,56 @@
       layout="vertical"
       :required-mark="false"
     >
-      <!-- ══ Part 1: 基本信息 ══ -->
+      <!-- i18n-skip-line: dev comment ══ Part 1: 基本信息 ══ -->
       <div class="student-form-modal__part-title student-form-modal__part-title--blue">
         <div class="student-form-modal__part-title-heading">
           <i class="mdi mdi-account-circle" aria-hidden="true"></i>
-          <strong>{{ student?.studentName || '学员资料' }}</strong>
+          <strong>{{ student?.studentName || t('admin.students.editModal.studentFallback') }}</strong>
         </div>
         <p>ID {{ student?.studentId ?? '-' }} · {{ formatStatus(student?.accountStatus) }}</p>
       </div>
 
-      <!-- ① 核心信息 -->
+      <!-- i18n-skip-line: dev comment ① 核心信息 -->
       <section class="student-form-modal__section student-form-modal__section--highlight">
         <div class="student-form-modal__section-header">
-          <span class="student-form-modal__section-badge student-form-modal__section-badge--primary">核心信息</span>
+          <span class="student-form-modal__section-badge student-form-modal__section-badge--primary">{{ t('admin.students.editModal.sections.coreInfo') }}</span>
         </div>
         <div class="student-form-modal__grid">
-          <a-form-item data-field-name="英文姓名">
+          <a-form-item data-field-name="英文姓名"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">英文姓名</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.englishName') }}</span>
             </template>
-            <a-input v-model:value="form.studentName" :disabled="submitting" placeholder="例如 Emily Zhang" allow-clear />
+            <a-input v-model:value="form.studentName" :disabled="submitting" :placeholder="t('admin.students.editModal.placeholders.englishName')" allow-clear />
           </a-form-item>
 
-          <a-form-item data-field-name="性别">
+          <a-form-item data-field-name="性别"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">性别</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.gender') }}</span>
             </template>
-            <a-select v-model:value="form.gender" :disabled="submitting" :options="genderOptions" placeholder="请选择" />
+            <a-select v-model:value="form.gender" :disabled="submitting" :options="genderOptions" :placeholder="t('admin.students.editModal.placeholders.gender')" />
           </a-form-item>
 
-          <a-form-item class="student-form-modal__field--wide" data-field-name="邮箱">
+          <a-form-item class="student-form-modal__field--wide" data-field-name="邮箱"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">邮箱</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.email') }}</span>
             </template>
-            <a-input v-model:value="form.email" :disabled="submitting" placeholder="学员邮箱" allow-clear />
+            <a-input v-model:value="form.email" :disabled="submitting" :placeholder="t('admin.students.editModal.placeholders.email')" allow-clear />
           </a-form-item>
         </div>
       </section>
 
-      <!-- ② 导师配置 -->
+      <!-- i18n-skip-line: dev comment ② 导师配置 -->
       <section class="student-form-modal__section">
         <div class="student-form-modal__section-header">
           <span class="student-form-modal__section-badge student-form-modal__section-badge--indigo">
-            <i class="mdi mdi-account-group" aria-hidden="true"></i> 导师配置
+            <i class="mdi mdi-account-group" aria-hidden="true"></i> {{ t('admin.students.editModal.sections.mentorConfig') }}
           </span>
-          <span class="student-form-modal__section-desc">可多选</span>
+          <span class="student-form-modal__section-desc">{{ t('admin.students.editModal.sections.mentorConfigDesc') }}</span>
         </div>
         <div class="student-form-modal__grid">
-          <a-form-item data-field-name="班主任">
+          <a-form-item data-field-name="班主任"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">班主任</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.leadMentor') }}</span>
             </template>
             <MultiSelect
               v-model:value="form.leadMentorIds"
@@ -75,14 +75,14 @@
               :loading="staffLoading"
               :disabled="submitting"
               :options="mentorSelectOptions"
-              placeholder="输入姓名搜索班主任"
+              :placeholder="t('admin.students.editModal.placeholders.searchMentor')"
               @search="handleStaffSearch"
             />
           </a-form-item>
 
-          <a-form-item data-field-name="助教">
+          <a-form-item data-field-name="助教"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">助教</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.assistant') }}</span>
             </template>
             <MultiSelect
               v-model:value="form.assistantIds"
@@ -90,43 +90,43 @@
               :loading="staffLoading"
               :disabled="submitting"
               :options="assistantSelectOptions"
-              placeholder="输入姓名搜索助教"
+              :placeholder="t('admin.students.editModal.placeholders.searchAssistant')"
               @search="handleStaffSearch"
             />
           </a-form-item>
         </div>
       </section>
 
-      <!-- ③ 学业信息 -->
+      <!-- i18n-skip-line: dev comment ③ 学业信息 -->
       <section class="student-form-modal__section">
         <div class="student-form-modal__section-header">
           <span class="student-form-modal__section-badge student-form-modal__section-badge--blue">
-            <i class="mdi mdi-school" aria-hidden="true"></i> 学业信息
+            <i class="mdi mdi-school" aria-hidden="true"></i> {{ t('admin.students.editModal.sections.academicInfo') }}
           </span>
         </div>
         <div class="student-form-modal__grid">
-          <a-form-item data-field-name="学校">
+          <a-form-item data-field-name="学校"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">学校</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.school') }}</span>
             </template>
             <MultiSelect
               v-model:value="form.school"
               :options="schoolOptions"
               :disabled="submitting"
-              placeholder="可多选学校（读研/双学位等）"
+              :placeholder="t('admin.students.editModal.placeholders.school')"
             />
           </a-form-item>
 
-          <a-form-item data-field-name="专业">
+          <a-form-item data-field-name="专业"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">专业</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.major') }}</span>
             </template>
-            <a-input v-model:value="form.major" :disabled="submitting" placeholder="例如 Finance" allow-clear />
+            <a-input v-model:value="form.major" :disabled="submitting" :placeholder="t('admin.students.editModal.placeholders.major')" allow-clear />
           </a-form-item>
 
-          <a-form-item data-field-name="毕业年月">
+          <a-form-item data-field-name="毕业年月"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">毕业年月</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.graduationMonth') }}</span>
             </template>
             <a-date-picker
               v-model:value="graduationMonthValue"
@@ -135,68 +135,68 @@
               value-format="YYYY-MM"
               :disabled="submitting"
               :disabled-date="disabledGraduationMonth"
-              placeholder="请选择毕业年月"
+              :placeholder="t('admin.students.editModal.placeholders.graduationMonth')"
               style="width: 100%"
             />
           </a-form-item>
 
-          <a-form-item data-field-name="高中">
+          <a-form-item data-field-name="高中"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">高中</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.highSchool') }}</span>
             </template>
-            <a-input v-model:value="form.highSchool" :disabled="submitting" placeholder="选填" allow-clear />
+            <a-input v-model:value="form.highSchool" :disabled="submitting" :placeholder="t('admin.students.editModal.placeholders.highSchool')" allow-clear />
           </a-form-item>
 
-          <a-form-item data-field-name="学业状态">
+          <a-form-item data-field-name="学业状态"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">学业状态</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.studyPlan') }}</span>
             </template>
             <a-radio-group v-model:value="form.studyPlan" class="student-form-modal__radio-group" :disabled="submitting">
-              <a-radio-button value="normal">正常毕业</a-radio-button>
-              <a-radio-button value="postgraduate">读研</a-radio-button>
-              <a-radio-button value="deferred">延毕</a-radio-button>
+              <a-radio-button value="normal">{{ t('admin.students.editModal.studyPlan.normal') }}</a-radio-button>
+              <a-radio-button value="postgraduate">{{ t('admin.students.editModal.studyPlan.postgraduate') }}</a-radio-button>
+              <a-radio-button value="deferred">{{ t('admin.students.editModal.studyPlan.deferred') }}</a-radio-button>
             </a-radio-group>
           </a-form-item>
 
-          <a-form-item data-field-name="签证">
+          <a-form-item data-field-name="签证"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">签证</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.visa') }}</span>
             </template>
             <a-select
               v-model:value="form.visaStatus"
               :disabled="submitting"
               :options="visaStatusOptions"
-              placeholder="请选择签证状态"
+              :placeholder="t('admin.students.editModal.placeholders.visa')"
               allow-clear
             />
           </a-form-item>
         </div>
       </section>
 
-      <!-- ④ 求职方向 -->
+      <!-- i18n-skip-line: dev comment ④ 求职方向 -->
       <section class="student-form-modal__section">
         <div class="student-form-modal__section-header">
           <span class="student-form-modal__section-badge student-form-modal__section-badge--amber">
-            <i class="mdi mdi-target" aria-hidden="true"></i> 求职方向
+            <i class="mdi mdi-target" aria-hidden="true"></i> {{ t('admin.students.editModal.sections.careerDirection') }}
           </span>
-          <span class="student-form-modal__section-desc">可多选，子方向根据主攻方向联动显示</span>
+          <span class="student-form-modal__section-desc">{{ t('admin.students.editModal.sections.careerDirectionDesc') }}</span>
         </div>
         <div class="student-form-modal__grid">
-          <a-form-item data-field-name="求职地区">
+          <a-form-item data-field-name="求职地区"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">求职地区</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.targetRegion') }}</span>
             </template>
             <MultiSelect
               v-model:value="form.targetRegion"
               :options="regionOptions"
               :disabled="submitting"
-              placeholder="可多选求职地区"
+              :placeholder="t('admin.students.editModal.placeholders.targetRegion')"
             />
           </a-form-item>
 
-          <a-form-item data-field-name="招聘周期" class="student-form-modal__field--wide">
+          <a-form-item data-field-name="招聘周期" class="student-form-modal__field--wide"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">招聘周期</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.recruitmentCycle') }}</span>
             </template>
             <a-checkbox-group
               v-model:value="form.recruitmentCycle"
@@ -206,43 +206,43 @@
             />
           </a-form-item>
 
-          <a-form-item data-field-name="主攻方向">
+          <a-form-item data-field-name="主攻方向"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">主攻方向</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.majorDirections') }}</span>
             </template>
             <MultiSelect
               v-model:value="form.majorDirections"
               :options="majorDirOptions"
               :disabled="submitting"
-              placeholder="可多选主攻方向"
+              :placeholder="t('admin.students.editModal.placeholders.majorDirections')"
             />
           </a-form-item>
 
-          <a-form-item data-field-name="子方向">
+          <a-form-item data-field-name="子方向"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">子方向</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.subDirections') }}</span>
             </template>
             <MultiSelect
               v-model:value="form.subDirections"
               :options="subDirOptions"
               :disabled="submitting"
-              placeholder="可多选子方向"
+              :placeholder="t('admin.students.editModal.placeholders.subDirections')"
             />
           </a-form-item>
         </div>
       </section>
 
-      <!-- ⑤ 联系方式与备注 -->
+      <!-- i18n-skip-line: dev comment ⑤ 联系方式与备注 -->
       <section class="student-form-modal__section">
         <div class="student-form-modal__section-header">
           <span class="student-form-modal__section-badge student-form-modal__section-badge--green">
-            <i class="mdi mdi-phone" aria-hidden="true"></i> 联系方式与备注
+            <i class="mdi mdi-phone" aria-hidden="true"></i> {{ t('admin.students.editModal.sections.contactAndRemark') }}
           </span>
         </div>
         <div class="student-form-modal__grid">
-          <a-form-item data-field-name="电话">
+          <a-form-item data-field-name="电话"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">电话</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.phone') }}</span>
             </template>
             <div class="phone-input-group">
               <a-select
@@ -257,26 +257,26 @@
                 v-model:value="form.phone"
                 class="phone-input-group__number"
                 :disabled="submitting"
-                placeholder="选填"
+                :placeholder="t('admin.students.editModal.placeholders.phone')"
               />
             </div>
           </a-form-item>
 
-          <a-form-item data-field-name="微信">
+          <a-form-item data-field-name="微信"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">微信</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.wechat') }}</span>
             </template>
-            <a-input v-model:value="form.wechat" :disabled="submitting" placeholder="选填" allow-clear />
+            <a-input v-model:value="form.wechat" :disabled="submitting" :placeholder="t('admin.students.editModal.placeholders.wechat')" allow-clear />
           </a-form-item>
 
-          <a-form-item data-field-name="备注" class="student-form-modal__field--wide">
+          <a-form-item data-field-name="备注" class="student-form-modal__field--wide"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">备注</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.remark') }}</span>
             </template>
             <a-textarea
               v-model:value="form.remark"
               :disabled="submitting"
-              placeholder="选填，可填写学员补充说明"
+              :placeholder="t('admin.students.editModal.placeholders.remark')"
               :rows="4"
               allow-clear
             />
@@ -284,35 +284,35 @@
         </div>
       </section>
 
-      <!-- ⑥ 合同（视觉对齐新增弹窗）-->
+      <!-- i18n-skip-line: dev comment ⑥ 合同 -->
       <section class="student-form-modal__section">
         <div class="student-form-modal__section-header">
           <span class="student-form-modal__section-badge student-form-modal__section-badge--blue">
-            <i class="mdi mdi-file-document" aria-hidden="true"></i> 合同
+            <i class="mdi mdi-file-document" aria-hidden="true"></i> {{ t('admin.students.editModal.sections.contract') }}
           </span>
-          <span class="student-form-modal__section-desc">编辑当前生效合同</span>
+          <span class="student-form-modal__section-desc">{{ t('admin.students.editModal.sections.contractDesc') }}</span>
         </div>
         <div v-if="!activeContract" class="student-form-modal__attachment-empty">
-          该学员暂无生效合同，请在合同模块续签或新建后再编辑。
+          {{ t('admin.students.editModal.noActiveContract') }}
         </div>
         <div v-else class="student-form-modal__grid">
-          <a-form-item data-field-name="币种" class="student-form-modal__field--wide">
+          <a-form-item data-field-name="币种" class="student-form-modal__field--wide"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
               <span class="student-form-modal__label">
-                币种
+                {{ t('admin.students.editModal.fields.currency') }}
                 <span class="student-form-modal__required">*</span>
               </span>
             </template>
             <a-radio-group v-model:value="contractForm.currency" :disabled="submitting">
-              <a-radio-button value="USD">美元 (USD)</a-radio-button>
-              <a-radio-button value="GBP">英镑 (GBP)</a-radio-button>
+              <a-radio-button value="USD">{{ t('admin.students.editModal.currency.usd') }}</a-radio-button>
+              <a-radio-button value="GBP">{{ t('admin.students.editModal.currency.gbp') }}</a-radio-button>
             </a-radio-group>
           </a-form-item>
 
-          <a-form-item v-if="contractForm.currency === 'GBP'" data-field-name="英镑金额">
+          <a-form-item v-if="contractForm.currency === 'GBP'" data-field-name="英镑金额"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
               <span class="student-form-modal__label">
-                英镑金额
+                {{ t('admin.students.editModal.fields.amountGbp') }}
                 <span class="student-form-modal__required">*</span>
               </span>
             </template>
@@ -324,14 +324,14 @@
               :precision="2"
               :controls="false"
               style="width: 100%"
-              placeholder="£ 请输入英镑金额"
+              :placeholder="t('admin.students.editModal.placeholders.amountGbp')"
             />
           </a-form-item>
 
-          <a-form-item data-field-name="美元金额">
+          <a-form-item data-field-name="美元金额"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
               <span class="student-form-modal__label">
-                {{ contractForm.currency === 'GBP' ? '美元等值金额' : '美元金额' }}
+                {{ contractForm.currency === 'GBP' ? t('admin.students.editModal.fields.usdEquivalent') : t('admin.students.editModal.fields.amountUsd') }}
                 <span class="student-form-modal__required">*</span>
               </span>
             </template>
@@ -343,14 +343,14 @@
               :precision="2"
               :controls="false"
               style="width: 100%"
-              :placeholder="contractForm.currency === 'GBP' ? '$ 请输入美元等值金额' : '$ 请输入美元金额'"
+              :placeholder="contractForm.currency === 'GBP' ? t('admin.students.editModal.placeholders.usdEquivalent') : t('admin.students.editModal.placeholders.amountUsd')"
             />
           </a-form-item>
 
-          <a-form-item data-field-name="课时（小时）">
+          <a-form-item data-field-name="课时（小时）"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
               <span class="student-form-modal__label">
-                课时（小时）
+                {{ t('admin.students.editModal.fields.totalHours') }}
                 <span class="student-form-modal__required">*</span>
               </span>
             </template>
@@ -362,14 +362,14 @@
               :precision="0"
               :controls="false"
               style="width: 100%"
-              placeholder="如 40"
+              :placeholder="t('admin.students.editModal.placeholders.totalHours')"
             />
           </a-form-item>
 
-          <a-form-item data-field-name="合同开始日期">
+          <a-form-item data-field-name="合同开始日期"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
               <span class="student-form-modal__label">
-                合同开始日期
+                {{ t('admin.students.editModal.fields.startDate') }}
                 <span class="student-form-modal__required">*</span>
               </span>
             </template>
@@ -379,14 +379,14 @@
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
               style="width: 100%"
-              placeholder="请选择合同开始日期"
+              :placeholder="t('admin.students.editModal.placeholders.startDate')"
             />
           </a-form-item>
 
-          <a-form-item data-field-name="合同结束日期">
+          <a-form-item data-field-name="合同结束日期"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
               <span class="student-form-modal__label">
-                合同结束日期
+                {{ t('admin.students.editModal.fields.endDate') }}
                 <span class="student-form-modal__required">*</span>
               </span>
             </template>
@@ -396,14 +396,14 @@
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
               style="width: 100%"
-              placeholder="请选择合同结束日期"
+              :placeholder="t('admin.students.editModal.placeholders.endDate')"
             />
           </a-form-item>
 
-          <a-form-item data-field-name="合同附件" class="student-form-modal__field--wide">
+          <a-form-item data-field-name="合同附件" class="student-form-modal__field--wide"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
               <span class="student-form-modal__label">
-                合同附件
+                {{ t('admin.students.editModal.fields.contractAttachment') }}
                 <span class="student-form-modal__required">*</span>
               </span>
             </template>
@@ -424,28 +424,27 @@
                 <i class="mdi mdi-cloud-upload" style="font-size: 28px; color: #4f74ff"></i>
               </p>
               <p class="ant-upload-text">
-                {{ contractForm.attachmentPath ? '点击或拖拽文件替换附件' : '点击或拖拽文件上传' }}
+                {{ contractForm.attachmentPath ? t('admin.students.editModal.upload.replace') : t('admin.students.editModal.upload.clickOrDrag') }}
               </p>
-              <p class="ant-upload-hint">仅支持 PDF / PNG / JPG / JPEG，单文件不超过 150MB</p>
+              <p class="ant-upload-hint">{{ t('admin.students.editModal.upload.hint') }}</p>
             </a-upload-dragger>
-            <!-- A-ST-012: 显式展示现有附件下载链接，避免用户找不到 a-upload 内部下载图标 -->
             <div v-if="contractForm.attachmentPath" class="student-form-modal__attachment-link">
               <i class="mdi mdi-file-download-outline" aria-hidden="true"></i>
-              <span>当前附件：</span>
+              <span>{{ t('admin.students.editModal.currentAttachment') }}</span>
               <a :href="resolveAttachmentUrl(contractForm.attachmentPath)" target="_blank" rel="noreferrer">
                 {{ extractAttachmentName(contractForm.attachmentPath) }}
               </a>
             </div>
           </a-form-item>
 
-          <a-form-item data-field-name="合同备注" class="student-form-modal__field--wide">
+          <a-form-item data-field-name="合同备注" class="student-form-modal__field--wide"> <!-- i18n-skip-line: playwright selector -->
             <template #label>
-              <span class="student-form-modal__label">备注</span>
+              <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.contractRemark') }}</span>
             </template>
             <a-textarea
               v-model:value="contractForm.remark"
               :disabled="submitting"
-              placeholder="选填，可填写特殊约定等"
+              :placeholder="t('admin.students.editModal.placeholders.contractRemark')"
               :rows="2"
               allow-clear
             />
@@ -455,14 +454,15 @@
     </a-form>
 
     <template #footer>
-      <a-button @click="handleClose">取消</a-button>
-      <a-button type="primary" :loading="submitting" @click="handleSubmit">保存修改</a-button>
+      <a-button @click="handleClose">{{ t('admin.students.editModal.footer.cancel') }}</a-button>
+      <a-button type="primary" :loading="submitting" @click="handleSubmit">{{ t('admin.students.editModal.footer.save') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import dayjs, { type Dayjs } from 'dayjs'
 import { message } from 'ant-design-vue'
 import type { UploadChangeParam } from 'ant-design-vue'
@@ -476,6 +476,8 @@ import { MultiSelect } from '@osg/shared/components'
 import { splitPhone, joinPhone, MAX_AMOUNT, MAX_AMOUNT_MESSAGE, MAX_CONTRACT_HOURS, MAX_CONTRACT_HOURS_MESSAGE } from '@osg/shared/utils'
 import { getToken } from '@osg/shared/utils/storage'
 import { useDictFacade } from '@osg/shared/composables'
+
+const { t } = useI18n()
 
 const props = withDefaults(defineProps<{
   visible: boolean
@@ -494,10 +496,10 @@ const emit = defineEmits<{
   ]
 }>()
 
-const genderOptions = [
-  { label: '男', value: '0' },
-  { label: '女', value: '1' }
-]
+const genderOptions = computed(() => [
+  { label: t('admin.students.editModal.gender.male'), value: '0' },
+  { label: t('admin.students.editModal.gender.female'), value: '1' },
+])
 
 const form = reactive({
   studentName: '',
@@ -529,7 +531,7 @@ const phoneCountryOptions = computed(() => {
       label: `${item.extra?.callingCode ?? ''} ${item.label}`.trim(),
     }))
     .filter((opt) => opt.value)
-  return items.length ? items : [{ value: '+1', label: '+1 美国/加拿大' }]
+  return items.length ? items : [{ value: '+1', label: '+1 美国/加拿大' }] // i18n-skip-line: backend values
 })
 const filterPhoneCountryOption = (input: string, option: { label: string; value: string }) => {
   const keyword = input.trim().toLowerCase()
@@ -612,11 +614,14 @@ const mergeCurrentOption = (
 ) => {
   if (staffId == null) return
   if (staffOptions.value.some((item) => item.staffId === staffId)) return
+  const fallbackName = staffType === 'lead_mentor'
+    ? t('admin.students.editModal.staffFallback.leadMentor')
+    : t('admin.students.editModal.staffFallback.assistant')
   staffOptions.value = [
     ...staffOptions.value,
     {
       staffId,
-      staffName: label || `${staffType === 'lead_mentor' ? '班主任' : '助教'} ${staffId}`,
+      staffName: label || `${fallbackName} ${staffId}`,
       staffType,
     },
   ]
@@ -651,11 +656,6 @@ const toExtraStudentFields = (student?: StudentListItem | null) => (student ?? {
 
 const splitCsv = (value?: string) => (value ? value.split(',').map(v => v.trim()).filter(Boolean) : [])
 
-// ── 合同区域 state（编辑学员的最新一份合同）──
-// 策略：按 contractId DESC 取最新一份。
-// 当前业务下所有合同 contractStatus 都是 'active'，"取最新" 与 "取 active" 等价；
-// 但 contractId 排序更稳定：多 active 脏数据时稳定取最新那条；未来出现非 active status 时也能正确展示。
-// 变量名保留 activeContract（语义：当前要编辑的合同），后端仍强制 active 才能写入（安全兜底）。
 const activeContract = ref<ContractListItem | null>(null)
 
 const contractForm = reactive({
@@ -671,13 +671,11 @@ const contractForm = reactive({
 
 const contractUploadAction = '/api/admin/contract/upload'
 const contractUploadHeaders = computed(() => ({ Authorization: `Bearer ${getToken() || ''}` }))
-// 上传时携带 contractId，复用后端 /admin/contract/upload?contractId= 同步绑定到合同
 const contractUploadData = computed(() => {
   const cid = activeContract.value?.contractId
   return cid != null ? { contractId: String(cid) } : {}
 })
 
-// 附件展示列表（对齐 AddStudentModal 的 a-upload-dragger file-list 语义）
 type ContractFileItem = { uid: string; name: string; status: 'done'; url: string }
 const contractFileList = ref<ContractFileItem[]>([])
 
@@ -686,8 +684,6 @@ const buildFileListFromPath = (path: string): ContractFileItem[] => {
   return [{ uid: `contract-${Date.now()}`, name: extractAttachmentName(path), status: 'done', url: resolveAttachmentUrl(path) }]
 }
 
-// A-ST-012: 附件相对路径（如 /profile/upload/contracts/xxx.pdf）拼接 backend URL 才能下载
-// nginx 已在 deploy/frontend/nginx.conf 加 location /profile/upload/ 代理到 backend
 function resolveAttachmentUrl(path: string): string {
   if (!path) return ''
   if (/^https?:\/\//i.test(path)) return path
@@ -747,7 +743,6 @@ const loadStudentContract = async (studentId?: number | null) => {
   try {
     const res = await http.get<{ contracts: ContractListItem[] }>(`/admin/student/${studentId}/contracts`)
     const contracts = res?.contracts || []
-    // 按 contractId DESC 取最新一份（contractId 递增天然反映创建顺序）
     const sorted = [...contracts].sort((a, b) => (b.contractId || 0) - (a.contractId || 0))
     const latest = sorted[0]
     if (latest) {
@@ -761,11 +756,11 @@ const loadStudentContract = async (studentId?: number | null) => {
 
 const beforeContractUpload = (file: File) => {
   if (!ALLOWED_CONTRACT_EXTS.test(file.name || '')) {
-    message.error('仅支持 PDF / PNG / JPG / JPEG')
+    message.error(t('admin.students.editModal.upload.unsupportedFormat'))
     return false
   }
   if (file.size > MAX_CONTRACT_UPLOAD_BYTES) {
-    message.error(`文件超过 ${MAX_CONTRACT_UPLOAD_MB}MB（实际 ${(file.size / 1024 / 1024).toFixed(2)}MB）`)
+    message.error(t('admin.students.editModal.upload.fileTooLarge', { max: MAX_CONTRACT_UPLOAD_MB, actual: (file.size / 1024 / 1024).toFixed(2) }))
     return false
   }
   return true
@@ -777,19 +772,19 @@ const handleContractUploadChange = (info: UploadChangeParam) => {
     if (response && response.code !== undefined && response.code !== 200) {
       contractForm.attachmentPath = ''
       contractFileList.value = []
-      message.error(`上传失败：${response.msg || '后端返回错误'}`)
+      message.error(t('admin.students.editModal.upload.failed', { reason: response.msg || t('admin.students.editModal.upload.backendError') }))
       return
     }
     const url = response?.attachmentPath || response?.url || response?.fileName || ''
     if (url) {
       contractForm.attachmentPath = url
       contractFileList.value = buildFileListFromPath(url)
-      message.success('上传成功')
+      message.success(t('admin.students.editModal.upload.success'))
     }
   } else if (info.file.status === 'error') {
     contractForm.attachmentPath = ''
     contractFileList.value = []
-    message.error('上传失败：网络或服务器错误')
+    message.error(t('admin.students.editModal.upload.failed', { reason: t('admin.students.editModal.upload.networkError') }))
   } else if (info.file.status === 'removed') {
     contractForm.attachmentPath = ''
     contractFileList.value = []
@@ -803,7 +798,6 @@ const buildContractPatch = (): { contractId: number; payload: UpdateContractPayl
   const patch: UpdateContractPayload = {}
   const origCurrency = (orig.currency || '').toUpperCase() === 'GBP' ? 'GBP' : 'USD'
   if (contractForm.currency !== origCurrency) patch.currency = contractForm.currency
-  // null/undefined 视为等价；未修改不纳入 patch（避免 JSON 序列化吞掉 undefined 导致空 body）
   const formUsd = contractForm.amountUsd ?? null
   const origUsd = orig.amountUsd ?? null
   if (formUsd !== origUsd && contractForm.amountUsd !== undefined) {
@@ -814,7 +808,6 @@ const buildContractPatch = (): { contractId: number; payload: UpdateContractPayl
   if (formGbp !== origGbp && contractForm.amountGbp !== undefined) {
     patch.amountGbp = contractForm.amountGbp
   }
-  // contractAmount 跟随 currency 自动取对应金额
   const newAmount = contractForm.currency === 'USD' ? contractForm.amountUsd : contractForm.amountGbp
   if (newAmount != null && newAmount !== orig.contractAmount) patch.contractAmount = newAmount
   if (contractForm.totalHours != null && contractForm.totalHours !== orig.totalHours) patch.totalHours = contractForm.totalHours
@@ -827,7 +820,6 @@ const buildContractPatch = (): { contractId: number; payload: UpdateContractPayl
   return Object.keys(patch).length ? { contractId: orig.contractId, payload: patch } : undefined
 }
 
-// 拉详情接口补齐表单回显（list row 不含 highSchool / visaStatus / studyPlan / subDirections / recruitmentCycles 等）
 const loadStudentDetail = async (studentId?: number | null) => {
   if (!studentId) return
   try {
@@ -873,11 +865,10 @@ const loadStudentDetail = async (studentId?: number | null) => {
     if (d.contact?.wechat) form.wechat = d.contact.wechat
     if (d.remark) form.remark = d.remark
     if (d.gender) form.gender = d.gender
-    // mentor names 灌进 staffOptions 让 MultiSelect 能渲染 label
     d.mentor?.leadMentorIds?.forEach((id, idx) => mergeCurrentOption('lead_mentor', id, d.mentor?.leadMentorNames?.[idx]))
     d.mentor?.assistantIds?.forEach((id, idx) => mergeCurrentOption('assistant', id, d.mentor?.assistantNames?.[idx]))
   } catch (_error) {
-    // detail 拉失败时维持 syncForm 已填的内容
+    // detail load failure: keep syncForm content
   }
 }
 
@@ -886,7 +877,6 @@ const syncForm = () => {
   form.studentName = props.student?.studentName || ''
   form.gender = extra.gender || ''
   form.email = props.student?.email || ''
-  // student.school 后端返回 CSV，detail.schools[] 为数组；统一切成数组喂 MultiSelect
   const schoolDetail = (props.student as unknown as { schools?: string[] })?.schools
   form.school = schoolDetail?.length
     ? [...schoolDetail]
@@ -943,7 +933,7 @@ const loadStaffOptions = async (keyword = '') => {
     staffOptions.value = response.rows || []
     seedStaffOptionsFromStudent(props.student)
   } catch (_error) {
-    message.error('加载导师列表失败')
+    message.error(t('admin.students.editModal.messages.loadStaffFailed'))
   } finally {
     staffLoading.value = false
   }
@@ -974,26 +964,24 @@ const handleClose = () => {
 
 const handleSubmit = () => {
   if (!props.student?.studentId) {
-    message.error('未找到学员信息')
+    message.error(t('admin.students.editModal.validation.studentId'))
     return
   }
   if (!form.email.trim()) {
-    message.error('请填写邮箱')
+    message.error(t('admin.students.editModal.validation.email'))
     return
   }
   if (!form.school?.length) {
-    message.error('请填写学校')
+    message.error(t('admin.students.editModal.validation.school'))
     return
   }
 
-  // 起止日期联合校验：在 emit 前先在前端拦截，避免一次保存里学员主体已写入但合同失败的不一致
   if (activeContract.value && contractForm.startDate && contractForm.endDate
       && contractForm.endDate < contractForm.startDate) {
-    message.error('合同结束日期不能早于开始日期')
+    message.error(t('admin.students.editModal.validation.contractDates'))
     return
   }
 
-  // 金额上限校验（与 a-input-number :max 双保险，防止代码外部赋值）
   if ((contractForm.amountUsd ?? 0) > MAX_AMOUNT) {
     message.error(MAX_AMOUNT_MESSAGE)
     return
@@ -1036,15 +1024,15 @@ const handleSubmit = () => {
 
 const formatStatus = (status?: string) => {
   switch (status) {
-    case '1': return '冻结'
-    case '2': return '已结束'
-    case '3': return '退费'
-    default: return '正常'
+    case '1': return t('admin.students.editModal.status.frozen')
+    case '2': return t('admin.students.editModal.status.ended')
+    case '3': return t('admin.students.editModal.status.refunded')
+    default: return t('admin.students.editModal.status.normal')
   }
 }
 </script>
 
-<!-- student-form.scss 注入 portal 出去的 body 节点（OverlaySurfaceModal），必须非 scoped -->
+<!-- i18n-skip-line: dev comment student-form.scss 注入 portal 出去的 body 节点（OverlaySurfaceModal），必须非 scoped -->
 <style lang="scss">
 @use './student-form.scss';
 </style>
