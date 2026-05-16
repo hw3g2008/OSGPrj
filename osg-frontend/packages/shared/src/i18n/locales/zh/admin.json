@@ -507,6 +507,46 @@
       "sourceDictionary": "来源字典：入职面试申请 / 自主填写",
       "empty": "暂无面试真题记录",
       "questionCount": "{count} 题"
+    },
+    "qbank": {
+      "pageTitle": "题库管理",
+      "createFolder": "新建文件夹",
+      "searchPlaceholder": "搜索文件名",
+      "search": "搜索",
+      "empty": "暂无题库文件夹",
+      "allUsers": "全部用户",
+      "notSet": "未设置",
+      "columns": {
+        "name": "名称",
+        "size": "大小",
+        "authorizedTo": "授权对象",
+        "expiryAt": "过期时间",
+        "createTime": "创建时间",
+        "action": "操作"
+      },
+      "action": {
+        "editAuth": "编辑 + 授权"
+      },
+      "messages": {
+        "loadError": "题库列表加载失败",
+        "createSuccess": "题库文件夹创建成功",
+        "updateSuccess": "题库文件夹已更新"
+      },
+      "modal": {
+        "titleCreate": "新建题库文件夹",
+        "titleEdit": "编辑题库文件夹",
+        "authType": "授权类型",
+        "authTypeAll": "全部用户",
+        "authTypeClass": "指定班级",
+        "authTypeUser": "指定用户",
+        "classLabel": "指定班级",
+        "classPlaceholder": "例如：2024Fall, 2025Spring",
+        "userLabel": "指定用户",
+        "userPlaceholder": "例如：Alice Zhang, Bob Li",
+        "expiryAt": "过期时间",
+        "cancel": "取消",
+        "save": "保存"
+      }
     }
   },
   "students": {
@@ -1482,6 +1522,42 @@
           "allStudent": "全部学员",
           "targetStudent": "指定学员"
         }
+      }
+    }
+  },
+  "teaching": {
+    "communication": {
+      "pageTitle": "人际关系沟通记录",
+      "export": "导出",
+      "search": "搜索",
+      "searchPlaceholder": "搜索学员/记录人...",
+      "methodPlaceholder": "沟通方式",
+      "headTeacherPlaceholder": "全部班主任",
+      "dateStart": "开始日期",
+      "dateEnd": "结束日期",
+      "empty": "暂无沟通记录",
+      "method": {
+        "phone": "电话",
+        "wechat": "微信",
+        "email": "邮件",
+        "meeting": "面谈"
+      },
+      "columns": {
+        "student": "学员",
+        "recorder": "记录人",
+        "method": "沟通方式",
+        "time": "沟通时间",
+        "content": "沟通内容",
+        "followUp": "跟进事项",
+        "action": "操作"
+      },
+      "action": {
+        "detail": "详情"
+      },
+      "messages": {
+        "loadError": "沟通记录加载失败",
+        "exportTodo": "导出功能将在后续版本中接入",
+        "detailTodo": "详情功能将在后续版本中接入"
       }
     }
   }

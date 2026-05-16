@@ -507,6 +507,46 @@
       "sourceDictionary": "Source dictionary: Interview Application / Self-submitted",
       "empty": "No interview question records",
       "questionCount": "{count} questions"
+    },
+    "qbank": {
+      "pageTitle": "Question Bank",
+      "createFolder": "New Folder",
+      "searchPlaceholder": "Search folder name",
+      "search": "Search",
+      "empty": "No question bank folders found",
+      "allUsers": "All Users",
+      "notSet": "Not Set",
+      "columns": {
+        "name": "Name",
+        "size": "Size",
+        "authorizedTo": "Authorized To",
+        "expiryAt": "Expiry",
+        "createTime": "Created At",
+        "action": "Action"
+      },
+      "action": {
+        "editAuth": "Edit & Authorize"
+      },
+      "messages": {
+        "loadError": "Failed to load question bank list",
+        "createSuccess": "Folder created successfully",
+        "updateSuccess": "Folder updated successfully"
+      },
+      "modal": {
+        "titleCreate": "New Folder",
+        "titleEdit": "Edit Folder",
+        "authType": "Authorization Type",
+        "authTypeAll": "All Users",
+        "authTypeClass": "Specific Classes",
+        "authTypeUser": "Specific Users",
+        "classLabel": "Classes",
+        "classPlaceholder": "e.g. 2024Fall, 2025Spring",
+        "userLabel": "Users",
+        "userPlaceholder": "e.g. Alice Zhang, Bob Li",
+        "expiryAt": "Expiry Time",
+        "cancel": "Cancel",
+        "save": "Save"
+      }
     }
   },
   "students": {
@@ -1481,6 +1521,42 @@
           "allStudent": "All Students",
           "targetStudent": "Specific Students"
         }
+      }
+    }
+  },
+  "teaching": {
+    "communication": {
+      "pageTitle": "Communication Records",
+      "export": "Export",
+      "search": "Search",
+      "searchPlaceholder": "Search student / recorder...",
+      "methodPlaceholder": "Method",
+      "headTeacherPlaceholder": "All Head Teachers",
+      "dateStart": "Start Date",
+      "dateEnd": "End Date",
+      "empty": "No communication records found",
+      "method": {
+        "phone": "Phone",
+        "wechat": "WeChat",
+        "email": "Email",
+        "meeting": "In-person"
+      },
+      "columns": {
+        "student": "Student",
+        "recorder": "Recorder",
+        "method": "Method",
+        "time": "Time",
+        "content": "Content",
+        "followUp": "Follow-up",
+        "action": "Action"
+      },
+      "action": {
+        "detail": "Detail"
+      },
+      "messages": {
+        "loadError": "Failed to load communication records",
+        "exportTodo": "Export will be available in a future version",
+        "detailTodo": "Detail view will be available in a future version"
       }
     }
   }

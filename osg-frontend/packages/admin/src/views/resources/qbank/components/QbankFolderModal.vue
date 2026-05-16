@@ -8,7 +8,7 @@
     <template #title>
       <span style="display:inline-flex;align-items:center;gap:8px">
         <span class="mdi mdi-folder-cog-outline" aria-hidden="true" />
-        <span>{{ mode === 'create' ? '新建题库文件夹' : '编辑题库文件夹' }}</span>
+        <span>{{ mode === 'create' ? t('admin.resources.qbank.modal.titleCreate') : t('admin.resources.qbank.modal.titleEdit') }}</span>
       </span>
     </template>
 
@@ -17,38 +17,41 @@
         <a-input v-model:value="form.folderName" placeholder="Folder Name" />
       </a-form-item>
 
-      <a-form-item label="授权类型">
+      <a-form-item :label="t('admin.resources.qbank.modal.authType')">
         <a-select v-model:value="form.authType">
-          <a-select-option value="all">全部用户</a-select-option>
-          <a-select-option value="class">指定班级</a-select-option>
-          <a-select-option value="user">指定用户</a-select-option>
+          <a-select-option value="all">{{ t('admin.resources.qbank.modal.authTypeAll') }}</a-select-option>
+          <a-select-option value="class">{{ t('admin.resources.qbank.modal.authTypeClass') }}</a-select-option>
+          <a-select-option value="user">{{ t('admin.resources.qbank.modal.authTypeUser') }}</a-select-option>
         </a-select>
       </a-form-item>
 
-      <a-form-item v-if="form.authType === 'class'" label="指定班级">
-        <a-input v-model:value="form.authorizedClasses" placeholder="例如：2024Fall, 2025Spring" />
+      <a-form-item v-if="form.authType === 'class'" :label="t('admin.resources.qbank.modal.classLabel')">
+        <a-input v-model:value="form.authorizedClasses" :placeholder="t('admin.resources.qbank.modal.classPlaceholder')" />
       </a-form-item>
 
-      <a-form-item v-if="form.authType === 'user'" label="指定用户">
-        <a-input v-model:value="form.authorizedUsers" placeholder="例如：Alice Zhang, Bob Li" />
+      <a-form-item v-if="form.authType === 'user'" :label="t('admin.resources.qbank.modal.userLabel')">
+        <a-input v-model:value="form.authorizedUsers" :placeholder="t('admin.resources.qbank.modal.userPlaceholder')" />
       </a-form-item>
 
-      <a-form-item label="过期时间">
+      <a-form-item :label="t('admin.resources.qbank.modal.expiryAt')">
         <a-input v-model:value="form.expiryAt" type="datetime-local" />
       </a-form-item>
     </a-form>
 
     <template #footer>
-      <a-button @click="$emit('update:modelValue', false)">取消</a-button>
-      <a-button type="primary" :loading="submitting" :disabled="!form.folderName" @click="handleConfirm">保存</a-button>
+      <a-button @click="$emit('update:modelValue', false)">{{ t('admin.resources.qbank.modal.cancel') }}</a-button>
+      <a-button type="primary" :loading="submitting" :disabled="!form.folderName" @click="handleConfirm">{{ t('admin.resources.qbank.modal.save') }}</a-button>
     </template>
   </OverlaySurfaceModal>
 </template>
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { QbankAuthType, QbankFolderRow } from '@osg/shared/api/admin/qbank'
 import { OverlaySurfaceModal } from '@osg/shared/components'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   modelValue: boolean
