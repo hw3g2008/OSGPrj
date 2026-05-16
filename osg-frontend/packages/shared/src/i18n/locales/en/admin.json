@@ -2812,6 +2812,194 @@
         "successReactivate": "Student re-joined via contract renewal",
         "successRenew": "Contract renewed successfully"
       }
+    },
+    "mentorChangeReview": {
+      "pageTitle": "Mentor Profile Change Review",
+      "filter": {
+        "statusLabel": "Status",
+        "statusPlaceholder": "All Statuses",
+        "statuses": {
+          "pending": "Pending",
+          "approved": "Approved",
+          "rejected": "Rejected"
+        },
+        "search": "Search",
+        "reset": "Reset"
+      },
+      "table": {
+        "empty": "No change requests found",
+        "showTotal": "{total} records",
+        "summarySeparator": ", "
+      },
+      "columns": {
+        "requestId": "Request ID",
+        "userId": "Mentor User ID",
+        "changeSummary": "Changed Fields",
+        "status": "Status",
+        "requestedBy": "Submitted By",
+        "createTime": "Submitted At",
+        "reviewer": "Reviewer",
+        "reviewedAt": "Reviewed At",
+        "action": "Action"
+      },
+      "fieldLabels": {
+        "nickName": "Nickname",
+        "sex": "Gender",
+        "phonenumber": "Phone",
+        "email": "Email",
+        "remark": "Remark",
+        "region": "Region",
+        "city": "City"
+      },
+      "action": {
+        "view": "View",
+        "approve": "Approve",
+        "reject": "Reject"
+      },
+      "detail": {
+        "title": "Change Detail",
+        "labels": {
+          "requestId": "Request ID",
+          "userId": "Mentor User ID",
+          "changeSummary": "Changed Fields",
+          "status": "Status",
+          "requestedBy": "Submitted By",
+          "createTime": "Submitted At",
+          "reviewer": "Reviewer",
+          "reviewedAt": "Reviewed At"
+        },
+        "payloadTitle": "Change Payload",
+        "rejectReasonLabel": "Rejection reason: "
+      },
+      "rejectModal": {
+        "title": "Reject Change",
+        "okText": "Confirm Reject",
+        "cancelText": "Cancel",
+        "reasonLabel": "Rejection Reason",
+        "reasonPlaceholder": "Enter rejection reason"
+      },
+      "approveModal": {
+        "title": "Approve Change Request",
+        "content": "Confirm approve request #{id}? Changes will be applied to mentor account.",
+        "okText": "Approve",
+        "cancelText": "Cancel"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "messages": {
+        "loadError": "Failed to load change requests",
+        "approveSuccess": "Approved",
+        "approveFail": "Approval failed",
+        "rejectReasonRequired": "Please enter rejection reason",
+        "rejectSuccess": "Rejected",
+        "rejectFail": "Rejection failed"
+      }
+    },
+    "mentorSchedule": {
+      "pageTitle": "Mentor Schedule",
+      "export": {
+        "idle": "Export Schedule",
+        "loading": "Exporting..."
+      },
+      "unfilled": {
+        "title": "{count} mentors have not filled schedule",
+        "descNext": "Please complete next week's schedule",
+        "descCurrent": "2 days until deadline",
+        "remindBtn": "Remind All",
+        "reminding": "Reminding..."
+      },
+      "header": {
+        "allMentors": "All Mentors ({count})"
+      },
+      "filter": {
+        "keyword": "Search mentor name/ID...",
+        "allTypes": "All Types",
+        "allDays": "All Days",
+        "allSlots": "All Slots"
+      },
+      "staffTypes": {
+        "lead_mentor": "Lead Mentor",
+        "mentor": "Mentor",
+        "assistant": "Assistant"
+      },
+      "weekOptions": {
+        "current": "This Week",
+        "next": "Next Week"
+      },
+      "weekdays": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "timeSlots": {
+        "morning": "Morning",
+        "afternoon": "Afternoon",
+        "evening": "Evening"
+      },
+      "table": {
+        "empty": "No schedule data for current filters",
+        "showTotal": "{total} records",
+        "unfilledTag": "No Schedule",
+        "unfilledAria": "No schedule filled",
+        "adjust": "Adjust",
+        "fill": "Fill Schedule"
+      },
+      "messages": {
+        "remindSuccess": "Reminded {count} mentors to fill schedule",
+        "noRemind": "No mentors to remind",
+        "remindFail": "Failed to remind mentors",
+        "exportSuccess": "Schedule exported successfully",
+        "exportFail": "Schedule export failed",
+        "exportFailReason": "Schedule export failed: {reason}",
+        "exportAuthFail": "Export unauthorized, please log in again",
+        "saveSuccess": "Schedule saved",
+        "saveFail": "Failed to save schedule"
+      },
+      "filename": "mentor-schedule.xlsx",
+      "columns": {
+        "staffId": "ID",
+        "staffName": "Mentor",
+        "staffType": "Type",
+        "availableHours": "Avail. Hours",
+        "availableSlotLabels": "Avail. Time",
+        "action": "Action"
+      },
+      "editModal": {
+        "titleAdjust": "Adjust Mentor Schedule",
+        "titleFill": "Fill Mentor Schedule",
+        "weekLabel": {
+          "current": "This Week",
+          "next": "Next Week"
+        },
+        "weekCurrent": "This Week",
+        "weekNext": "Next Week",
+        "staffPlaceholder": "Select Mentor",
+        "hoursLabel": "{week} Available Hours",
+        "hoursTitle": "Available Hours",
+        "hoursUnit": "hrs / week",
+        "quickSelectAriaLabel": "Quick select",
+        "slotsTitle": "Available Time per Day",
+        "slotsHint": "Multiple allowed",
+        "slotSuffix": " available slots",
+        "monthLabel": "{month}",
+        "weekend": "Weekend",
+        "weekendHint": "Weekend",
+        "reasonTitle": "Reason",
+        "reasonPlaceholder": "Enter reason — will be notified to the mentor",
+        "notifyTitle": "Notify Mentor",
+        "notifyDesc": "Email and in-app message will be sent to the mentor after saving",
+        "cancel": "Cancel",
+        "submit": "Save & Notify",
+        "warnNoStaff": "Mentor not found, cannot save",
+        "warnNoReason": "Please enter a reason"
+      }
     }
   }
 }

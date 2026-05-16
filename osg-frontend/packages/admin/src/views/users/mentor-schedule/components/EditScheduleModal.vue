@@ -21,7 +21,7 @@
         <span class="esm-staff-card__avatar-text">{{ avatarText }}</span>
       </div>
       <div class="esm-staff-card__info">
-        <div class="esm-staff-card__name">{{ record?.staffName || '待选择导师' }}</div>
+        <div class="esm-staff-card__name">{{ record?.staffName || t('admin.users.mentorSchedule.editModal.staffPlaceholder') }}</div>
         <div class="esm-staff-card__meta">
           <span class="esm-staff-card__meta-chip">ID {{ record?.staffId }}</span>
           <span class="esm-staff-card__meta-dot" aria-hidden="true"></span>
@@ -31,7 +31,7 @@
         </div>
       </div>
       <div class="esm-staff-card__hours">
-        <div class="esm-staff-card__hours-label">{{ weekLabel }}可用时长</div>
+        <div class="esm-staff-card__hours-label">{{ t('admin.users.mentorSchedule.editModal.hoursLabel', { week: weekLabel }) }}</div>
         <div class="esm-staff-card__hours-value">
           <span class="esm-staff-card__hours-num">{{ formState.availableHours }}</span>
           <span class="esm-staff-card__hours-unit">h</span>
@@ -53,7 +53,7 @@
         :class="['esm-week-switch__tab', { 'esm-week-switch__tab--active': localWeek === 'current' }]"
         @click="localWeek = 'current'"
       >
-        <span class="esm-week-switch__label">本周</span>
+        <span class="esm-week-switch__label">{{ t('admin.users.mentorSchedule.editModal.weekCurrent') }}</span>
         <span class="esm-week-switch__range">{{ weekRanges.current }}</span>
       </button>
       <button
@@ -63,16 +63,16 @@
         :class="['esm-week-switch__tab', { 'esm-week-switch__tab--active': localWeek === 'next' }]"
         @click="localWeek = 'next'"
       >
-        <span class="esm-week-switch__label">下周</span>
+        <span class="esm-week-switch__label">{{ t('admin.users.mentorSchedule.editModal.weekNext') }}</span>
         <span class="esm-week-switch__range">{{ weekRanges.next }}</span>
       </button>
     </div>
 
     <!-- Hours input -->
-    <section class="esm-section" data-field-name="调整导师排期弹窗可上课时长">
+    <section class="esm-section" data-field-name="调整导师排期弹窗可上课时长"> <!-- i18n-skip-line: playwright selector -->
       <header class="esm-section__head">
         <span class="esm-section__icon mdi mdi-clock-outline" aria-hidden="true"></span>
-        <span class="esm-section__title">可上课时长</span>
+        <span class="esm-section__title">{{ t('admin.users.mentorSchedule.editModal.hoursTitle') }}</span>
         <span class="esm-required" aria-hidden="true">*</span>
       </header>
       <div class="esm-hours">
@@ -84,9 +84,9 @@
             :controls="false"
             class="esm-hours__input"
           />
-          <span class="esm-hours__unit">小时 / 周</span>
+          <span class="esm-hours__unit">{{ t('admin.users.mentorSchedule.editModal.hoursUnit') }}</span>
         </div>
-        <div class="esm-hours__quick" role="group" aria-label="快捷选择">
+        <div class="esm-hours__quick" role="group" :aria-label="t('admin.users.mentorSchedule.editModal.quickSelectAriaLabel')">
           <button
             v-for="value in quickHours"
             :key="value"
@@ -101,33 +101,33 @@
     </section>
 
     <!-- Day grid -->
-    <section class="esm-section" data-field-name="调整导师排期弹窗每天可上课时间">
+    <section class="esm-section" data-field-name="调整导师排期弹窗每天可上课时间"> <!-- i18n-skip-line: playwright selector -->
       <header class="esm-section__head">
         <span class="esm-section__icon mdi mdi-calendar-check" aria-hidden="true"></span>
-        <span class="esm-section__title">每天可上课时间</span>
+        <span class="esm-section__title">{{ t('admin.users.mentorSchedule.editModal.slotsTitle') }}</span>
         <span class="esm-required" aria-hidden="true">*</span>
-        <span class="esm-section__hint">可多选</span>
+        <span class="esm-section__hint">{{ t('admin.users.mentorSchedule.editModal.slotsHint') }}</span>
       </header>
       <div class="esm-day-list">
         <fieldset
           v-for="day in weekdays"
           :key="day.value"
           :class="['esm-day-row', { 'esm-day-row--weekend': day.weekend }]"
-          :data-field-name="`${day.label}可用时段`"
+          :data-field-name="`${day.label}可用时段`" <!-- i18n-skip-line: playwright selector -->
         >
-          <legend class="sr-only">{{ day.label }}可用时段</legend>
+          <legend class="sr-only">{{ day.displayLabel }}{{ t('admin.users.mentorSchedule.editModal.slotSuffix') }}</legend>
           <div class="esm-day-row__lead">
             <span class="esm-day-row__rail" aria-hidden="true"></span>
             <span class="esm-day-row__date">{{ day.dayNum }}</span>
             <span class="esm-day-row__meta">
-              <span class="esm-day-row__weekday">{{ day.label }}</span>
+              <span class="esm-day-row__weekday">{{ day.displayLabel }}</span>
               <span class="esm-day-row__month">{{ day.monthLabel }}</span>
             </span>
             <span
               v-if="day.weekend"
               class="esm-day-row__tag esm-day-row__tag--weekend"
             >
-              周末
+              {{ t('admin.users.mentorSchedule.editModal.weekend') }}
             </span>
           </div>
           <div class="esm-day-row__slots">
@@ -151,7 +151,7 @@
       <div class="esm-day-hint">
         <span class="esm-day-hint__legend">
           <span class="esm-day-hint__swatch esm-day-hint__swatch--weekend"></span>
-          周末
+          {{ t('admin.users.mentorSchedule.editModal.weekendHint') }}
         </span>
       </div>
     </section>
@@ -160,34 +160,34 @@
     <section class="esm-section">
       <header class="esm-section__head">
         <span class="esm-section__icon mdi mdi-note-text" aria-hidden="true"></span>
-        <span class="esm-section__title">调整原因</span>
+        <span class="esm-section__title">{{ t('admin.users.mentorSchedule.editModal.reasonTitle') }}</span>
         <span class="esm-required" aria-hidden="true">*</span>
       </header>
       <a-textarea
         v-model:value="formState.reason"
         :rows="3"
         class="esm-reason"
-        placeholder="请填写调整原因，将同步通知给导师"
+        :placeholder="t('admin.users.mentorSchedule.editModal.reasonPlaceholder')"
       />
     </section>
 
     <!-- Notify -->
-    <fieldset class="esm-notify-card" data-field-name="同步通知导师复选框">
-      <legend class="sr-only">同步通知导师</legend>
+    <fieldset class="esm-notify-card" data-field-name="同步通知导师复选框"> <!-- i18n-skip-line: playwright selector -->
+      <legend class="sr-only">{{ t('admin.users.mentorSchedule.editModal.notifyTitle') }}</legend>
       <span class="esm-notify-card__icon mdi mdi-bell-ring-outline" aria-hidden="true"></span>
       <label class="esm-notify-label">
         <a-checkbox v-model:checked="formState.notifyStaff">
-          <span class="esm-notify-label__title">同步通知导师</span>
-          <span class="esm-notify-label__desc">调整后将发送邮件和站内消息通知该导师</span>
+          <span class="esm-notify-label__title">{{ t('admin.users.mentorSchedule.editModal.notifyTitle') }}</span>
+          <span class="esm-notify-label__desc">{{ t('admin.users.mentorSchedule.editModal.notifyDesc') }}</span>
         </a-checkbox>
       </label>
     </fieldset>
 
     <template #footer>
-      <a-button data-surface-part="cancel-control" class="esm-footer-btn" @click="handleClose">取消</a-button>
+      <a-button data-surface-part="cancel-control" class="esm-footer-btn" @click="handleClose">{{ t('admin.users.mentorSchedule.editModal.cancel') }}</a-button>
       <a-button type="primary" data-surface-part="confirm-control" class="esm-footer-btn esm-footer-btn--primary" @click="handleSubmit">
         <span class="mdi mdi-check" aria-hidden="true"></span>
-        保存并通知
+        {{ t('admin.users.mentorSchedule.editModal.submit') }}
       </a-button>
     </template>
   </OverlaySurfaceModal>
@@ -195,9 +195,12 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import type { StaffScheduleListItem, TimeSlot, WeekScope } from '@osg/shared/api/admin/schedule'
 import { OverlaySurfaceModal } from '@osg/shared/components'
+
+const { t, tm } = useI18n()
 
 const props = withDefaults(defineProps<{
   visible: boolean
@@ -221,39 +224,39 @@ const emit = defineEmits<{
 
 const quickHours = [5, 10, 15, 20]
 
-const formatStaffType = (staffType?: string) => {
-  if (staffType === 'lead_mentor') return '班主任'
-  if (staffType === 'assistant') return '助教'
-  return '导师'
-}
+const DAY_LABELS_ZH = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] // i18n-skip-line: playwright labels
+
+const formatStaffType = (staffType?: string) =>
+  t(`admin.users.mentorSchedule.staffTypes.${staffType || 'mentor'}` as never)
 
 const weekRanges = { current: '03/09 - 03/15', next: '03/16 - 03/22' }
 const localWeek = ref<WeekScope>(props.weekScope)
 
 const currentWeekDates = ['03/10', '03/11', '03/12', '03/13', '03/14', '03/15', '03/16']
 const nextWeekDates = ['03/17', '03/18', '03/19', '03/20', '03/21', '03/22', '03/23']
-const dayLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 
 const weekdays = computed(() => {
   const dates = localWeek.value === 'next' ? nextWeekDates : currentWeekDates
+  const displayLabels = tm('admin.users.mentorSchedule.weekdays') as string[]
   return dates.map((date, i) => {
     const [month, day] = date.split('/')
     return {
       value: i + 1,
-      label: dayLabels[i],
+      label: DAY_LABELS_ZH[i],
+      displayLabel: displayLabels[i] || DAY_LABELS_ZH[i],
       date,
       dayNum: day,
-      monthLabel: `${Number(month)}月`,
+      monthLabel: t('admin.users.mentorSchedule.editModal.monthLabel', { month: Number(month) }),
       weekend: i >= 5,
     }
   })
 })
 
-const timeSlots: { value: TimeSlot; label: string; icon: string }[] = [
-  { value: 'morning', label: '上午', icon: 'mdi-weather-sunset-up' },
-  { value: 'afternoon', label: '下午', icon: 'mdi-white-balance-sunny' },
-  { value: 'evening', label: '晚上', icon: 'mdi-weather-night' },
-]
+const timeSlots = computed<{ value: TimeSlot; label: string; icon: string }[]>(() => [
+  { value: 'morning', label: t('admin.users.mentorSchedule.timeSlots.morning'), icon: 'mdi-weather-sunset-up' },
+  { value: 'afternoon', label: t('admin.users.mentorSchedule.timeSlots.afternoon'), icon: 'mdi-white-balance-sunny' },
+  { value: 'evening', label: t('admin.users.mentorSchedule.timeSlots.evening'), icon: 'mdi-weather-night' },
+])
 
 const formState = reactive({
   availableHours: 0,
@@ -274,9 +277,17 @@ const avatarText = computed(() => {
     .join('')
 })
 
-const weekLabel = computed(() => (localWeek.value === 'next' ? '下周排期' : '本周排期'))
+const weekLabel = computed(() =>
+  localWeek.value === 'next'
+    ? t('admin.users.mentorSchedule.editModal.weekLabel.next')
+    : t('admin.users.mentorSchedule.editModal.weekLabel.current')
+)
 
-const modalTitle = computed(() => (props.record?.filled ? '调整导师排期' : '代填导师排期'))
+const modalTitle = computed(() =>
+  props.record?.filled
+    ? t('admin.users.mentorSchedule.editModal.titleAdjust')
+    : t('admin.users.mentorSchedule.editModal.titleFill')
+)
 
 const resetForm = () => {
   localWeek.value = props.weekScope
@@ -317,11 +328,11 @@ const handleClose = () => {
 
 const handleSubmit = () => {
   if (!props.record?.staffId) {
-    message.warning('未找到导师信息，暂时无法保存')
+    message.warning(t('admin.users.mentorSchedule.editModal.warnNoStaff'))
     return
   }
   if (!formState.reason.trim()) {
-    message.warning('请填写调整原因')
+    message.warning(t('admin.users.mentorSchedule.editModal.warnNoReason'))
     return
   }
   emit('submit', {

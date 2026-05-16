@@ -2813,6 +2813,194 @@
         "successReactivate": "学员已通过续签合同重新加入",
         "successRenew": "续签合同成功"
       }
+    },
+    "mentorChangeReview": {
+      "pageTitle": "导师资料变更审核",
+      "filter": {
+        "statusLabel": "状态",
+        "statusPlaceholder": "全部状态",
+        "statuses": {
+          "pending": "待审核",
+          "approved": "已通过",
+          "rejected": "已驳回"
+        },
+        "search": "搜索",
+        "reset": "重置"
+      },
+      "table": {
+        "empty": "暂无导师资料变更申请",
+        "showTotal": "共 {total} 条",
+        "summarySeparator": "、"
+      },
+      "columns": {
+        "requestId": "请求 ID",
+        "userId": "导师 userId",
+        "changeSummary": "变更字段",
+        "status": "状态",
+        "requestedBy": "提交人",
+        "createTime": "提交时间",
+        "reviewer": "审核人",
+        "reviewedAt": "审核时间",
+        "action": "操作"
+      },
+      "fieldLabels": {
+        "nickName": "昵称",
+        "sex": "性别",
+        "phonenumber": "手机号",
+        "email": "邮箱",
+        "remark": "备注",
+        "region": "地区",
+        "city": "城市"
+      },
+      "action": {
+        "view": "查看",
+        "approve": "通过",
+        "reject": "驳回"
+      },
+      "detail": {
+        "title": "变更详情",
+        "labels": {
+          "requestId": "请求 ID",
+          "userId": "导师 userId",
+          "changeSummary": "变更字段",
+          "status": "状态",
+          "requestedBy": "提交人",
+          "createTime": "提交时间",
+          "reviewer": "审核人",
+          "reviewedAt": "审核时间"
+        },
+        "payloadTitle": "变更内容（payload）",
+        "rejectReasonLabel": "驳回原因："
+      },
+      "rejectModal": {
+        "title": "驳回变更",
+        "okText": "确认驳回",
+        "cancelText": "取消",
+        "reasonLabel": "驳回原因",
+        "reasonPlaceholder": "请输入驳回原因"
+      },
+      "approveModal": {
+        "title": "通过变更申请",
+        "content": "确认通过请求 #{id}？通过后变更内容会写入导师账号。",
+        "okText": "通过",
+        "cancelText": "取消"
+      },
+      "status": {
+        "pending": "待审核",
+        "approved": "已通过",
+        "rejected": "已驳回"
+      },
+      "messages": {
+        "loadError": "加载变更申请失败",
+        "approveSuccess": "已通过",
+        "approveFail": "通过失败",
+        "rejectReasonRequired": "请填写驳回原因",
+        "rejectSuccess": "已驳回",
+        "rejectFail": "驳回失败"
+      }
+    },
+    "mentorSchedule": {
+      "pageTitle": "导师排期管理",
+      "export": {
+        "idle": "导出排期表",
+        "loading": "导出中..."
+      },
+      "unfilled": {
+        "title": "{count} 位导师排期未填写",
+        "descNext": "请尽快补齐下周排期",
+        "descCurrent": "距离截止还有 2 天",
+        "remindBtn": "一键催促全部",
+        "reminding": "催促中..."
+      },
+      "header": {
+        "allMentors": "全部导师 ({count}人)"
+      },
+      "filter": {
+        "keyword": "搜索导师姓名/ID...",
+        "allTypes": "全部类型",
+        "allDays": "全部日期",
+        "allSlots": "全部时段"
+      },
+      "staffTypes": {
+        "lead_mentor": "班主任",
+        "mentor": "导师",
+        "assistant": "助教"
+      },
+      "weekOptions": {
+        "current": "本周",
+        "next": "下周"
+      },
+      "weekdays": [
+        "周一",
+        "周二",
+        "周三",
+        "周四",
+        "周五",
+        "周六",
+        "周日"
+      ],
+      "timeSlots": {
+        "morning": "上午",
+        "afternoon": "下午",
+        "evening": "晚上"
+      },
+      "table": {
+        "empty": "当前筛选条件下暂无排期数据",
+        "showTotal": "共 {total} 条记录",
+        "unfilledTag": "未填写排期",
+        "unfilledAria": "未填写排期",
+        "adjust": "调整排期",
+        "fill": "代填排期"
+      },
+      "messages": {
+        "remindSuccess": "已提醒 {count} 位导师补齐排期",
+        "noRemind": "当前无可提醒导师",
+        "remindFail": "催促导师失败",
+        "exportSuccess": "导师排期导出成功",
+        "exportFail": "导师排期导出失败",
+        "exportFailReason": "导师排期导出失败：{reason}",
+        "exportAuthFail": "导出请求未通过认证，请重新登录",
+        "saveSuccess": "导师排期已保存",
+        "saveFail": "导师排期保存失败"
+      },
+      "filename": "导师排期表.xlsx",
+      "columns": {
+        "staffId": "ID",
+        "staffName": "导师",
+        "staffType": "类型",
+        "availableHours": "可用时长",
+        "availableSlotLabels": "可用时间",
+        "action": "操作"
+      },
+      "editModal": {
+        "titleAdjust": "调整导师排期",
+        "titleFill": "代填导师排期",
+        "weekLabel": {
+          "current": "本周排期",
+          "next": "下周排期"
+        },
+        "weekCurrent": "本周",
+        "weekNext": "下周",
+        "staffPlaceholder": "待选择导师",
+        "hoursLabel": "{week}可用时长",
+        "hoursTitle": "可上课时长",
+        "hoursUnit": "小时 / 周",
+        "quickSelectAriaLabel": "快捷选择",
+        "slotsTitle": "每天可上课时间",
+        "slotsHint": "可多选",
+        "slotSuffix": "可用时段",
+        "monthLabel": "{month}月",
+        "weekend": "周末",
+        "weekendHint": "周末",
+        "reasonTitle": "调整原因",
+        "reasonPlaceholder": "请填写调整原因，将同步通知给导师",
+        "notifyTitle": "同步通知导师",
+        "notifyDesc": "调整后将发送邮件和站内消息通知该导师",
+        "cancel": "取消",
+        "submit": "保存并通知",
+        "warnNoStaff": "未找到导师信息，暂时无法保存",
+        "warnNoReason": "请填写调整原因"
+      }
     }
   }
 }
