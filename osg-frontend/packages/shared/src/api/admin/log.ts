@@ -1,4 +1,5 @@
 import { downloadAdminFile, http } from '../../utils'
+import { i18n } from '../../i18n'
 
 export interface LogRow {
   operId: number
@@ -40,6 +41,6 @@ export function exportLogs(filters: LogFilters = {}) {
   return downloadAdminFile({
     path: '/admin/log/export',
     params: toParams(filters),
-    fallbackFilename: '操作日志.xlsx',
+    fallbackFilename: `${(i18n.global.t as unknown as (k: string) => string)('common.shared.exportFile.operationLog')}.xlsx`,
   })
 }

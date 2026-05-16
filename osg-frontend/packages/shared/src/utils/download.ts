@@ -1,6 +1,12 @@
+import { i18n } from '../i18n'
 import { getToken } from './storage'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+
+const t = (k: string, named?: Record<string, unknown>): string =>
+  named
+    ? (i18n.global.t as unknown as (k: string, n: Record<string, unknown>) => string)(k, named)
+    : (i18n.global.t as unknown as (k: string) => string)(k)
 
 type DownloadParamValue = string | number | boolean | null | undefined
 
@@ -51,7 +57,7 @@ export async function downloadAdminFile({ path, params, fallbackFilename }: Admi
   })
 
   if (!response.ok) {
-    throw new Error(`${fallbackFilename}下载失败`)
+    throw new Error(t('common.shared.download.failed', { name: fallbackFilename }))
   }
 
   const blob = await response.blob()

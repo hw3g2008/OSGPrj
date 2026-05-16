@@ -1,6 +1,9 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { i18n } from '../i18n'
 import { useDictFacade, type DictFacadeOption } from './useDictFacade'
+
+const t = (k: string): string => (i18n.global.t as unknown as (k: string) => string)(k)
 
 /**
  * S-055 §4A.1 共享：osg_base_course_topic 字典加载 + 必修/选修/行为分组
@@ -98,7 +101,7 @@ export function useBaseCourseTopic(): UseBaseCourseTopicReturn {
   const warnOnce = (): void => {
     if (warned) return
     warned = true
-    message.warning('部分基础课程主题字典数据格式异常，已归入未分类')
+    message.warning(t('common.shared.baseCourseTopic.dictWarning'))
   }
 
   const load = async (): Promise<void> => {

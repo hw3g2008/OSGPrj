@@ -1,5 +1,6 @@
 import { downloadAdminFile } from '../../utils'
 import { http } from '../../utils/request'
+import { i18n } from '../../i18n'
 
 export interface StaffListParams {
   pageNum: number
@@ -108,7 +109,7 @@ export function exportStaffList(params: StaffExportParams = {}) {
   return downloadAdminFile({
     path: '/admin/staff/export',
     params,
-    fallbackFilename: '导师列表.xlsx',
+    fallbackFilename: `${(i18n.global.t as unknown as (k: string) => string)('common.shared.exportFile.mentorList')}.xlsx`,
   })
 }
 

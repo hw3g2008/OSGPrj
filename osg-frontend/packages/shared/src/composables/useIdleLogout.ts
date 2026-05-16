@@ -1,8 +1,11 @@
 import { onBeforeUnmount, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
+import { i18n } from '../i18n'
 import { logout as logoutApi } from '../api/auth'
 import { clearAuth } from '../utils/storage'
 import { http } from '../utils/request'
+
+const t = (k: string): string => (i18n.global.t as unknown as (k: string) => string)(k)
 
 /**
  * 空闲自动登出配置（单一来源）。
@@ -85,7 +88,7 @@ export function useIdleLogout(options: UseIdleLogoutOptions = {}) {
       // 即使后端 logout 失败，前端也强制清理本地登录态
     }
     clearAuth()
-    message.warning('因长时间未操作，已自动退出')
+    message.warning(t('common.shared.idleLogout.message'))
     if (options.onLogout) {
       options.onLogout()
     } else if (typeof window !== 'undefined') {

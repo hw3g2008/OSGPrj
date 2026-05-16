@@ -11,6 +11,8 @@
  * - 其他 / 空 / null / undefined → fallback 到 pending（与 asst 现实现 normalizeStatus 一致）
  */
 
+import { i18n } from '../i18n'
+
 export type ClassRecordStatusToneClass =
   | 'osg-class-record-status-tag--pending'
   | 'osg-class-record-status-tag--approved'
@@ -51,16 +53,18 @@ export function resolveClassRecordStatusToneClass(
 }
 
 /**
- * 按 status 字符串解析中文展示文案
+ * 按 status 字符串解析展示文案（已 i18n）。
  *
- * 规则（与原型 SSOT + asst/mentor 现实现一致）：
- * - 'approved' → '已通过'
- * - 'rejected' → '已驳回'
- * - 其他 / 空 → '待审核'
+ * 通过 vue-i18n 的全局实例查表；当前 locale='zh' 时返回 '已通过' / '已驳回' / '待审核'，
+ * 'en' 时返回 'Approved' / 'Rejected' / 'Pending'。
  */
 export function resolveClassRecordStatusLabel(status?: string | null): string {
   const normalized = normalizeClassRecordStatus(status)
-  if (normalized === 'approved') return '已通过'
-  if (normalized === 'rejected') return '已驳回'
-  return '待审核'
+  const key =
+    normalized === 'approved'
+      ? 'common.shared.classRecordStatus.approved'
+      : normalized === 'rejected'
+        ? 'common.shared.classRecordStatus.rejected'
+        : 'common.shared.classRecordStatus.pending'
+  return (i18n.global.t as unknown as (k: string) => string)(key)
 }

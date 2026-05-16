@@ -1,5 +1,11 @@
 import { computed, reactive, ref, unref } from 'vue'
 import type { ComputedRef, MaybeRefOrGetter, Ref } from 'vue'
+import { i18n } from '../i18n'
+
+const t = (key: string, named?: Record<string, unknown>): string =>
+  named
+    ? (i18n.global.t as unknown as (k: string, n: Record<string, unknown>) => string)(key, named)
+    : (i18n.global.t as unknown as (k: string) => string)(key)
 
 export interface PagedResponse<T> {
   rows?: T[]
@@ -68,7 +74,7 @@ export function usePagination<T, P extends Record<string, unknown> = Record<stri
     hideOnSinglePage: options.hideOnSinglePage ?? false,
     showTotal:
       options.showTotal ??
-      ((t: number) => `共 ${t} 条记录`)
+      ((total: number) => t('common.shared.pagination.totalRecords', { total }))
   }))
 
   let lastParams: P | undefined
@@ -132,7 +138,7 @@ export function useStandardClientPagination(
     pageSize: 10,
     showSizeChanger: false,
     total: typeof total === 'function' ? (total as () => number)() : unref(total),
-    showTotal: (t: number) => `共 ${t} 条记录`,
+    showTotal: (total: number) => t('common.shared.pagination.totalRecords', { total }),
     hideOnSinglePage: false
   }))
 }

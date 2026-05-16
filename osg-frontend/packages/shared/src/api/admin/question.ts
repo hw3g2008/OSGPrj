@@ -1,3 +1,4 @@
+// i18n-skip-file: QuestionSourceType 是 TypeScript 字面量类型，匹配后端返回值（'入职面试申请' / '自主填写'）；非 UI 文案
 import { http } from '../../utils/request'
 
 export type QuestionTab = 'pending' | 'approved' | 'rejected'

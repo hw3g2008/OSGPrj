@@ -144,6 +144,80 @@
         "baseCourse": "Base session"
       }
     },
+    "classRecordStatus": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "studentStatus": {
+      "active": "Active",
+      "frozen": "Frozen",
+      "ended": "Ended",
+      "refunded": "Refunded"
+    },
+    "practiceType": {
+      "mockInterview": "Mock Interview",
+      "relation": "Interpersonal test",
+      "communication": "Communication test",
+      "midterm": "Midterm"
+    },
+    "applicationStatus": {
+      "pending": "Awaiting Mentor",
+      "assigned": "Mentor assigned",
+      "coaching": "Coaching",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "mockPracticeStatus": {
+      "pending": "Awaiting Mentor",
+      "assigned": "Mentor assigned",
+      "coaching": "Coaching",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "pagination": {
+      "totalRecords": "{total} records in total"
+    },
+    "request": {
+      "sessionExpired": "Session expired. Please log in again.",
+      "unauthorized": "Unauthorized",
+      "requestFailed": "Request failed",
+      "networkError": "Network error"
+    },
+    "phone": {
+      "countries": {
+        "cn": "Mainland China",
+        "hk": "Hong Kong, China",
+        "mo": "Macao, China",
+        "tw": "Taiwan, China",
+        "usCa": "US / Canada",
+        "uk": "United Kingdom",
+        "sg": "Singapore",
+        "au": "Australia"
+      }
+    },
+    "exportFile": {
+      "classRecord": "Session Record",
+      "jobOverview": "Job search overview",
+      "operationLog": "Operation log",
+      "mentorList": "Mentor list"
+    },
+    "limits": {
+      "amountMax": "Amount must not exceed {max}",
+      "hoursMax": "Hours must not exceed {max}"
+    },
+    "download": {
+      "failed": "{name} download failed"
+    },
+    "idleLogout": {
+      "message": "Signed out due to inactivity"
+    },
+    "baseCourseTopic": {
+      "dictWarning": "Some base session topic Dictionary entries are malformed; merged into uncategorized."
+    },
+    "referenceFinder": {
+      "loadFailed": "Failed to load reference candidates"
+    },
     "classReport": {
       "title": "Report session record",
       "submitLoading": "Submitting...",
@@ -159,6 +233,7 @@
         "studentLabel": "Student",
         "studentPlaceholder": "Please select a student",
         "studentEmpty": "No reportable students for this account",
+        "loadFailed": "Failed to load reportable students",
         "studentLabelFrozen": "{name} (frozen, not reportable)",
         "studentLabelRefunded": "{name} (refunded, not reportable)",
         "studentLabelEnded": "{name} (ended)",

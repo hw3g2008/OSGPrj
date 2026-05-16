@@ -144,6 +144,80 @@
         "baseCourse": "基础课程"
       }
     },
+    "classRecordStatus": {
+      "pending": "待审核",
+      "approved": "已通过",
+      "rejected": "已驳回"
+    },
+    "studentStatus": {
+      "active": "正常",
+      "frozen": "冻结",
+      "ended": "已结束",
+      "refunded": "退款"
+    },
+    "practiceType": {
+      "mockInterview": "模拟面试",
+      "relation": "人际关系测试",
+      "communication": "沟通测试",
+      "midterm": "期中考试"
+    },
+    "applicationStatus": {
+      "pending": "待分配导师",
+      "assigned": "已分配导师",
+      "coaching": "辅导中",
+      "completed": "已完成",
+      "cancelled": "已取消"
+    },
+    "mockPracticeStatus": {
+      "pending": "待分配导师",
+      "assigned": "已分配导师",
+      "coaching": "辅导中",
+      "completed": "已完成",
+      "cancelled": "已取消"
+    },
+    "pagination": {
+      "totalRecords": "共 {total} 条记录"
+    },
+    "request": {
+      "sessionExpired": "登录已过期，请重新登录",
+      "unauthorized": "未授权",
+      "requestFailed": "请求失败",
+      "networkError": "网络错误"
+    },
+    "phone": {
+      "countries": {
+        "cn": "中国大陆",
+        "hk": "中国香港",
+        "mo": "中国澳门",
+        "tw": "中国台湾",
+        "usCa": "美国/加拿大",
+        "uk": "英国",
+        "sg": "新加坡",
+        "au": "澳大利亚"
+      }
+    },
+    "exportFile": {
+      "classRecord": "课程记录",
+      "jobOverview": "求职总览",
+      "operationLog": "操作日志",
+      "mentorList": "导师列表"
+    },
+    "limits": {
+      "amountMax": "金额不能超过 {max}",
+      "hoursMax": "课时不能超过 {max}"
+    },
+    "download": {
+      "failed": "{name}下载失败"
+    },
+    "idleLogout": {
+      "message": "因长时间未操作，已自动退出"
+    },
+    "baseCourseTopic": {
+      "dictWarning": "部分基础课程主题字典数据格式异常，已归入未分类"
+    },
+    "referenceFinder": {
+      "loadFailed": "加载关联候选失败"
+    },
     "classReport": {
       "title": "上报课程记录",
       "submitLoading": "提交中...",
@@ -159,6 +233,7 @@
         "studentLabel": "学员",
         "studentPlaceholder": "请选择学员",
         "studentEmpty": "当前账号暂无可上报学员",
+        "loadFailed": "加载可上报学员失败",
         "studentLabelFrozen": "{name}（冻结，不可申报）",
         "studentLabelRefunded": "{name}（已退费，不可申报）",
         "studentLabelEnded": "{name}（已结束）",

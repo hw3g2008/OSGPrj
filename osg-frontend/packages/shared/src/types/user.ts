@@ -1,3 +1,4 @@
+// i18n-skip-file: 本文件仅类型定义，中文均为字段注释，按 glossary §4 不做 t() 化
 // 用户角色
 export type UserRole = 'student' | 'mentor' | 'lead_mentor' | 'assistant' | 'admin'
 

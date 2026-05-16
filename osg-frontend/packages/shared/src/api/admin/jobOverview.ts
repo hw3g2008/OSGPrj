@@ -1,5 +1,6 @@
 import { downloadAdminFile } from '../../utils'
 import { http } from '../../utils/request'
+import { i18n } from '../../i18n'
 
 export interface JobOverviewFilters {
   studentName?: string
@@ -160,7 +161,7 @@ export function exportJobOverview(filters: JobOverviewExportFilters = {}) {
   return downloadAdminFile({
     path: '/admin/job-overview/export',
     params: toRequestParams(filters),
-    fallbackFilename: '求职总览.xlsx',
+    fallbackFilename: `${(i18n.global.t as unknown as (k: string) => string)('common.shared.exportFile.jobOverview')}.xlsx`,
   })
 }
 

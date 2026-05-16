@@ -5,31 +5,43 @@
  * - 集中维护国际区号清单，5 端共用，避免硬编码重复。
  * - 提供 phone 字符串与 (countryCode, number) 的双向转换工具。
  * - 与系统现有约定对齐：DB 中 phone 整体存为 "+86 13001985588" 格式（区号 + 空格 + 号码）。
+ *
+ * i18n：`labelKey` 是 i18n key（如 'common.shared.phone.countries.cn'），消费方用
+ * `formatCountryDisplay(item, t)` 渲染为 "+86 中国大陆" / "+86 Mainland China"。
  */
 
 export interface PhoneCountryCode {
   /** ITU E.164 区号，含 "+"，例如 "+86" */
   code: string
-  /** 国家或地区中文名 */
-  label: string
-  /** 下拉展示文本，例如 "+86 中国大陆" */
-  display: string
+  /** 国家或地区名称的 i18n key（如 'common.shared.phone.countries.cn'） */
+  labelKey: string
 }
 
 export const PHONE_COUNTRY_CODES: readonly PhoneCountryCode[] = Object.freeze([
-  { code: '+86', label: '中国大陆', display: '+86 中国大陆' },
-  { code: '+852', label: '中国香港', display: '+852 中国香港' },
-  { code: '+853', label: '中国澳门', display: '+853 中国澳门' },
-  { code: '+886', label: '中国台湾', display: '+886 中国台湾' },
-  { code: '+1', label: '美国/加拿大', display: '+1 美国/加拿大' },
-  { code: '+44', label: '英国', display: '+44 英国' },
-  { code: '+65', label: '新加坡', display: '+65 新加坡' },
-  { code: '+61', label: '澳大利亚', display: '+61 澳大利亚' },
+  { code: '+86', labelKey: 'common.shared.phone.countries.cn' },
+  { code: '+852', labelKey: 'common.shared.phone.countries.hk' },
+  { code: '+853', labelKey: 'common.shared.phone.countries.mo' },
+  { code: '+886', labelKey: 'common.shared.phone.countries.tw' },
+  { code: '+1', labelKey: 'common.shared.phone.countries.usCa' },
+  { code: '+44', labelKey: 'common.shared.phone.countries.uk' },
+  { code: '+65', labelKey: 'common.shared.phone.countries.sg' },
+  { code: '+61', labelKey: 'common.shared.phone.countries.au' },
 ])
 
 export const DEFAULT_PHONE_COUNTRY_CODE = '+86'
 
 const KNOWN_CODES: readonly string[] = PHONE_COUNTRY_CODES.map((item) => item.code)
+
+/**
+ * 渲染为下拉显示文本，例如 "+86 中国大陆" / "+86 Mainland China"。
+ * caller 传入 `t` 函数（vue-i18n 的 t）。
+ */
+export function formatCountryDisplay(
+  item: PhoneCountryCode,
+  t: (key: string) => string,
+): string {
+  return `${item.code} ${t(item.labelKey)}`
+}
 
 /**
  * 解析 phone 字符串为 { countryCode, number }。

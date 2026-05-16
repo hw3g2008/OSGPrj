@@ -102,7 +102,9 @@ function getMondayWeekStart(d: Date): Date {
 }
 
 function isCoachingStatus(status?: string): boolean {
-  return /辅导|coach/i.test(status ?? '')
+  // 业务逻辑模式匹配（非展示文案）：匹配后端状态字符串，可能含中文"辅导"或英文 coach 前缀。
+  // 按 glossary §4，错误判断/状态匹配用的字符串不做 t() 化。
+  return /辅导|coach/i.test(status ?? '') // TODO(i18n) intentionally kept: pattern match, not display text
 }
 
 function formatMonthDay(value?: string): string {

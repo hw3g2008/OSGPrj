@@ -1,5 +1,6 @@
 import { downloadAdminFile } from '../../utils'
 import { http } from '../../utils/request'
+import { i18n } from '../../i18n'
 
 export interface ClassRecordRow {
   recordId: number
@@ -75,6 +76,6 @@ export function exportClassRecords(filters: ClassRecordFilters = {}) {
   return downloadAdminFile({
     path: '/admin/class-record/export',
     params: toParams(filters),
-    fallbackFilename: '课程记录.xlsx',
+    fallbackFilename: `${(i18n.global.t as unknown as (k: string) => string)('common.shared.exportFile.classRecord')}.xlsx`,
   })
 }

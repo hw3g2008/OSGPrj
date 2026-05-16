@@ -1,9 +1,12 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue'
+import { i18n } from '../i18n'
 import {
   getReportableStudents,
   type ClassReportEnd,
 } from '../api/class-records'
 import type { StudentOption } from '../types/classReport'
+
+const t = (k: string): string => (i18n.global.t as unknown as (k: string) => string)(k)
 
 /**
  * S-055 §4A.1 共享：按 end 选 reportable students 接口 + 空状态文案
@@ -16,7 +19,7 @@ import type { StudentOption } from '../types/classReport'
  *
  * 403 等权限错误：不吞掉，error 持有可展示消息，students=[]。
  */
-const DEFAULT_EMPTY_TEXT = '当前账号暂无可上报学员'
+const EMPTY_TEXT_KEY = 'common.shared.classReport.basic.studentEmpty'
 
 export interface UseStudentScopeFinderReturn {
   students: Ref<StudentOption[]>
@@ -39,7 +42,7 @@ export function useStudentScopeFinder(
 
   const emptyMessage = computed(() => {
     if (error.value) return error.value
-    return DEFAULT_EMPTY_TEXT
+    return t(EMPTY_TEXT_KEY)
   })
 
   const refresh = async (): Promise<void> => {
@@ -56,7 +59,7 @@ export function useStudentScopeFinder(
           ? err.message
           : typeof err === 'string'
             ? err
-            : '加载可上报学员失败'
+            : t('common.shared.classReport.basic.loadFailed')
     } finally {
       loading.value = false
     }
@@ -67,7 +70,9 @@ export function useStudentScopeFinder(
     loading,
     error,
     isEmpty,
-    emptyText: DEFAULT_EMPTY_TEXT,
+    get emptyText() {
+      return t(EMPTY_TEXT_KEY)
+    },
     emptyMessage,
     refresh,
   }

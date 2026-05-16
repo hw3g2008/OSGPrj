@@ -1,9 +1,12 @@
 import { ref, type Ref } from 'vue'
+import { i18n } from '../i18n'
 import {
   getReferenceCandidates,
   type ClassReportEnd,
 } from '../api/class-records'
 import type { ReferenceOption, ReferenceType } from '../types/classReport'
+
+const t = (k: string): string => (i18n.global.t as unknown as (k: string) => string)(k)
 
 /**
  * S-056 §3.3 / §4A.1 按 referenceType + studentId 路由候选加载
@@ -75,7 +78,7 @@ export function useReferenceFinder(
           ? err.message
           : typeof err === 'string'
             ? err
-            : '加载关联候选失败'
+            : t('common.shared.referenceFinder.loadFailed')
       throw err
     } finally {
       loading.value = false

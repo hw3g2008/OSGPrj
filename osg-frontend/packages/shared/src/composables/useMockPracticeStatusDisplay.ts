@@ -31,6 +31,8 @@
  *
  * 引用方：assistant / mentor / lead-mentor / admin / student 五端 mock-practice 列表/详情页
  */
+import { i18n } from '../i18n'
+
 export interface MockPracticeStatusInput {
   status?: string | null
   completedHours?: number | null
@@ -43,12 +45,12 @@ export interface MockPracticeStatusDisplay {
   tone: 'danger' | 'warning' | 'info' | 'success' | 'default'
 }
 
-const LABEL_MAP: Record<MockPracticeStatusDisplay['value'], string> = {
-  pending: '待分配导师',
-  assigned: '已分配导师',
-  coaching: '辅导中',
-  completed: '已完成',
-  cancelled: '已取消',
+const LABEL_KEY_MAP: Record<MockPracticeStatusDisplay['value'], string> = {
+  pending: 'common.shared.mockPracticeStatus.pending',
+  assigned: 'common.shared.mockPracticeStatus.assigned',
+  coaching: 'common.shared.mockPracticeStatus.coaching',
+  completed: 'common.shared.mockPracticeStatus.completed',
+  cancelled: 'common.shared.mockPracticeStatus.cancelled',
 }
 
 const TONE_MAP: Record<MockPracticeStatusDisplay['value'], MockPracticeStatusDisplay['tone']> = {
@@ -105,7 +107,8 @@ function toNumber(v: unknown): number {
 }
 
 function makeDisplay(value: MockPracticeStatusDisplay['value']): MockPracticeStatusDisplay {
-  return { value, label: LABEL_MAP[value], tone: TONE_MAP[value] }
+  const t = i18n.global.t as unknown as (k: string) => string
+  return { value, label: t(LABEL_KEY_MAP[value]), tone: TONE_MAP[value] }
 }
 
 /**

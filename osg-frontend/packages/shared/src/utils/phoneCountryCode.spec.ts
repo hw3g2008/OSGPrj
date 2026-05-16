@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   PHONE_COUNTRY_CODES,
   DEFAULT_PHONE_COUNTRY_CODE,
+  formatCountryDisplay,
   splitPhone,
   joinPhone,
 } from './phoneCountryCode'
@@ -13,12 +14,17 @@ describe('PHONE_COUNTRY_CODES', () => {
     expect(DEFAULT_PHONE_COUNTRY_CODE).toBe('+86')
   })
 
-  it('每个区号都以 + 开头且 display 含完整 label', () => {
+  it('每个区号都以 + 开头且 labelKey 形如 i18n 命名空间', () => {
     for (const item of PHONE_COUNTRY_CODES) {
       expect(item.code.startsWith('+')).toBe(true)
-      expect(item.display).toContain(item.code)
-      expect(item.display).toContain(item.label)
+      expect(item.labelKey).toMatch(/^common\.shared\.phone\.countries\./)
     }
+  })
+
+  it('formatCountryDisplay 拼接 code + t(labelKey)', () => {
+    const item = PHONE_COUNTRY_CODES[0]
+    const fakeT = (k: string) => `[${k}]`
+    expect(formatCountryDisplay(item, fakeT)).toBe(`${item.code} [${item.labelKey}]`)
   })
 })
 

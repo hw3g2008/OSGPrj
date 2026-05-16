@@ -18,11 +18,13 @@ const DEFAULT_OUT = path.resolve(__dirname, 'i18n-map.csv')
 const argv = process.argv.slice(2)
 let MODULE = null
 let CHECK = false
+let INCLUDE_TESTS = false
 let positional = []
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i]
   if (a === '--module') { MODULE = argv[++i]; continue }
   if (a === '--check') { CHECK = true; continue }
+  if (a === '--include-tests') { INCLUDE_TESTS = true; continue }
   positional.push(a)
 }
 if (CHECK && !MODULE && positional[0]) MODULE = positional[0]
@@ -42,6 +44,10 @@ const TODO_MARKERS = [
 ]
 
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'coverage', '.git', '.turbo', 'playwright-report'])
+
+function isTestFile(filePath) {
+  return /\.(spec|test)\.(ts|tsx|js)$/.test(filePath) || /[\\/]__tests__[\\/]/.test(filePath) || /[\\/]tests[\\/]e2e[\\/]/.test(filePath)
+}
 
 function* walkFiles(dir) {
   if (!fs.existsSync(dir)) return
@@ -78,8 +84,13 @@ let total = 0
 const violations = []
 
 for (const filePath of walkFiles(SCAN_DIR)) {
+  if (!INCLUDE_TESTS && isTestFile(filePath)) continue
   const rel = path.relative(process.cwd(), filePath).replace(/\\/g, '/')
   const lines = fs.readFileSync(filePath, 'utf8').split('\n')
+  // File-level skip pragma — must appear in the first 10 lines.
+  // Use this for files where Chinese strings are mapping keys / regex patterns / etc.,
+  // NOT user-facing display text. Mark with: // i18n-skip-file: <reason>
+  if (lines.slice(0, 10).some((l) => /i18n-skip-file/.test(l))) continue
 
   // Track block-comment state for .ts files (simple, conservative)
   let inBlockComment = false

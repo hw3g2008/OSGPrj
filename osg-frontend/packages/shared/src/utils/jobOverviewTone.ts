@@ -3,6 +3,10 @@
  *
  * SSOT：以 Assistant job-overview 为基准的 9 条阶段规则 + 辅导状态规则
  * 供三端 (Assistant / Lead-Mentor / Mentor) 共用，保证视觉一致
+ *
+ * i18n-skip-file: 此文件无 UI 文案输出，仅返回 color 枚举字符串；中文字符串"拒绝"
+ * "放弃""投递""辅导""待""新"是与后端字段做子串匹配的 PATTERN，非展示文案，按
+ * glossary §4 不做 t() 化。
  */
 
 /**

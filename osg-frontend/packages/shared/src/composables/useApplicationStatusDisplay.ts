@@ -20,6 +20,8 @@
  * 与之前各端冗余 statusLabel/statusTone 字段相比，本 composable 为唯一源。
  * 后端 §D.3 要求停止输出 statusLabel/statusTone 固化字段，仅返回 raw 字段。
  */
+import { i18n } from '../i18n'
+
 export interface ApplicationStatusInput {
   assignStatus?: string | null
   coachingStatus?: string | null
@@ -31,12 +33,12 @@ export interface ApplicationStatusDisplay {
   tone: 'danger' | 'warning' | 'info' | 'success' | 'default'
 }
 
-const LABEL_MAP: Record<ApplicationStatusDisplay['value'], string> = {
-  pending: '待分配导师',
-  assigned: '已分配导师',
-  coaching: '辅导中',
-  completed: '已完成',
-  cancelled: '已取消',
+const LABEL_KEY_MAP: Record<ApplicationStatusDisplay['value'], string> = {
+  pending: 'common.shared.applicationStatus.pending',
+  assigned: 'common.shared.applicationStatus.assigned',
+  coaching: 'common.shared.applicationStatus.coaching',
+  completed: 'common.shared.applicationStatus.completed',
+  cancelled: 'common.shared.applicationStatus.cancelled',
 }
 
 const TONE_MAP: Record<ApplicationStatusDisplay['value'], ApplicationStatusDisplay['tone']> = {
@@ -78,7 +80,8 @@ export function deriveApplicationStatus(input: ApplicationStatusInput | null | u
 }
 
 function makeDisplay(value: ApplicationStatusDisplay['value']): ApplicationStatusDisplay {
-  return { value, label: LABEL_MAP[value], tone: TONE_MAP[value] }
+  const t = i18n.global.t as unknown as (k: string) => string
+  return { value, label: t(LABEL_KEY_MAP[value]), tone: TONE_MAP[value] }
 }
 
 /**
