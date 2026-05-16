@@ -6,7 +6,7 @@
       :user-initials="userInitials"
       :role-label="roleLabel"
       :current-path="route.path"
-      logo-title="OSG Assistant"
+      :logo-title="t('assistant.layout.appName')"
       @nav="handleNavClick"
       @profile-click="handleProfileClick"
       @logout="handleLogout"
@@ -20,6 +20,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 import { AppSidebar, type NavigationGroup } from '@osg/shared/components'
@@ -28,45 +29,47 @@ import { clearAuth, getUser } from '@osg/shared/utils'
 
 import '@mdi/font/css/materialdesignicons.css'
 
-const FALLBACK_NAME = 'Assistant User'
-const FALLBACK_ROLE = 'Assistant'
+const { t } = useI18n()
 
-const navigationGroups: NavigationGroup[] = [
+const FALLBACK_NAME = t('assistant.layout.fallbackName')
+const FALLBACK_ROLE = t('assistant.layout.fallbackRole')
+
+const navigationGroups = computed<NavigationGroup[]>(() => [
   {
-    title: '求职中心 Career',
+    title: t('assistant.layout.groups.career'),
     items: [
       {
         path: '/career/positions',
-        label: '岗位信息 Positions',
+        label: t('assistant.layout.nav.positions'),
         iconClass: 'mdi-briefcase-search',
         activePaths: ['/career/positions'],
       },
       {
         path: '/career/job-overview',
-        label: '学员求职总览 Job Overview',
+        label: t('assistant.layout.nav.jobOverview'),
         iconClass: 'mdi-briefcase-eye',
         activePaths: ['/career/job-overview'],
       },
       {
         path: '/career/mock-practice',
-        label: '模拟应聘管理 Mock Practice',
+        label: t('assistant.layout.nav.mockPractice'),
         iconClass: 'mdi-account-voice',
         activePaths: ['/career/mock-practice'],
       },
     ],
   },
   {
-    title: '学员中心 Students',
+    title: t('assistant.layout.groups.students'),
     items: [
       {
         path: '/students',
-        label: '学员列表 Student List',
+        label: t('assistant.layout.nav.studentList'),
         iconClass: 'mdi-account-group',
         activePaths: ['/students'],
       },
       {
         path: '/communication',
-        label: '人际关系沟通记录 Communication',
+        label: t('assistant.layout.nav.communication'),
         iconClass: 'mdi-message-text-clock',
         activePaths: ['/communication'],
         hidden: true,
@@ -74,29 +77,29 @@ const navigationGroups: NavigationGroup[] = [
     ],
   },
   {
-    title: '教学中心 Teaching',
+    title: t('assistant.layout.groups.teaching'),
     items: [
       {
         path: '/class-records',
-        label: '课程记录 Class Records',
+        label: t('assistant.layout.nav.classRecords'),
         iconClass: 'mdi-book-open-variant',
         activePaths: ['/class-records'],
       },
     ],
   },
   {
-    title: '财务中心 Finance',
+    title: t('assistant.layout.groups.finance'),
     items: [
       {
         path: '/settlement',
-        label: '课时结算 Settlement',
+        label: t('assistant.layout.nav.settlement'),
         iconClass: 'mdi-cash-clock',
         activePaths: ['/settlement'],
         hidden: true,
       },
       {
         path: '/expense',
-        label: '报销管理 Expense',
+        label: t('assistant.layout.nav.expense'),
         iconClass: 'mdi-receipt-text-clock',
         activePaths: ['/expense'],
         hidden: true,
@@ -104,25 +107,25 @@ const navigationGroups: NavigationGroup[] = [
     ],
   },
   {
-    title: '资源中心 Resources',
+    title: t('assistant.layout.groups.resources'),
     items: [
       {
         path: '/files',
-        label: '文件 Files',
+        label: t('assistant.layout.nav.files'),
         iconClass: 'mdi-folder-open',
         activePaths: ['/files'],
         hidden: true,
       },
       {
         path: '/online-test-bank',
-        label: '在线测试题库 Online Test',
+        label: t('assistant.layout.nav.onlineTest'),
         iconClass: 'mdi-monitor-cellphone',
         activePaths: ['/online-test-bank'],
         hidden: true,
       },
       {
         path: '/interview-bank',
-        label: '真人面试题库 Interview Bank',
+        label: t('assistant.layout.nav.interviewBank'),
         iconClass: 'mdi-account-tie-voice',
         activePaths: ['/interview-bank'],
         hidden: true,
@@ -130,37 +133,37 @@ const navigationGroups: NavigationGroup[] = [
     ],
   },
   {
-    title: '个人中心 Profile',
+    title: t('assistant.layout.groups.profile'),
     items: [
       {
         path: '/profile',
-        label: '基本信息 Profile',
+        label: t('assistant.layout.nav.profile'),
         iconClass: 'mdi-account',
         activePaths: ['/profile'],
       },
       {
         path: '/schedule',
-        label: '课程排期 Schedule',
+        label: t('assistant.layout.nav.schedule'),
         iconClass: 'mdi-calendar-clock',
         activePaths: ['/schedule'],
       },
       {
         path: '/notice',
-        label: '消息 Notice',
+        label: t('assistant.layout.nav.notice'),
         iconClass: 'mdi-bell-outline',
         activePaths: ['/notice'],
         hidden: true,
       },
       {
         path: '/faq',
-        label: '常见问题 FAQ',
+        label: t('assistant.layout.nav.faq'),
         iconClass: 'mdi-help-circle-outline',
         activePaths: ['/faq'],
         hidden: true,
       },
     ],
   },
-]
+])
 
 const route = useRoute()
 const router = useRouter()

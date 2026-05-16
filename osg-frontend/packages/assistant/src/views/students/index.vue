@@ -1,7 +1,7 @@
 <template>
   <div class="osg-page">
     <PageHeader
-      title-zh="学员列表"
+      :title-zh="t('assistant.students.title')"
       title-en="Student List"
     />
 
@@ -10,7 +10,7 @@
         <a-input
           id="assistant-students-keyword"
           v-model:value="filters.keyword"
-          placeholder="搜索姓名"
+          :placeholder="t('assistant.students.k6')"
           allow-clear
           style="width: 180px"
           @press-enter="handleSearch"
@@ -22,32 +22,32 @@
         <!-- TODO: 待后端支持「关系类型」字段后补充「学员类型」筛选（我教的学员 / 助教为我） -->
         <a-input
           v-model:value="filters.school"
-          placeholder="学校"
+          :placeholder="t('assistant.students.k7')"
           allow-clear
           style="width: 160px"
           @press-enter="handleSearch"
         />
         <a-select
           v-model:value="filters.majorDirection"
-          placeholder="主攻方向"
+          :placeholder="t('assistant.students.k8')"
           allow-clear
           style="width: 140px"
           :options="majorDirectionSelectOptions"
         />
         <a-select
           v-model:value="filters.accountStatus"
-          placeholder="账号状态"
+          :placeholder="t('assistant.students.k9')"
           allow-clear
           style="width: 140px"
           :options="accountStatusOptions"
         />
         <a-button id="assistant-students-search" type="primary" @click="handleSearch">
           <template #icon><SearchOutlined /></template>
-          搜索
+          {{ t('assistant.students.k1') }}
         </a-button>
         <a-button id="assistant-students-reset" type="text" @click="resetFilters">
           <template #icon><ReloadOutlined /></template>
-          重置
+          {{ t('assistant.students.k2') }}
         </a-button>
       </div>
     </a-card>
@@ -56,12 +56,12 @@
       v-if="errorMessage"
       type="error"
       show-icon
-      :message="'学员列表加载失败'"
+      :message="t('assistant.students.k10')"
       :description="errorMessage"
       class="error-alert"
     >
       <template #action>
-        <a-button size="small" type="link" @click="loadStudents">重新加载</a-button>
+        <a-button size="small" type="link" @click="loadStudents">{{ t('assistant.students.k3') }}</a-button>
       </template>
     </a-alert>
 
@@ -72,7 +72,7 @@
         :loading="loading"
         :pagination="tablePagination"
         :scroll="{ x: 'max-content' }"
-        :locale="{ emptyText: '暂无可查看学员' }"
+        :locale="t('assistant.students.k11')"
         row-key="studentId"
         :row-attrs="() => ({ 'data-student-row': '' })"
         size="middle"
@@ -121,8 +121,8 @@
               <span class="status-tag" :class="contractStatusToneClass(record.contractStatus, record.isBlacklisted)">
                 {{ formatContractStatus(record.contractStatus, record.isBlacklisted) }}
               </span>
-              <span v-if="record.pendingReview" class="status-tag status-tag--warning">待审核</span>
-              <span v-if="formatReminder(record) !== '当前暂无额外提醒'" class="status-hint">
+              <span v-if="record.pendingReview" class="status-tag status-tag--warning">{{ t('assistant.students.k4') }}</span>
+              <span v-if="formatReminder(record) !== t('assistant.students.k38')" class="status-hint">
                 {{ formatReminder(record) }}
               </span>
             </div>
@@ -131,7 +131,7 @@
             <StudentStatusTag :account-status="record.accountStatus" />
           </template>
           <template v-else-if="column.key === 'action'">
-            <a-button type="link" size="small" @click="handleViewJob(record)">查看求职</a-button>
+            <a-button type="link" size="small" @click="handleViewJob(record)">{{ t('assistant.students.k5') }}</a-button>
           </template>
         </template>
       </a-table>
@@ -141,6 +141,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import type { TablePaginationConfig } from 'ant-design-vue'
@@ -150,6 +151,8 @@ import {
   getAssistantStudentList,
   type AssistantStudentListItem,
 } from '@osg/shared/api'
+
+const { t } = useI18n()
 
 const router = useRouter()
 
@@ -199,27 +202,27 @@ const majorDirectionSelectOptions = computed(() => {
 })
 
 const accountStatusOptions = [
-  { value: '0', label: '正常' },
-  { value: '1', label: '冻结' },
-  { value: '2', label: '已结束' },
-  { value: '3', label: '退款' },
+  { value: '0', label: t('assistant.students.k12') },
+  { value: '1', label: t('assistant.students.k13') },
+  { value: '2', label: t('assistant.students.k14') },
+  { value: '3', label: t('assistant.students.k15') },
 ]
 
 const columns = [
   { title: 'ID', key: 'studentId', dataIndex: 'studentId', width: 96 },
-  { title: '英文姓名', key: 'studentName', dataIndex: 'studentName', width: 140 },
-  { title: '邮箱', key: 'email', dataIndex: 'email', width: 200, ellipsis: true },
-  { title: '班主任', key: 'leadMentorName', dataIndex: 'leadMentorName', width: 120 },
-  { title: '学校', key: 'school', dataIndex: 'school', width: 160, ellipsis: true },
-  { title: '主攻方向', key: 'majorDirection', dataIndex: 'majorDirection', width: 120 },
-  { title: '求职辅导', key: 'jobCoachingCount', dataIndex: 'jobCoachingCount', width: 100, align: 'center' as const },
-  { title: '基础课', key: 'basicCourseCount', dataIndex: 'basicCourseCount', width: 90, align: 'center' as const },
-  { title: '模拟应聘', key: 'mockInterviewCount', dataIndex: 'mockInterviewCount', width: 100, align: 'center' as const },
-  { title: '剩余课时', key: 'remainingHours', dataIndex: 'remainingHours', width: 110, align: 'center' as const },
-  { title: '求职目标', key: 'targetPosition', dataIndex: 'targetPosition', width: 140, ellipsis: true },
-  { title: '服务状态', key: 'contractStatus', dataIndex: 'contractStatus', width: 160 },
-  { title: '账号状态', key: 'accountStatus', dataIndex: 'accountStatus', width: 110 },
-  { title: '操作', key: 'action', width: 110, fixed: 'right' as const },
+  { title: t('assistant.students.k16'), key: 'studentName', dataIndex: 'studentName', width: 140 },
+  { title: t('assistant.students.k17'), key: 'email', dataIndex: 'email', width: 200, ellipsis: true },
+  { title: t('assistant.students.k18'), key: 'leadMentorName', dataIndex: 'leadMentorName', width: 120 },
+  { title: t('assistant.students.k7'), key: 'school', dataIndex: 'school', width: 160, ellipsis: true },
+  { title: t('assistant.students.k8'), key: 'majorDirection', dataIndex: 'majorDirection', width: 120 },
+  { title: t('assistant.students.k19'), key: 'jobCoachingCount', dataIndex: 'jobCoachingCount', width: 100, align: 'center' as const },
+  { title: t('assistant.students.k20'), key: 'basicCourseCount', dataIndex: 'basicCourseCount', width: 90, align: 'center' as const },
+  { title: t('assistant.students.k21'), key: 'mockInterviewCount', dataIndex: 'mockInterviewCount', width: 100, align: 'center' as const },
+  { title: t('assistant.students.k22'), key: 'remainingHours', dataIndex: 'remainingHours', width: 110, align: 'center' as const },
+  { title: t('assistant.students.k23'), key: 'targetPosition', dataIndex: 'targetPosition', width: 140, ellipsis: true },
+  { title: t('assistant.students.k24'), key: 'contractStatus', dataIndex: 'contractStatus', width: 160 },
+  { title: t('assistant.students.k9'), key: 'accountStatus', dataIndex: 'accountStatus', width: 110 },
+  { title: t('assistant.students.k25'), key: 'action', width: 110, fixed: 'right' as const },
 ]
 
 const tablePagination = computed<TablePaginationConfig>(() => ({
@@ -227,7 +230,7 @@ const tablePagination = computed<TablePaginationConfig>(() => ({
   pageSize: pagination.pageSize,
   total: total.value,
   showSizeChanger: false,
-  showTotal: (t: number) => `共 ${t} 条记录`,
+  showTotal: (count: number) => t('assistant.students.k39', { n: count }),
 }))
 
 function normalizePersistedState(value: unknown): StudentFilterState | null {
@@ -295,26 +298,26 @@ function formatCount(value?: number) {
 }
 
 function formatMentor(value?: string) {
-  return value && value.trim() ? value : '待补充班主任'
+  return value && value.trim() ? value : t('assistant.students.fallbackMentor')
 }
 
 function formatContractStatus(value?: string, isBlacklisted?: boolean) {
   if (isBlacklisted || value === 'blacklist') {
-    return '黑名单'
+    return t('assistant.students.k26')
   }
   if (value === 'expiring') {
-    return '即将到期'
+    return t('assistant.students.k27')
   }
   if (value === 'expired') {
-    return '已到期'
+    return t('assistant.students.k28')
   }
   if (value === 'cancelled') {
-    return '已终止'
+    return t('assistant.students.k29')
   }
   if (value === 'pending_review') {
-    return '待审核'
+    return t('assistant.students.k4')
   }
-  return '正常服务'
+  return t('assistant.students.k30')
 }
 
 function contractStatusToneClass(value?: string, isBlacklisted?: boolean) {
@@ -347,7 +350,7 @@ function isLowHours(student: AssistantStudentListItem) {
 }
 
 function isContractExpiring(student: AssistantStudentListItem) {
-  return student.contractStatus === 'expiring' || String(student.reminder || '').includes('到期')
+  return student.contractStatus === 'expiring' || String(student.reminder || '').includes(t('assistant.students.k31'))
 }
 
 function formatReminder(student: AssistantStudentListItem) {
@@ -355,18 +358,18 @@ function formatReminder(student: AssistantStudentListItem) {
     return student.reminder
   }
   if (student.pendingReview) {
-    return '资料变更待审核'
+    return t('assistant.students.k32')
   }
   if (student.isBlacklisted) {
-    return '当前学员已被纳入黑名单'
+    return t('assistant.students.k33')
   }
   if (isLowHours(student)) {
-    return '剩余课时偏低，建议优先跟进'
+    return t('assistant.students.k34')
   }
   if (isContractExpiring(student)) {
-    return '合同即将到期'
+    return t('assistant.students.k35')
   }
-  return '当前暂无额外提醒'
+  return t('assistant.students.k36')
 }
 
 async function loadStudents() {
@@ -398,7 +401,7 @@ async function loadStudents() {
     total.value = nextTotal
     persistState()
   } catch (error: any) {
-    errorMessage.value = error?.message || '学员列表暂时无法加载，请稍后重试。'
+    errorMessage.value = error?.message || t('assistant.students.k37')
   } finally {
     loading.value = false
   }

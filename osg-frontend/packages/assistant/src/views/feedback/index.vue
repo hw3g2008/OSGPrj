@@ -1,10 +1,10 @@
 <template>
   <div class="feedback-page">
-    <OsgPageContainer title="反馈收集">
+    <OsgPageContainer :title="t('assistant.feedback.title')">
       <a-table :columns="columns" :data-source="feedbacks" :loading="loading" row-key="id">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
-            <a-tag :color="record.status === 'pending' ? 'orange' : 'green'">{{ record.status === 'pending' ? '待处理' : '已处理' }}</a-tag>
+            <a-tag :color="record.status === 'pending' ? 'orange' : 'green'">{{ record.status === 'pending' ? t('assistant.feedback.k11') : t('assistant.feedback.k12') }}</a-tag>
           </template>
         </template>
       </a-table>
@@ -14,16 +14,19 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { OsgPageContainer } from '@osg/shared/components'
+
+const { t } = useI18n()
 const loading = ref(false)
 const columns = [
-  { title: '学员', dataIndex: 'student', key: 'student' },
-  { title: '类型', dataIndex: 'type', key: 'type' },
-  { title: '内容', dataIndex: 'content', key: 'content' },
-  { title: '状态', key: 'status' }
+  { title: t('assistant.feedback.k1'), dataIndex: 'student', key: 'student' },
+  { title: t('assistant.feedback.k2'), dataIndex: 'type', key: 'type' },
+  { title: t('assistant.feedback.k3'), dataIndex: 'content', key: 'content' },
+  { title: t('assistant.feedback.k4'), key: 'status' }
 ]
 const feedbacks = ref([
-  { id: 1, student: '张同学', type: '课程反馈', content: '希望增加实战项目', status: 'pending' },
-  { id: 2, student: '李同学', type: '导师反馈', content: '王老师讲解很清晰', status: 'done' }
+  { id: 1, student: t('assistant.feedback.k5'), type: t('assistant.feedback.k6'), content: t('assistant.feedback.k7'), status: 'pending' },
+  { id: 2, student: t('assistant.feedback.k8'), type: t('assistant.feedback.k9'), content: t('assistant.feedback.k10'), status: 'done' }
 ])
 </script>

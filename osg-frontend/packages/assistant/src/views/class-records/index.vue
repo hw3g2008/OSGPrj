@@ -1,13 +1,13 @@
 <template>
   <div class="osg-page">
     <PageHeader
-      title-zh="课程记录"
+      :title-zh="t('assistant.classRecords.title')"
       title-en="Class Records"
     >
       <template #actions>
         <a-button type="primary" @click="openReportModal">
           <template #icon><PlusOutlined /></template>
-          上报课程记录
+          {{ t('assistant.classRecords.k1') }}
         </a-button>
       </template>
     </PageHeader>
@@ -19,7 +19,7 @@
     >
       <a-tab-pane key="mine">
         <template #tab>
-          <span>我的申报</span>
+          <span>{{ t('assistant.classRecords.k2') }}</span>
           <a-badge
             v-if="scopeCount('mine') > 0"
             :count="scopeCount('mine')"
@@ -30,7 +30,7 @@
       </a-tab-pane>
       <a-tab-pane key="managed">
         <template #tab>
-          <span>我管理的学员</span>
+          <span>{{ t('assistant.classRecords.k3') }}</span>
           <a-badge
             v-if="scopeCount('managed') > 0"
             :count="scopeCount('managed')"
@@ -44,7 +44,7 @@
     <a-alert type="info" show-icon class="flow-alert">
       <template #message>
         <a-space wrap :size="[12, 8]">
-          <span class="flow-alert__title">课程记录流程</span>
+          <span class="flow-alert__title">{{ t('assistant.classRecords.k4') }}</span>
           <a-tag v-for="(step, idx) in flowSteps" :key="step" color="blue">
             {{ idx + 1 }}. {{ step }}
           </a-tag>
@@ -67,7 +67,7 @@
         <a-input
           id="assistant-class-records-keyword"
           v-model:value="filters.keyword"
-          placeholder="搜索学员姓名/ID"
+          :placeholder="t('assistant.classRecords.k8')"
           allow-clear
           style="width: 180px"
           @press-enter="handleSearch"
@@ -79,7 +79,7 @@
 
         <a-select
           v-model:value="filters.coachingType"
-          placeholder="辅导类型"
+          :placeholder="t('assistant.classRecords.k9')"
           allow-clear
           style="width: 140px"
           :options="coachingTypeSelectOptions"
@@ -87,7 +87,7 @@
 
         <a-select
           v-model:value="filters.courseContent"
-          placeholder="课程内容"
+          :placeholder="t('assistant.classRecords.k10')"
           allow-clear
           style="width: 180px"
           :options="courseContentSelectOptions"
@@ -95,7 +95,7 @@
 
         <a-select
           v-model:value="filters.reporterRole"
-          placeholder="申报人"
+          :placeholder="t('assistant.classRecords.k11')"
           allow-clear
           style="width: 120px"
           :options="reporterRoleSelectOptions"
@@ -109,11 +109,11 @@
 
         <a-button id="assistant-class-records-search" type="primary" @click="handleSearch">
           <template #icon><SearchOutlined /></template>
-          搜索
+          {{ t('assistant.classRecords.k5') }}
         </a-button>
         <a-button id="assistant-class-records-reset" type="text" @click="resetFilters">
           <template #icon><ReloadOutlined /></template>
-          重置
+          {{ t('assistant.classRecords.k6') }}
         </a-button>
       </div>
     </a-card>
@@ -122,12 +122,12 @@
       v-if="errorMessage"
       type="error"
       show-icon
-      :message="'课程记录加载失败'"
+      :message="t('assistant.classRecords.k12')"
       :description="errorMessage"
       class="error-alert"
     >
       <template #action>
-        <a-button size="small" type="link" @click="loadRecords">重新加载</a-button>
+        <a-button size="small" type="link" @click="loadRecords">{{ t('assistant.classRecords.k7') }}</a-button>
       </template>
     </a-alert>
 
@@ -152,7 +152,7 @@
         :loading="loading"
         :pagination="tablePagination"
         :scroll="{ x: 'max-content' }"
-        :locale="{ emptyText: '当前筛选下暂无课程记录' }"
+        :locale="t('assistant.classRecords.k13')"
         :row-class-name="rowClassName"
         row-key="recordId"
         :row-attrs="() => ({ 'data-class-record-row': '' })"
@@ -214,7 +214,7 @@
 
           <template v-else-if="column.key === 'action'">
             <a-button type="link" size="small" @click="openDetail(record)">
-              {{ record.status === 'rejected' ? '查看原因' : '查看详情' }}
+              {{ record.status === 'rejected' ? t('assistant.classRecords.k54') : t('assistant.classRecords.k55') }}
             </a-button>
           </template>
         </template>
@@ -224,66 +224,66 @@
     <OverlaySurfaceModal
       :open="detailVisible"
       surface-id="assistant-class-record-detail"
-      :title="selectedRecord?.status === 'rejected' ? '驳回原因' : '课程记录详情'"
+      :title="t('assistant.classRecords.k14')"
       :width="720"
       :show-footer="false"
       :body-class="['assistant-class-record-detail__body', 'osg-modal-form']"
       @cancel="closeDetail"
     >
       <a-descriptions v-if="selectedRecord" :column="2" bordered size="small">
-        <a-descriptions-item label="记录ID">
+        <a-descriptions-item :label="t('assistant.classRecords.k15')">
           {{ selectedRecord.recordCode || `#R${selectedRecord.recordId}` }}
         </a-descriptions-item>
-        <a-descriptions-item label="学员">
+        <a-descriptions-item :label="t('assistant.classRecords.k16')">
           {{ selectedRecord.studentName || '-' }}
           <span class="muted-id">（ID: {{ selectedRecord.studentId }}）</span>
         </a-descriptions-item>
-        <a-descriptions-item label="申报人">
+        <a-descriptions-item :label="t('assistant.classRecords.k11')">
           {{ selectedRecord.mentorName || '-' }} / {{ reporterRoleLabel(selectedRecord.reporterRole) }}
         </a-descriptions-item>
-        <a-descriptions-item label="辅导内容">
+        <a-descriptions-item :label="t('assistant.classRecords.k17')">
           <a-tag v-if="selectedRecord.coachingType" :color="coachingTypeColor(selectedRecord.coachingType)">
             {{ selectedRecord.coachingType }}
           </a-tag>
           <span v-else class="muted-id">-</span>
         </a-descriptions-item>
-        <a-descriptions-item label="课程内容">
+        <a-descriptions-item :label="t('assistant.classRecords.k10')">
           <a-tag :style="contentTagStyle(selectedRecord)">
             {{ selectedRecord.courseContent || '-' }}
           </a-tag>
         </a-descriptions-item>
-        <a-descriptions-item label="上课日期">
+        <a-descriptions-item :label="t('assistant.classRecords.k18')">
           {{ formatClassDate(selectedRecord.classDate) }}
         </a-descriptions-item>
-        <a-descriptions-item label="时长">
+        <a-descriptions-item :label="t('assistant.classRecords.k19')">
           {{ formatHours(selectedRecord.durationHours) }}
         </a-descriptions-item>
         <!-- 课时费按需求不显示 -->
         <a-descriptions-item
           v-if="selectedRecord.classStatus === 'absent'"
-          label="旷课备注"
+          :label="t('assistant.classRecords.k20')"
           :span="2"
         >
-          {{ extractAbsenceRemark(selectedRecord.comments) || '未填写' }}
+          {{ extractAbsenceRemark(selectedRecord.comments) || t('assistant.classRecords.k56') }}
         </a-descriptions-item>
-        <a-descriptions-item label="学员评价" :span="2">
+        <a-descriptions-item :label="t('assistant.classRecords.k21')" :span="2">
           <a-tag v-if="selectedRecord.studentRating" color="green">
             ⭐ {{ selectedRecord.studentRating }}
           </a-tag>
           <span v-else>-</span>
         </a-descriptions-item>
-        <a-descriptions-item label="审核状态" :span="2">
+        <a-descriptions-item :label="t('assistant.classRecords.k22')" :span="2">
           <ClassRecordStatusTag :status="selectedRecord.status" />
         </a-descriptions-item>
         <a-descriptions-item
           v-if="selectedRecord.status === 'rejected'"
-          label="驳回原因"
+          :label="t('assistant.classRecords.k23')"
           :span="2"
         >
-          {{ selectedRecord.reviewRemark || '（未填写驳回原因）' }}
+          {{ selectedRecord.reviewRemark || t('assistant.classRecords.k57') }}
         </a-descriptions-item>
-        <a-descriptions-item v-else label="反馈摘要" :span="2">
-          {{ selectedRecord.reviewRemark || '暂无反馈摘要' }}
+        <a-descriptions-item v-else :label="t('assistant.classRecords.k24')" :span="2">
+          {{ selectedRecord.reviewRemark || t('assistant.classRecords.k58') }}
         </a-descriptions-item>
       </a-descriptions>
     </OverlaySurfaceModal>
@@ -297,6 +297,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import type { TableColumnsType, TablePaginationConfig } from 'ant-design-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
@@ -309,6 +310,8 @@ import {
   type AssistantClassRecordRow,
   type AssistantClassRecordStats,
 } from '@osg/shared/api'
+
+const { t } = useI18n()
 
 const STORAGE_KEY = 'osg-assistant-class-records-state-v1'
 
@@ -349,41 +352,41 @@ const filters = reactive<FilterState>({
 
 // ── Tabs ──
 const tabList: TabDef[] = [
-  { key: 'all', label: '全部', badgeColor: '#94A3B8' },
-  { key: 'pending', label: '待审核', badgeColor: '#F59E0B' },
-  { key: 'approved', label: '已通过', badgeColor: '#22C55E' },
-  { key: 'rejected', label: '已驳回', badgeColor: '#EF4444' },
+  { key: 'all', label: t('assistant.classRecords.k25'), badgeColor: '#94A3B8' },
+  { key: 'pending', label: t('assistant.classRecords.k26'), badgeColor: '#F59E0B' },
+  { key: 'approved', label: t('assistant.classRecords.k27'), badgeColor: '#22C55E' },
+  { key: 'rejected', label: t('assistant.classRecords.k28'), badgeColor: '#EF4444' },
 ]
 
 // ── Select Options ──
 // value 为数据库真实 raw key（osg_class_record.course_type），传给后端 SQL 直接过滤
 const coachingTypeSelectOptions = [
-  { value: 'job_coaching', label: '岗位辅导' },
-  { value: 'mock_practice', label: '模拟应聘' },
-  { value: 'basic_course', label: '基础课程' },
+  { value: 'job_coaching', label: t('assistant.classRecords.k29') },
+  { value: 'mock_practice', label: t('assistant.classRecords.k30') },
+  { value: 'basic_course', label: t('assistant.classRecords.k31') },
 ]
 
 // value 为数据库真实 raw key（osg_class_record.class_status），label 对齐弹窗 jobContentOptions / basicContentOptions
 const courseContentSelectOptions = [
-  { value: 'technical', label: '技术的' },
-  { value: 'behavioral', label: '行为训练' },
-  { value: 'resume_update', label: '简历更新' },
-  { value: 'mock_interview', label: '模拟面试的课程' },
-  { value: 'networking_midterm', label: '人际关系的课程' },
-  { value: 'mock_midterm', label: '模拟期中考试' },
-  { value: 'case_prep', label: '咨询案例准备' },
-  { value: 'other', label: '其他' },
-  { value: 'absent', label: '旷课' },
+  { value: 'technical', label: t('assistant.classRecords.k32') },
+  { value: 'behavioral', label: t('assistant.classRecords.k33') },
+  { value: 'resume_update', label: t('assistant.classRecords.k34') },
+  { value: 'mock_interview', label: t('assistant.classRecords.k35') },
+  { value: 'networking_midterm', label: t('assistant.classRecords.k36') },
+  { value: 'mock_midterm', label: t('assistant.classRecords.k37') },
+  { value: 'case_prep', label: t('assistant.classRecords.k38') },
+  { value: 'other', label: t('assistant.classRecords.k39') },
+  { value: 'absent', label: t('assistant.classRecords.k40') },
 ]
 
 const reporterRoleSelectOptions = [
-  { value: 'mentor', label: '导师' },
-  { value: 'headteacher', label: '班主任' },
-  { value: 'assistant', label: '助教' },
+  { value: 'mentor', label: t('assistant.classRecords.k41') },
+  { value: 'headteacher', label: t('assistant.classRecords.k42') },
+  { value: 'assistant', label: t('assistant.classRecords.k43') },
 ]
 
 // ── Flow steps fallback ──
-const defaultFlowSteps = ['课程执行', '记录提交', '审核处理', '反馈回看']
+const defaultFlowSteps = [t('assistant.classRecords.k44'), t('assistant.classRecords.k45'), t('assistant.classRecords.k46'), t('assistant.classRecords.k47')]
 
 const flowSteps = computed(() => {
   const steps = stats.value?.flowSteps?.filter(Boolean) || []
@@ -392,16 +395,16 @@ const flowSteps = computed(() => {
 
 // ── Table columns ──
 const columns: TableColumnsType<AssistantClassRecordRow> = [
-  { title: '记录ID', key: 'recordId', width: 110 },
-  { title: '学员', key: 'student', width: 140 },
-  { title: '申报人', key: 'reporter', width: 140 },
-  { title: '辅导内容', key: 'coachingType', width: 120 },
-  { title: '课程内容', key: 'courseContent', width: 160 },
-  { title: '上课日期', key: 'classDate', width: 120 },
-  { title: '时长', key: 'durationHours', width: 80 },
-  { title: '学员评价', key: 'studentRating', width: 110 },
-  { title: '审核状态', key: 'status', width: 100 },
-  { title: '操作', key: 'action', width: 110, fixed: 'right' },
+  { title: t('assistant.classRecords.k15'), key: 'recordId', width: 110 },
+  { title: t('assistant.classRecords.k16'), key: 'student', width: 140 },
+  { title: t('assistant.classRecords.k11'), key: 'reporter', width: 140 },
+  { title: t('assistant.classRecords.k17'), key: 'coachingType', width: 120 },
+  { title: t('assistant.classRecords.k10'), key: 'courseContent', width: 160 },
+  { title: t('assistant.classRecords.k18'), key: 'classDate', width: 120 },
+  { title: t('assistant.classRecords.k19'), key: 'durationHours', width: 80 },
+  { title: t('assistant.classRecords.k21'), key: 'studentRating', width: 110 },
+  { title: t('assistant.classRecords.k22'), key: 'status', width: 100 },
+  { title: t('assistant.classRecords.k48'), key: 'action', width: 110, fixed: 'right' },
 ]
 
 // ── Stats value styles ──
@@ -414,15 +417,15 @@ const statColorMap: Record<string, string> = {
 
 // ── Course content color Map (key = Chinese label, 对齐弹窗 + 后端 toCourseContentLabel) ──
 const contentTagStyleMap: Record<string, Record<string, string>> = {
-  '技术的': { background: '#DBEAFE', color: '#1D4ED8', border: 'none' },
-  '行为训练': { background: '#DBEAFE', color: '#1D4ED8', border: 'none' },
-  '简历更新': { background: '#FEF3C7', color: '#92400E', border: 'none' },
-  '模拟面试的课程': { background: '#DBEAFE', color: '#1D4ED8', border: 'none' },
-  '人际关系的课程': { background: '#EDE9FE', color: '#5B21B6', border: 'none' },
-  '模拟期中考试': { background: '#F59E0B', color: '#FFFFFF', border: 'none' },
-  '咨询案例准备': { background: '#DBEAFE', color: '#1D4ED8', border: 'none' },
-  '其他': { background: '#F1F5F9', color: '#475569', border: 'none' },
-  '旷课': { background: '#FEE2E2', color: '#B91C1C', border: 'none' },
+  '技术的': { background: '#DBEAFE', color: '#1D4ED8', border: 'none' }, // i18n-skip-line: backend enum value
+  '行为训练': { background: '#DBEAFE', color: '#1D4ED8', border: 'none' }, // i18n-skip-line: backend enum value
+  '简历更新': { background: '#FEF3C7', color: '#92400E', border: 'none' }, // i18n-skip-line: backend enum value
+  '模拟面试的课程': { background: '#DBEAFE', color: '#1D4ED8', border: 'none' }, // i18n-skip-line: backend enum value
+  '人际关系的课程': { background: '#EDE9FE', color: '#5B21B6', border: 'none' }, // i18n-skip-line: backend enum value
+  '模拟期中考试': { background: '#F59E0B', color: '#FFFFFF', border: 'none' }, // i18n-skip-line: backend enum value
+  '咨询案例准备': { background: '#DBEAFE', color: '#1D4ED8', border: 'none' }, // i18n-skip-line: backend enum value
+  '其他': { background: '#F1F5F9', color: '#475569', border: 'none' }, // i18n-skip-line: backend enum value
+  '旷课': { background: '#FEE2E2', color: '#B91C1C', border: 'none' }, // i18n-skip-line: backend enum value
 }
 
 // ── Computed ──
@@ -480,7 +483,7 @@ const tablePagination = computed<TablePaginationConfig>(() => ({
   pageSize: pagination.pageSize,
   total: filteredRecords.value.length,
   showSizeChanger: true,
-  showTotal: (total: number) => `共 ${total} 条`,
+  showTotal: (total: number) => `共 ${total} 条`, // TODO(i18n-complex)
   pageSizeOptions: ['10', '20', '50'],
 }))
 
@@ -496,12 +499,12 @@ const summaryCards = computed(() => {
     fallback.filter((record) => normalizeStatus(record.status) === 'approved').length
 
   return [
-    { key: 'all', label: '全部课程', value: totalCount },
-    { key: 'pending', label: '待审核', value: pendingCount },
-    { key: 'approved', label: '已通过', value: approvedCount },
+    { key: 'all', label: t('assistant.classRecords.k49'), value: totalCount },
+    { key: 'pending', label: t('assistant.classRecords.k26'), value: pendingCount },
+    { key: 'approved', label: t('assistant.classRecords.k27'), value: approvedCount },
     {
       key: 'settlement',
-      label: '待结算金额',
+      label: t('assistant.classRecords.k50'),
       value: formatFee(current?.pendingSettlementAmount || 0),
     },
   ]
@@ -515,11 +518,11 @@ function normalizeStatus(status?: string | null) {
     normalized.includes('done') ||
     normalized.includes('finish') ||
     normalized.includes('approved') ||
-    normalized.includes('通过')
+    normalized.includes(t('assistant.classRecords.k51'))
   ) {
     return 'approved'
   }
-  if (normalized.includes('rejected') || normalized.includes('驳回')) {
+  if (normalized.includes('rejected') || normalized.includes(t('assistant.classRecords.k52'))) {
     return 'rejected'
   }
   return 'pending'
@@ -528,25 +531,25 @@ function normalizeStatus(status?: string | null) {
 function reporterRoleLabel(role?: string | null) {
   const normalized = String(role || '').trim().toLowerCase()
   if (!normalized) return '-'
-  if (normalized.includes('assistant') || normalized.includes('助教')) return '助教'
-  if (normalized.includes('headteacher') || normalized.includes('班主任')) return '班主任'
-  if (normalized.includes('mentor') || normalized.includes('导师')) return '导师'
+  if (normalized.includes('assistant') || normalized.includes(t('assistant.classRecords.k43'))) return t('assistant.classRecords.k43')
+  if (normalized.includes('headteacher') || normalized.includes(t('assistant.classRecords.k42'))) return t('assistant.classRecords.k42')
+  if (normalized.includes('mentor') || normalized.includes(t('assistant.classRecords.k41'))) return t('assistant.classRecords.k41')
   return String(role)
 }
 
 function reporterRoleToRaw(role?: string | null) {
   const label = reporterRoleLabel(role)
-  if (label === '助教') return 'assistant'
-  if (label === '班主任') return 'headteacher'
-  if (label === '导师') return 'mentor'
+  if (label === t('assistant.classRecords.k43')) return 'assistant'
+  if (label === t('assistant.classRecords.k42')) return 'headteacher'
+  if (label === t('assistant.classRecords.k41')) return 'mentor'
   return ''
 }
 
 function coachingTypeToRaw(coachingType?: string | null) {
   const normalized = String(coachingType || '').trim()
-  if (normalized === '岗位辅导') return 'job_coaching'
-  if (normalized === '模拟应聘') return 'mock_practice'
-  if (normalized === '基础课程') return 'basic_course'
+  if (normalized === t('assistant.classRecords.k29')) return 'job_coaching'
+  if (normalized === t('assistant.classRecords.k30')) return 'mock_practice'
+  if (normalized === t('assistant.classRecords.k31')) return 'basic_course'
   return ''
 }
 
@@ -559,9 +562,9 @@ function courseContentToRaw(courseContent?: string | null) {
 // ── Tag color helpers ──
 function coachingTypeColor(coachingType?: string | null) {
   const normalized = String(coachingType || '').trim()
-  if (normalized === '岗位辅导') return 'blue'
-  if (normalized === '模拟应聘') return 'green'
-  if (normalized === '基础课程') return 'purple'
+  if (normalized === t('assistant.classRecords.k29')) return 'blue'
+  if (normalized === t('assistant.classRecords.k30')) return 'green'
+  if (normalized === t('assistant.classRecords.k31')) return 'purple'
   return undefined
 }
 
@@ -612,7 +615,7 @@ function formatHours(value?: number | null) {
 
 function extractAbsenceRemark(comments?: string | null): string {
   if (!comments) return ''
-  const match = comments.match(/旷课备注:\s*([^\n]*)/)
+  const match = comments.match(/旷课备注:\s*([^\n]*)/) // i18n-skip-line: regex match against backend payload
   return match ? match[1].trim() : ''
 }
 
@@ -755,7 +758,7 @@ async function loadRecords() {
     records.value = listResponse.rows || []
   } catch (error: any) {
     if (requestId !== latestLoadRequestId) return
-    errorMessage.value = error?.message || '课程记录暂时无法加载，请稍后重试。'
+    errorMessage.value = error?.message || t('assistant.classRecords.k53')
   } finally {
     if (requestId === latestLoadRequestId) loading.value = false
   }

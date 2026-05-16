@@ -104,18 +104,18 @@ export function resolveComments(
 ): string | undefined {
   const segments: string[] = []
   segments.push(
-    form.attendanceStatus === 'absent' ? '学员状态: 旷课未到场' : '学员状态: 正常上课',
+    form.attendanceStatus === 'absent' ? '学员状态: 旷课未到场' : t('assistant.assistantClassReportPayload.k1'), // i18n-skip-line: backend payload format
   )
-  if (form.absenceRemark.trim()) segments.push(`旷课备注: ${form.absenceRemark.trim()}`)
+  if (form.absenceRemark.trim()) segments.push(`旷课备注: ${form.absenceRemark.trim()}`) // i18n-skip-line: backend payload format
 
   if (isMockInterviewContext(form) && form.performanceRating) {
     const opt = performanceOptions.find((o) => o.value === form.performanceRating)
-    if (opt) segments.push(`学员表现: ${opt.label}`)
+    if (opt) segments.push(`学员表现: ${opt.label}`) // i18n-skip-line: backend payload format
   }
 
   if (isNetworkingContext(form)) {
     if (form.networkingRecommendation) {
-      segments.push(`推荐意见: ${form.networkingRecommendation}`)
+      segments.push(`推荐意见: ${form.networkingRecommendation}`) // i18n-skip-line: backend payload format
     }
     Object.entries(form.networkingScoreMap)
       .filter(([, v]) => v && v.trim())
@@ -124,22 +124,22 @@ export function resolveComments(
 
   if (isMidtermContext(form)) {
     if (form.midtermScore !== undefined) {
-      segments.push(`模拟期中分数: ${form.midtermScore}`)
+      segments.push(`模拟期中分数: ${form.midtermScore}`) // i18n-skip-line: backend payload format
     }
-    if (form.midtermProgress) segments.push(`进度评估: ${form.midtermProgress}`)
+    if (form.midtermProgress) segments.push(`进度评估: ${form.midtermProgress}`) // i18n-skip-line: backend payload format
   }
 
   if (form.resumeBeforeFiles.length > 0 && form.resumeBeforeFiles[0].name) {
-    segments.push(`原简历: ${form.resumeBeforeFiles[0].name}`)
+    segments.push(`原简历: ${form.resumeBeforeFiles[0].name}`) // i18n-skip-line: backend payload format
   }
   if (form.resumeBeforeUrl) {
-    segments.push(`原简历URL: ${form.resumeBeforeUrl}`)
+    segments.push(`原简历URL: ${form.resumeBeforeUrl}`) // i18n-skip-line: backend payload format
   }
   if (form.resumeAfterFiles.length > 0 && form.resumeAfterFiles[0].name) {
-    segments.push(`修改后简历: ${form.resumeAfterFiles[0].name}`)
+    segments.push(`修改后简历: ${form.resumeAfterFiles[0].name}`) // i18n-skip-line: backend payload format
   }
   if (form.resumeAfterUrl) {
-    segments.push(`修改后简历URL: ${form.resumeAfterUrl}`)
+    segments.push(`修改后简历URL: ${form.resumeAfterUrl}`) // i18n-skip-line: backend payload format
   }
 
   return segments.length > 0 ? segments.join('\n') : undefined

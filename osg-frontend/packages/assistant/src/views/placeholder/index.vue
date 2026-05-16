@@ -4,6 +4,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 
 import AssistantPlaceholderShell from '../_shared/AssistantPlaceholderShell.vue'
@@ -20,33 +21,34 @@ interface PlaceholderContent {
 }
 
 const route = useRoute()
-
-const fallbackContent: PlaceholderContent = {
-  pageId: 'page-coming-soon',
-  title: '敬请期待',
-  titleEn: 'Coming Soon',
-  description: '当前功能正在准备中，完整内容将在后续版本开放。',
-  cardTitle: '功能即将上线',
-  cardDescription: '该页面已保留访问入口，后续版本会在这里提供完整内容。',
-  statusText: '敬请期待',
-  bullets: [
-    '入口已保留，方便后续快速访问。',
-    '当前版本暂未开放该功能。',
-    '完整内容将在后续版本上线。',
-  ],
-}
+const { t } = useI18n()
 
 const placeholderContent = computed<PlaceholderContent>(() => {
+  const fallback: PlaceholderContent = {
+    pageId: t('assistant.placeholderShell.fallback.pageId'),
+    title: t('assistant.placeholderShell.fallback.title'),
+    titleEn: t('assistant.placeholderShell.fallback.titleEn'),
+    description: t('assistant.placeholderShell.fallback.description'),
+    cardTitle: t('assistant.placeholderShell.fallback.cardTitle'),
+    cardDescription: t('assistant.placeholderShell.fallback.cardDescription'),
+    statusText: t('assistant.placeholderShell.fallback.statusText'),
+    bullets: [
+      t('assistant.placeholderShell.fallback.bullet1'),
+      t('assistant.placeholderShell.fallback.bullet2'),
+      t('assistant.placeholderShell.fallback.bullet3'),
+    ],
+  }
+
   const metaContent = route.meta.placeholderContent
   if (!metaContent || typeof metaContent !== 'object') {
-    return fallbackContent
+    return fallback
   }
 
   const partialContent = metaContent as Partial<PlaceholderContent>
   return {
-    ...fallbackContent,
+    ...fallback,
     ...partialContent,
-    bullets: Array.isArray(partialContent.bullets) ? partialContent.bullets : fallbackContent.bullets,
+    bullets: Array.isArray(partialContent.bullets) ? partialContent.bullets : fallback.bullets,
   }
 })
 </script>

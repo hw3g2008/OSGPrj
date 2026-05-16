@@ -22,26 +22,27 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import '@mdi/font/css/materialdesignicons.css'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 
-withDefaults(
-  defineProps<{
-    pageId: string
-    title: string
-    titleEn: string
-    description: string
-    bullets: string[]
-    cardTitle?: string
-    cardDescription?: string
-    statusText?: string
-  }>(),
-  {
-    cardTitle: '敬请期待',
-    cardDescription: '该页面已保留访问入口，完整内容将在后续版本开放。',
-    statusText: '敬请期待',
-  },
-)
+const props = defineProps<{
+  pageId: string
+  title: string
+  titleEn: string
+  description: string
+  bullets: string[]
+  cardTitle?: string
+  cardDescription?: string
+  statusText?: string
+}>()
+
+const { t } = useI18n()
+
+const cardTitle = computed(() => props.cardTitle ?? t('assistant.placeholderShell.defaultCardTitle'))
+const cardDescription = computed(() => props.cardDescription ?? t('assistant.placeholderShell.defaultCardDescription'))
+const statusText = computed(() => props.statusText ?? t('assistant.placeholderShell.defaultStatusText'))
 </script>
 
 <style scoped lang="scss">

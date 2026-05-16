@@ -1,1 +1,1030 @@
-{}
+{
+  "common": {
+    "loading": "加载中",
+    "retry": "重新加载",
+    "empty": "暂无数据",
+    "notFilled": "未填写",
+    "notRecorded": "未记录",
+    "comingSoon": "敬请期待"
+  },
+  "login": {
+    "brandTitle": "OSG Platform",
+    "brandDesc": "职业培训一站式平台，学生与导师共同成长",
+    "feature1": "学生端：一对一导师辅导",
+    "feature2": "导师端：高效课程管理",
+    "feature3": "实时岗位信息共享",
+    "feature4": "完善的学习资料库",
+    "appName": "OSG Assistant",
+    "welcome": "欢迎回来",
+    "subtitle": "使用邮箱登录（助教）",
+    "roleTag": "助教端",
+    "emailLabel": "邮箱",
+    "emailPlaceholder": "请输入邮箱",
+    "passwordLabel": "密码",
+    "passwordPlaceholder": "请输入密码",
+    "submitting": "登录中...",
+    "submit": "登录",
+    "forgot": "忘记密码？",
+    "forgotLink": "点击重置",
+    "errors": {
+      "emailRequired": "请输入邮箱",
+      "passwordRequired": "请输入密码",
+      "notAssistant": "该账号无助教端访问权限",
+      "default": "邮箱或密码错误"
+    }
+  },
+  "layout": {
+    "appName": "OSG Assistant",
+    "fallbackName": "Assistant User",
+    "fallbackRole": "Assistant",
+    "groups": {
+      "career": "求职中心 Career",
+      "students": "学员中心 Students",
+      "teaching": "教学中心 Teaching",
+      "finance": "财务中心 Finance",
+      "resources": "资源中心 Resources",
+      "profile": "个人中心 Profile"
+    },
+    "nav": {
+      "positions": "岗位信息 Positions",
+      "jobOverview": "学员求职总览 Job Overview",
+      "mockPractice": "模拟应聘管理 Mock Practice",
+      "studentList": "学员列表 Student List",
+      "communication": "人际关系沟通记录 Communication",
+      "classRecords": "课程记录 Class Records",
+      "settlement": "课时结算 Settlement",
+      "expense": "报销管理 Expense",
+      "files": "文件 Files",
+      "onlineTest": "在线测试题库 Online Test",
+      "interviewBank": "真人面试题库 Interview Bank",
+      "profile": "基本信息 Profile",
+      "schedule": "课程排期 Schedule",
+      "notice": "消息 Notice",
+      "faq": "常见问题 FAQ"
+    }
+  },
+  "router": {
+    "title": {
+      "login": "登录",
+      "home": "首页",
+      "positions": "岗位信息",
+      "jobOverview": "学员求职总览",
+      "mockPractice": "模拟应聘管理",
+      "students": "学员列表",
+      "classRecords": "课程记录",
+      "profile": "基本信息",
+      "schedule": "课程排期"
+    },
+    "placeholder": {
+      "communicationTitle": "人际关系沟通记录",
+      "communicationTitleEn": "Communication Records",
+      "communicationDesc": "与学员沟通相关的内容将在这里开放。",
+      "settlementTitle": "课时结算",
+      "settlementTitleEn": "Settlement",
+      "settlementDesc": "课时结算相关的内容将在这里开放。",
+      "expenseTitle": "报销管理",
+      "expenseTitleEn": "Expense",
+      "expenseDesc": "报销处理相关的内容将在这里开放。",
+      "filesTitle": "文件",
+      "filesTitleEn": "Files",
+      "filesDesc": "文件资料相关的内容将在这里开放。",
+      "onlineTestTitle": "在线测试题库",
+      "onlineTestTitleEn": "Online Test Bank",
+      "onlineTestDesc": "在线测试题库相关的内容将在这里开放。",
+      "interviewBankTitle": "真人面试题库",
+      "interviewBankTitleEn": "Interview Bank",
+      "interviewBankDesc": "真人面试题库相关的内容将在这里开放。",
+      "noticeTitle": "消息",
+      "noticeTitleEn": "Notice",
+      "noticeDesc": "消息通知相关的内容将在这里开放。",
+      "faqTitle": "常见问题",
+      "faqTitleEn": "FAQ",
+      "faqDesc": "常见问题与帮助内容将在这里开放。",
+      "bulletEntryReserved": "该功能入口已保留，方便后续快速访问。",
+      "bulletCurrentClosed": "当前版本暂未开放{title}。",
+      "bulletLaterRelease": "完整内容将在后续版本上线，敬请期待。",
+      "cardTitleSuffix": "{title}敬请期待",
+      "cardDescription": "当前版本暂未开放{title}，相关内容将在后续版本上线。",
+      "statusComingSoon": "敬请期待"
+    }
+  },
+  "placeholderShell": {
+    "fallback": {
+      "pageId": "page-coming-soon",
+      "title": "敬请期待",
+      "titleEn": "Coming Soon",
+      "description": "当前功能正在准备中，完整内容将在后续版本开放。",
+      "cardTitle": "功能即将上线",
+      "cardDescription": "该页面已保留访问入口，后续版本会在这里提供完整内容。",
+      "statusText": "敬请期待",
+      "bullet1": "入口已保留，方便后续快速访问。",
+      "bullet2": "当前版本暂未开放该功能。",
+      "bullet3": "完整内容将在后续版本上线。"
+    },
+    "defaultCardTitle": "敬请期待",
+    "defaultCardDescription": "该页面已保留访问入口，完整内容将在后续版本开放。",
+    "defaultStatusText": "敬请期待"
+  },
+  "home": {
+    "eyebrow": "Assistant Home",
+    "greeting": "欢迎回来，{name}",
+    "fallbackName": "助教老师",
+    "description": "这里汇总本周教学协同、求职跟进和课程安排概览，帮助你快速进入常用工作页面。",
+    "viewClassRecords": "查看课程记录",
+    "metricsAriaLabel": "首页主统计区",
+    "statsAriaLabel": "首页次级概览区",
+    "quickLinksAriaLabel": "首页快捷入口区",
+    "quickLinks": {
+      "title": "快捷入口",
+      "note": "直接进入日常使用频率较高的页面。"
+    },
+    "primary": {
+      "pendingClasses": "待确认课程",
+      "pendingClassesUnit": "节",
+      "pendingClassesHint": "进入课程记录页面处理待确认反馈与记录。",
+      "weeklyHours": "本周课时",
+      "weeklyHoursUnit": "h",
+      "weeklyHoursHint": "快速了解本周课时安排与协同节奏。",
+      "mockFollowups": "模拟应聘待跟进",
+      "mockFollowupsUnit": "项",
+      "mockFollowupsHint": "聚焦本周需要继续跟进的模拟应聘事项。"
+    },
+    "stats": {
+      "studentCount": "学员数量",
+      "studentCountUnit": "人",
+      "weeklySchedule": "本周排期",
+      "weeklyScheduleFilled": "已填充",
+      "positionFollowups": "岗位跟进",
+      "positionFollowupsUnit": "条",
+      "todayClasses": "今日课程",
+      "todayClassesUnit": "节"
+    },
+    "quick": {
+      "positions": "岗位信息",
+      "positionsDesc": "查看岗位开放状态与关联申请进展。",
+      "students": "学员列表",
+      "studentsDesc": "快速进入学员列表查看状态与进度。",
+      "classRecords": "课程记录",
+      "classRecordsDesc": "进入课程记录页面处理教学记录。",
+      "schedule": "课程排期",
+      "scheduleDesc": "查看近期课程安排与待处理事项。"
+    }
+  },
+  "dashboard": {
+    "stats": {
+      "pendingSchedule": "待处理排课",
+      "pendingScheduleUnit": "个",
+      "todayConsult": "今日咨询",
+      "todayConsultUnit": "次",
+      "pendingMaterials": "待整理资料",
+      "pendingMaterialsUnit": "份",
+      "pendingFeedback": "待收集反馈",
+      "pendingFeedbackUnit": "条"
+    },
+    "todayTasks": "今日任务",
+    "quickEntries": "快捷入口",
+    "actions": {
+      "scheduleAssist": "排课协助",
+      "studentService": "学员服务",
+      "feedbackCollect": "反馈收集"
+    },
+    "priority": {
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "tasks": {
+      "scheduleStudent": "协助张同学约课",
+      "organizeMaterials": "整理本周学习资料",
+      "collectFeedback": "收集 01 期学员反馈",
+      "updateInterview": "更新面试题库"
+    },
+    "k1": "排课协助",
+    "k2": "学员服务",
+    "k3": "反馈收集",
+    "k4": "待处理排课",
+    "k5": "个",
+    "k6": "今日咨询",
+    "k7": "次",
+    "k8": "待整理资料",
+    "k9": "份",
+    "k10": "待收集反馈",
+    "k11": "条",
+    "k12": "协助张同学约课",
+    "k13": "高",
+    "k14": "整理本周学习资料",
+    "k15": "中",
+    "k16": "收集 01 期学员反馈",
+    "k17": "更新面试题库",
+    "k18": "低"
+  },
+  "feedback": {
+    "title": "反馈收集",
+    "columns": {
+      "student": "学员",
+      "type": "类型",
+      "content": "内容",
+      "status": "状态"
+    },
+    "status": {
+      "pending": "待处理",
+      "done": "已处理"
+    },
+    "samples": {
+      "studentZhang": "张同学",
+      "studentLi": "李同学",
+      "typeCourse": "课程反馈",
+      "typeMentor": "导师反馈",
+      "contentMore": "希望增加实战项目",
+      "contentPraise": "王老师讲解很清晰"
+    },
+    "k1": "学员",
+    "k2": "类型",
+    "k3": "内容",
+    "k4": "状态",
+    "k5": "张同学",
+    "k6": "课程反馈",
+    "k7": "希望增加实战项目",
+    "k8": "李同学",
+    "k9": "导师反馈",
+    "k10": "王老师讲解很清晰",
+    "k11": "待处理",
+    "k12": "已处理"
+  },
+  "materials": {
+    "title": "资料管理",
+    "upload": "上传资料",
+    "columns": {
+      "name": "资料名称",
+      "category": "分类",
+      "uploadTime": "上传时间",
+      "downloads": "下载量"
+    },
+    "samples": {
+      "javaNotes": "Java 核心笔记",
+      "springBoot": "Spring Boot 实战",
+      "category": "学习文档"
+    },
+    "k1": "资料名称",
+    "k2": "分类",
+    "k3": "上传时间",
+    "k4": "下载量",
+    "k5": "Java 核心笔记",
+    "k6": "学习文档",
+    "k7": "Spring Boot 实战"
+  },
+  "profile": {
+    "title": "基本信息",
+    "titleEn": "Profile",
+    "overviewBadge": "资料概览",
+    "actions": {
+      "edit": "编辑资料",
+      "reload": "重新加载",
+      "refresh": "刷新资料",
+      "cancel": "取消",
+      "save": "保存修改",
+      "saving": "保存中..."
+    },
+    "states": {
+      "loadFailedTitle": "资料加载失败",
+      "loadingTitle": "资料加载中",
+      "loadingHint": "正在读取当前账号的基本信息与联系方式，请稍候。",
+      "loadFailedFallback": "资料暂时无法加载，请稍后重试。"
+    },
+    "identity": {
+      "fallbackName": "Assistant",
+      "metaSuffix": "Assistant"
+    },
+    "status": {
+      "active": "正常",
+      "disabled": "停用"
+    },
+    "summary": {
+      "statusLabel": "账号状态",
+      "statusHint": "当前登录账号的可用状态",
+      "contactLabel": "联系方式",
+      "contactHint": "邮箱与手机号的填写完整度",
+      "loginDateLabel": "最近登录",
+      "loginDateHint": "最近一次登录时间",
+      "loginIpLabel": "登录地址",
+      "loginIpHint": "最近一次登录 IP 信息"
+    },
+    "detail": {
+      "title": "资料详情",
+      "subtitle": "以下信息会用于账号展示、联系确认与内部协作识别。",
+      "nickName": "英文名",
+      "sex": "性别",
+      "email": "邮箱",
+      "phone": "手机号",
+      "account": "账号",
+      "remark": "备注"
+    },
+    "tips": {
+      "title": "更新说明",
+      "subtitle": "可直接修改常用联系字段。保存成功后，页面会自动同步最新结果。",
+      "chip1": "姓名展示",
+      "chip2": "联系方式",
+      "chip3": "登录信息",
+      "copy": "若资料提交失败，可先检查邮箱格式与手机号是否正确，再重新保存。"
+    },
+    "editor": {
+      "title": "编辑资料",
+      "subtitle": "修改后将立即提交到当前账号资料中。",
+      "nickNamePlaceholder": "请输入英文名",
+      "emailPlaceholder": "请输入邮箱",
+      "phonePlaceholder": "请输入 11 位手机号"
+    },
+    "sex": {
+      "male": "男",
+      "female": "女",
+      "unset": "未设置"
+    },
+    "errors": {
+      "cannotSaveTitle": "无法保存",
+      "cannotSaveText": "请先修正表单中的错误信息。",
+      "nickNameTooShort": "请输入至少 2 个字符的英文名。",
+      "emailInvalid": "请输入正确的邮箱格式。",
+      "phoneInvalid": "手机号需为 11 位数字。",
+      "sexInvalid": "请选择有效的性别。",
+      "saveFailedTitle": "保存失败",
+      "saveFailedFallback": "资料暂时无法保存，请稍后重试。"
+    },
+    "success": {
+      "title": "保存成功",
+      "text": "基本信息已更新，并同步显示最新内容。"
+    }
+  },
+  "students": {
+    "title": "学员列表",
+    "titleEn": "Student List",
+    "filters": {
+      "keyword": "搜索姓名",
+      "school": "学校",
+      "majorDirection": "主攻方向",
+      "accountStatus": "账号状态",
+      "search": "搜索",
+      "reset": "重置"
+    },
+    "errors": {
+      "loadFailedTitle": "学员列表加载失败",
+      "loadFailedFallback": "学员列表暂时无法加载，请稍后重试。"
+    },
+    "emptyText": "暂无可查看学员",
+    "totalRecords": "共 {total} 条记录",
+    "columns": {
+      "id": "ID",
+      "studentName": "英文姓名",
+      "email": "邮箱",
+      "leadMentor": "班主任",
+      "school": "学校",
+      "majorDirection": "主攻方向",
+      "jobCoaching": "求职辅导",
+      "basicCourse": "基础课",
+      "mockInterview": "模拟应聘",
+      "remainingHours": "剩余课时",
+      "targetPosition": "求职目标",
+      "contractStatus": "服务状态",
+      "accountStatus": "账号状态",
+      "action": "操作"
+    },
+    "actions": {
+      "viewJob": "查看求职"
+    },
+    "accountStatus": {
+      "active": "正常",
+      "frozen": "冻结",
+      "ended": "已结束",
+      "refunded": "退款"
+    },
+    "contractStatus": {
+      "normal": "正常服务",
+      "expiring": "即将到期",
+      "expired": "已到期",
+      "cancelled": "已终止",
+      "pendingReview": "待审核",
+      "blacklist": "黑名单"
+    },
+    "fallbackMentor": "待补充班主任",
+    "reminder": {
+      "pendingReview": "资料变更待审核",
+      "blacklisted": "当前学员已被纳入黑名单",
+      "lowHours": "剩余课时偏低，建议优先跟进",
+      "contractExpiring": "合同即将到期",
+      "none": "当前暂无额外提醒"
+    },
+    "k1": "搜索",
+    "k2": "重置",
+    "k3": "重新加载",
+    "k4": "待审核",
+    "k5": "查看求职",
+    "k6": "搜索姓名",
+    "k7": "学校",
+    "k8": "主攻方向",
+    "k9": "账号状态",
+    "k10": "'学员列表加载失败'",
+    "k11": "{ emptyText: '暂无可查看学员' }",
+    "k12": "正常",
+    "k13": "冻结",
+    "k14": "已结束",
+    "k15": "退款",
+    "k16": "英文姓名",
+    "k17": "邮箱",
+    "k18": "班主任",
+    "k19": "求职辅导",
+    "k20": "基础课",
+    "k21": "模拟应聘",
+    "k22": "剩余课时",
+    "k23": "求职目标",
+    "k24": "服务状态",
+    "k25": "操作",
+    "k26": "黑名单",
+    "k27": "即将到期",
+    "k28": "已到期",
+    "k29": "已终止",
+    "k30": "正常服务",
+    "k31": "到期",
+    "k32": "资料变更待审核",
+    "k33": "当前学员已被纳入黑名单",
+    "k34": "剩余课时偏低，建议优先跟进",
+    "k35": "合同即将到期",
+    "k36": "当前暂无额外提醒",
+    "k37": "学员列表暂时无法加载，请稍后重试。",
+    "k38": "当前暂无额外提醒",
+    "k39": "共 {n} 条记录"
+  },
+  "schedule": {
+    "title": "我的排期",
+    "titleEn": "My Schedule",
+    "bannerAria": "排期提醒",
+    "banner": {
+      "title": "请及时维护本周排期",
+      "syncedHint": "当前排期已同步，可继续微调后保存。",
+      "noAvailabilityHint": "请至少选择一天可授课时间段。",
+      "tag": "按真实状态更新"
+    },
+    "loading": {
+      "title": "排期加载中",
+      "hint": "正在读取本周排期与上一周可复制内容，请稍候。"
+    },
+    "errors": {
+      "loadFailedTitle": "排期加载失败",
+      "loadFailedFallback": "排期暂时无法加载，请稍后重试。",
+      "saveFailedTitle": "保存失败",
+      "saveFailedFallback": "排期暂时无法保存，请稍后重试。",
+      "copyFailedTitle": "复制失败",
+      "copyFailedFallback": "暂时无法读取上一周排期。",
+      "copyEmptyTitle": "暂无可复制内容",
+      "copyEmptyText": "上一周暂无排期记录，可直接手动填写本周排期。",
+      "cannotSaveTitle": "无法保存",
+      "noAvailability": "请至少选择一天可授课时间段。",
+      "totalHoursRequired": "请填写大于 0 的本周总时长。",
+      "totalHoursMax": "本周总时长不能超过 80 小时。"
+    },
+    "success": {
+      "saveTitle": "保存成功",
+      "saveText": "课程排期已更新，刷新页面后仍会保留最新结果。",
+      "copyTitle": "复制成功",
+      "copyText": "已载入上一周排期，可继续按本周实际情况微调。"
+    },
+    "weekViewPrefix": "周视图",
+    "userRole": "Assistant",
+    "summary": {
+      "metaPrefix": "当前登录助教 · 周区间 {range}",
+      "weeklyAvailable": "本周可用",
+      "availableDays": "可用天数",
+      "statusLabel": "排期状态",
+      "statusCopyable": "可复制",
+      "statusPending": "待完善"
+    },
+    "card": {
+      "currentWeekTitle": "本周排期",
+      "readOnlyTag": "只读视图",
+      "availableHours": "可用时长",
+      "availableDays": "可用天数",
+      "configuredAvailability": "已设置的可用时间",
+      "readOnlyNote": "(只读)",
+      "editTitle": "编辑排期",
+      "saveTag": "可保存",
+      "totalWeekHours": "本周总时长",
+      "hoursUnit": "小时",
+      "totalHoursUnitInline": "{hours} 小时",
+      "copyLastWeek": "复制上周排期",
+      "copying": "复制中...",
+      "saveSchedule": "保存排期",
+      "saving": "保存中..."
+    },
+    "days": {
+      "monday": "周一",
+      "tuesday": "周二",
+      "wednesday": "周三",
+      "thursday": "周四",
+      "friday": "周五",
+      "saturday": "周六",
+      "sunday": "周日"
+    },
+    "slots": {
+      "unavailable": "不可用",
+      "morning": "上午",
+      "afternoon": "下午",
+      "evening": "晚上",
+      "all_day": "全天"
+    },
+    "k1": "请及时维护本周排期",
+    "k2": "按真实状态更新",
+    "k3": "排期加载失败",
+    "k4": "重新加载",
+    "k5": "本周可用",
+    "k6": "可用天数",
+    "k7": "排期状态",
+    "k8": "本周排期",
+    "k9": "只读视图",
+    "k10": "可用时长",
+    "k11": "已设置的可用时间",
+    "k12": "(只读)",
+    "k13": "编辑排期",
+    "k14": "可保存",
+    "k15": "本周总时长",
+    "k16": "小时",
+    "k17": "排期加载中",
+    "k18": "正在读取本周排期与上一周可复制内容，请稍候。",
+    "k19": "周一",
+    "k20": "周二",
+    "k21": "周三",
+    "k22": "周四",
+    "k23": "周五",
+    "k24": "周六",
+    "k25": "周日",
+    "k26": "不可用",
+    "k27": "上午",
+    "k28": "下午",
+    "k29": "晚上",
+    "k30": "全天",
+    "k31": "无法保存",
+    "k32": "请至少选择一天可授课时间段。",
+    "k33": "请填写大于 0 的本周总时长。",
+    "k34": "本周总时长不能超过 80 小时。",
+    "k35": "排期暂时无法加载，请稍后重试。",
+    "k36": "暂无可复制内容",
+    "k37": "上一周暂无排期记录，可直接手动填写本周排期。",
+    "k38": "复制成功",
+    "k39": "已载入上一周排期，可继续按本周实际情况微调。",
+    "k40": "复制失败",
+    "k41": "暂时无法读取上一周排期。",
+    "k42": "保存成功",
+    "k43": "课程排期已更新，刷新页面后仍会保留最新结果。",
+    "k44": "保存失败",
+    "k45": "排期暂时无法保存，请稍后重试。",
+    "k46": "排期提醒",
+    "k47": "当前排期已同步，可继续微调后保存。",
+    "k48": "请至少选择一天可授课时间段。",
+    "k49": "当前登录助教 · 周区间 {range}",
+    "k50": "可复制",
+    "k51": "待完善",
+    "k52": "复制中...",
+    "k53": "复制上周排期",
+    "k54": "保存中...",
+    "k55": "保存排期",
+    "k56": "{n} 小时",
+    "k57": "周视图 {date}"
+  },
+  "positions": {
+    "title": "岗位信息",
+    "titleEn": "Job Tracker",
+    "viewMode": {
+      "list": "列表视图",
+      "drilldown": "下钻视图"
+    },
+    "filters": {
+      "category": "全部分类",
+      "industry": "全部行业",
+      "company": "全部公司",
+      "region": "全部地区",
+      "keyword": "搜索岗位/公司/城市...",
+      "reset": "重置"
+    },
+    "loadingTip": "正在加载岗位数据...",
+    "errors": {
+      "loadFailedFallback": "岗位列表暂时无法加载，请稍后重试。",
+      "linkedStudentsFallback": "关联学员暂时无法加载。",
+      "reload": "重新加载"
+    },
+    "uncategorizedIndustry": "未归类行业",
+    "uncategorized": "未归类",
+    "categoryLabel": {
+      "summer": "暑期实习",
+      "fulltime": "全职招聘",
+      "offcycle": "Off-cycle",
+      "spring": "春季实习",
+      "events": "招聘活动"
+    },
+    "studentModal": {
+      "titleDefault": "关联学员",
+      "titlePattern": "关联学员 · {position} · {company}",
+      "loadingTip": "正在读取关联学员...",
+      "emptyText": "当前岗位暂无可展示的关联学员明细",
+      "columns": {
+        "student": "学员",
+        "status": "当前状态",
+        "usedHours": "已用课时"
+      }
+    },
+    "k1": "列表视图",
+    "k2": "下钻视图",
+    "k3": "重置",
+    "k4": "重新加载",
+    "k5": "全部分类",
+    "k6": "全部行业",
+    "k7": "全部公司",
+    "k8": "全部地区",
+    "k9": "搜索岗位/公司/城市...",
+    "k10": "正在读取关联学员...",
+    "k11": "{ emptyText: '当前岗位暂无可展示的关联学员明细' }",
+    "k12": "暑期实习",
+    "k13": "全职招聘",
+    "k14": "春季实习",
+    "k15": "招聘活动",
+    "k16": "学员",
+    "k17": "当前状态",
+    "k18": "已用课时",
+    "k19": "关联学员",
+    "k20": "岗位列表暂时无法加载，请稍后重试。",
+    "k21": "关联学员暂时无法加载。",
+    "k22": "关联学员 · {position} · {company}"
+  },
+  "jobOverview": {
+    "title": "学员求职总览",
+    "titleEn": "Job Overview",
+    "export": "导出",
+    "exportFileName": "求职总览",
+    "filters": {
+      "company": "公司",
+      "stage": "面试阶段",
+      "interviewRange": "面试时间",
+      "allCompanies": "全部公司",
+      "allStages": "全部状态",
+      "rangeStart": "开始日期",
+      "rangeEnd": "结束日期",
+      "search": "搜索",
+      "reset": "重置"
+    },
+    "errors": {
+      "loadFailedFallback": "求职总览暂时无法加载，请稍后重试。",
+      "loadDetailFailed": "加载课消详情失败",
+      "reload": "重新加载"
+    },
+    "card": {
+      "titleZh": "我管理的学员",
+      "titleEn": "Managed Students",
+      "totalSuffix": "共 {total} 条",
+      "emptyText": "当前暂无管理学员的求职记录"
+    },
+    "columns": {
+      "studentId": "学生 ID",
+      "student": "学员",
+      "position": "岗位",
+      "company": "公司",
+      "location": "城市",
+      "interviewStage": "面试阶段",
+      "interviewTime": "面试时间",
+      "mentor": "导师",
+      "latestRating": "最近评分",
+      "action": "操作"
+    },
+    "csvHeader": "学员,公司,岗位,城市,面试阶段,面试时间,导师,最近评分",
+    "actions": {
+      "viewDetail": "查看详情"
+    },
+    "recordColumns": {
+      "classDate": "上课日期",
+      "courseType": "课程类型",
+      "memberStatus": "状态",
+      "durationHours": "时长(h)",
+      "rate": "评分",
+      "feedbackContent": "反馈"
+    },
+    "memberStatus": {
+      "absent": "旷课",
+      "present": "出席"
+    },
+    "schedule": {
+      "unscheduled": "未安排",
+      "notScheduled": "尚未安排面试",
+      "parseFail": "时间待解析",
+      "passed": "已过面试时间",
+      "today": "今天",
+      "daysLeft": "还剩 {days} 天"
+    },
+    "detail": {
+      "title": "跟进详情",
+      "subId": "ID: {id}",
+      "labels": {
+        "position": "岗位",
+        "company": "公司",
+        "city": "城市",
+        "stage": "面试阶段",
+        "interviewTime": "面试时间",
+        "mentor": "导师"
+      },
+      "metrics": {
+        "totalHours": "总课时",
+        "avgRating": "平均评分",
+        "lessonCount": "课消条数"
+      },
+      "records": {
+        "title": "课消记录",
+        "empty": "该求职申请暂无课消记录",
+        "mentorFallback": "导师待补",
+        "totalHoursLabel": "共 {hours}h",
+        "avgLabel": "平均 {rating}",
+        "countLabel": "{count} 条"
+      }
+    },
+    "k1": "搜索",
+    "k2": "重置",
+    "k3": "重新加载",
+    "k4": "我管理的学员",
+    "k5": "查看详情",
+    "k6": "跟进详情",
+    "k7": "岗位",
+    "k8": "公司",
+    "k9": "城市",
+    "k10": "面试阶段",
+    "k11": "面试时间",
+    "k12": "导师",
+    "k13": "总课时",
+    "k14": "平均评分",
+    "k15": "课消条数",
+    "k16": "课消记录",
+    "k17": "该求职申请暂无课消记录",
+    "k18": "全部公司",
+    "k19": "全部状态",
+    "k20": "['开始日期', '结束日期']",
+    "k21": "{ emptyText: '当前暂无管理学员的求职记录' }",
+    "k22": "学生 ID",
+    "k23": "学员",
+    "k24": "最近评分",
+    "k25": "操作",
+    "k26": "上课日期",
+    "k27": "课程类型",
+    "k28": "状态",
+    "k29": "时长(h)",
+    "k30": "评分",
+    "k31": "反馈",
+    "k32": "未安排",
+    "k33": "尚未安排面试",
+    "k34": "时间待解析",
+    "k35": "已过面试时间",
+    "k36": "今天",
+    "k37": "拒绝",
+    "k38": "放弃",
+    "k39": "学员,公司,岗位,城市,面试阶段,面试时间,导师,最近评分\\n",
+    "k40": "求职总览暂时无法加载，请稍后重试。",
+    "k41": "加载课消详情失败",
+    "k42": "导师待补",
+    "k43": "平均 {n}",
+    "k44": "旷课",
+    "k45": "出席",
+    "k46": "还剩 {n} 天",
+    "k47": "求职总览"
+  },
+  "mockPractice": {
+    "title": "模拟应聘管理",
+    "titleEn": "Mock Practice",
+    "managedStudents": "我管理的学员 Managed Students",
+    "filters": {
+      "practiceType": "全部类型",
+      "filter": "筛选",
+      "reset": "重置"
+    },
+    "errors": {
+      "loadFailedFallback": "模拟应聘记录暂时无法加载，请稍后重试。",
+      "reload": "重新加载"
+    },
+    "emptyText": "当前筛选下没有可展示的模拟应聘记录",
+    "totalSuffix": "共 {total} 条",
+    "practiceType": {
+      "mock_interview": "模拟面试",
+      "communication_test": "沟通测试",
+      "relation_test": "人际关系测试",
+      "midterm": "期中考试"
+    },
+    "columns": {
+      "studentId": "学生 ID",
+      "studentName": "学生姓名",
+      "practiceType": "类型",
+      "submittedAt": "申请时间",
+      "mentor": "辅导老师",
+      "reportedLessonCount": "已上报课消数",
+      "action": "操作"
+    },
+    "mentor": {
+      "unassigned": "待分配",
+      "bgFallback": "信息待补充"
+    },
+    "actions": {
+      "viewDetail": "查看详情"
+    },
+    "detail": {
+      "titleFallback": "模拟应聘详情",
+      "titlePattern": "模拟应聘详情 · {name}",
+      "labels": {
+        "studentId": "学生 ID",
+        "studentName": "学生姓名",
+        "type": "类型",
+        "submittedAt": "申请时间",
+        "mentor": "辅导老师",
+        "reportedLessonCount": "已上报课消数",
+        "requestContent": "申请内容"
+      },
+      "emptyRequest": "暂无申请内容",
+      "noticeFeedbackPending": "导师上报的多条课消反馈待后端详情接口接入后展示"
+    },
+    "k1": "重新加载",
+    "k2": "筛选",
+    "k3": "重置",
+    "k4": "查看详情",
+    "k5": "申请内容",
+    "k6": "全部类型",
+    "k7": "{ emptyText: '当前筛选下没有可展示的模拟应聘记录' }",
+    "k8": "detailModal.record ? `模拟应聘详情 · ${detailModal.record.studentName || '-'}` : '模拟应聘详情'",
+    "k9": "学生 ID",
+    "k10": "学生姓名",
+    "k11": "类型",
+    "k12": "申请时间",
+    "k13": "辅导老师",
+    "k14": "已上报课消数",
+    "k15": "导师上报的多条课消反馈待后端详情接口接入后展示",
+    "k16": "模拟面试",
+    "k17": "沟通测试",
+    "k18": "人际关系测试",
+    "k19": "期中考试",
+    "k20": "操作",
+    "k21": "模拟应聘记录暂时无法加载，请稍后重试。",
+    "k22": "待分配",
+    "k23": "信息待补充",
+    "k24": "暂无申请内容"
+  },
+  "classRecords": {
+    "title": "课程记录",
+    "titleEn": "Class Records",
+    "actions": {
+      "create": "上报课程记录",
+      "search": "搜索",
+      "reset": "重置",
+      "viewDetail": "查看详情",
+      "viewRejectReason": "查看原因",
+      "reload": "重新加载"
+    },
+    "scope": {
+      "mine": "我的申报",
+      "managed": "我管理的学员"
+    },
+    "flow": {
+      "title": "课程记录流程",
+      "step1": "课程执行",
+      "step2": "记录提交",
+      "step3": "审核处理",
+      "step4": "反馈回看"
+    },
+    "summary": {
+      "all": "全部课程",
+      "pending": "待审核",
+      "approved": "已通过",
+      "settlement": "待结算金额"
+    },
+    "filters": {
+      "keyword": "搜索学员姓名/ID",
+      "coachingType": "辅导类型",
+      "courseContent": "课程内容",
+      "reporterRole": "申报人"
+    },
+    "errors": {
+      "loadFailedTitle": "课程记录加载失败",
+      "loadFailedFallback": "课程记录暂时无法加载，请稍后重试。"
+    },
+    "emptyText": "当前筛选下暂无课程记录",
+    "totalSuffix": "共 {total} 条",
+    "tabs": {
+      "all": "全部",
+      "pending": "待审核",
+      "approved": "已通过",
+      "rejected": "已驳回"
+    },
+    "coachingType": {
+      "job_coaching": "岗位辅导",
+      "mock_practice": "模拟应聘",
+      "basic_course": "基础课程"
+    },
+    "courseContent": {
+      "technical": "技术的",
+      "behavioral": "行为训练",
+      "resume_update": "简历更新",
+      "mock_interview": "模拟面试的课程",
+      "networking_midterm": "人际关系的课程",
+      "mock_midterm": "模拟期中考试",
+      "case_prep": "咨询案例准备",
+      "other": "其他",
+      "absent": "旷课"
+    },
+    "reporterRole": {
+      "mentor": "导师",
+      "headteacher": "班主任",
+      "assistant": "助教"
+    },
+    "columns": {
+      "recordId": "记录ID",
+      "student": "学员",
+      "reporter": "申报人",
+      "coachingType": "辅导内容",
+      "courseContent": "课程内容",
+      "classDate": "上课日期",
+      "duration": "时长",
+      "studentRating": "学员评价",
+      "status": "审核状态",
+      "action": "操作"
+    },
+    "detail": {
+      "title": "课程记录详情",
+      "rejectTitle": "驳回原因",
+      "labels": {
+        "recordId": "记录ID",
+        "student": "学员",
+        "studentIdSuffix": "（ID: {id}）",
+        "reporter": "申报人",
+        "coachingType": "辅导内容",
+        "courseContent": "课程内容",
+        "classDate": "上课日期",
+        "duration": "时长",
+        "absenceRemark": "旷课备注",
+        "studentRating": "学员评价",
+        "status": "审核状态",
+        "rejectReason": "驳回原因",
+        "feedbackSummary": "反馈摘要"
+      },
+      "absenceFallback": "未填写",
+      "rejectReasonFallback": "（未填写驳回原因）",
+      "feedbackFallback": "暂无反馈摘要"
+    },
+    "k1": "上报课程记录",
+    "k2": "我的申报",
+    "k3": "我管理的学员",
+    "k4": "课程记录流程",
+    "k5": "搜索",
+    "k6": "重置",
+    "k7": "重新加载",
+    "k8": "搜索学员姓名/ID",
+    "k9": "辅导类型",
+    "k10": "课程内容",
+    "k11": "申报人",
+    "k12": "'课程记录加载失败'",
+    "k13": "{ emptyText: '当前筛选下暂无课程记录' }",
+    "k14": "selectedRecord?.status === 'rejected' ? '驳回原因' : '课程记录详情'",
+    "k15": "记录ID",
+    "k16": "学员",
+    "k17": "辅导内容",
+    "k18": "上课日期",
+    "k19": "时长",
+    "k20": "旷课备注",
+    "k21": "学员评价",
+    "k22": "审核状态",
+    "k23": "驳回原因",
+    "k24": "反馈摘要",
+    "k25": "全部",
+    "k26": "待审核",
+    "k27": "已通过",
+    "k28": "已驳回",
+    "k29": "岗位辅导",
+    "k30": "模拟应聘",
+    "k31": "基础课程",
+    "k32": "技术的",
+    "k33": "行为训练",
+    "k34": "简历更新",
+    "k35": "模拟面试的课程",
+    "k36": "人际关系的课程",
+    "k37": "模拟期中考试",
+    "k38": "咨询案例准备",
+    "k39": "其他",
+    "k40": "旷课",
+    "k41": "导师",
+    "k42": "班主任",
+    "k43": "助教",
+    "k44": "课程执行",
+    "k45": "记录提交",
+    "k46": "审核处理",
+    "k47": "反馈回看",
+    "k48": "操作",
+    "k49": "全部课程",
+    "k50": "待结算金额",
+    "k51": "通过",
+    "k52": "驳回",
+    "k53": "课程记录暂时无法加载，请稍后重试。",
+    "k54": "查看原因",
+    "k55": "查看详情",
+    "k56": "未填写",
+    "k57": "（未填写驳回原因）",
+    "k58": "暂无反馈摘要"
+  },
+  "assistantClassReportPayload": {
+    "k1": "学员状态: 正常上课"
+  }
+}

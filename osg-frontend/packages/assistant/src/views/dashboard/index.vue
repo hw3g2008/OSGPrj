@@ -1,14 +1,14 @@
 <template>
   <div class="dashboard">
     <a-row :gutter="16">
-      <a-col :span="6"><a-card><a-statistic title="待处理排课" :value="stats.pendingSchedule" suffix="个" /></a-card></a-col>
-      <a-col :span="6"><a-card><a-statistic title="今日咨询" :value="stats.todayConsult" suffix="次" /></a-card></a-col>
-      <a-col :span="6"><a-card><a-statistic title="待整理资料" :value="stats.pendingMaterials" suffix="份" /></a-card></a-col>
-      <a-col :span="6"><a-card><a-statistic title="待收集反馈" :value="stats.pendingFeedback" suffix="条" /></a-card></a-col>
+      <a-col :span="6"><a-card><a-statistic :title="t('assistant.dashboard.k4')" :value="stats.pendingSchedule" :suffix="t('assistant.dashboard.k5')" /></a-card></a-col>
+      <a-col :span="6"><a-card><a-statistic :title="t('assistant.dashboard.k6')" :value="stats.todayConsult" :suffix="t('assistant.dashboard.k7')" /></a-card></a-col>
+      <a-col :span="6"><a-card><a-statistic :title="t('assistant.dashboard.k8')" :value="stats.pendingMaterials" :suffix="t('assistant.dashboard.k9')" /></a-card></a-col>
+      <a-col :span="6"><a-card><a-statistic :title="t('assistant.dashboard.k10')" :value="stats.pendingFeedback" :suffix="t('assistant.dashboard.k11')" /></a-card></a-col>
     </a-row>
     <a-row :gutter="16" style="margin-top: 24px">
       <a-col :span="12">
-        <a-card title="今日任务">
+        <a-card :title="t('assistant.dashboard.todayTasks')">
           <a-list :data-source="tasks" size="small">
             <template #renderItem="{ item }">
               <a-list-item>
@@ -20,11 +20,11 @@
         </a-card>
       </a-col>
       <a-col :span="12">
-        <a-card title="快捷入口">
+        <a-card :title="t('assistant.dashboard.quickEntries')">
           <a-space direction="vertical" style="width: 100%">
-            <a-button type="primary" block @click="$router.push('/schedule')">排课协助</a-button>
-            <a-button block @click="$router.push('/students')">学员服务</a-button>
-            <a-button block @click="$router.push('/feedback')">反馈收集</a-button>
+            <a-button type="primary" block @click="$router.push('/schedule')">{{ t('assistant.dashboard.k1') }}</a-button>
+            <a-button block @click="$router.push('/students')">{{ t('assistant.dashboard.k2') }}</a-button>
+            <a-button block @click="$router.push('/feedback')">{{ t('assistant.dashboard.k3') }}</a-button>
           </a-space>
         </a-card>
       </a-col>
@@ -34,11 +34,14 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 const stats = ref({ pendingSchedule: 5, todayConsult: 12, pendingMaterials: 3, pendingFeedback: 8 })
 const tasks = ref([
-  { content: '协助张同学约课', priority: '高', color: 'red' },
-  { content: '整理本周学习资料', priority: '中', color: 'orange' },
-  { content: '收集 01 期学员反馈', priority: '中', color: 'orange' },
-  { content: '更新面试题库', priority: '低', color: 'blue' }
+  { content: t('assistant.dashboard.k12'), priority: t('assistant.dashboard.k13'), color: 'red' },
+  { content: t('assistant.dashboard.k14'), priority: t('assistant.dashboard.k15'), color: 'orange' },
+  { content: t('assistant.dashboard.k16'), priority: t('assistant.dashboard.k15'), color: 'orange' },
+  { content: t('assistant.dashboard.k17'), priority: t('assistant.dashboard.k18'), color: 'blue' }
 ])
 </script>

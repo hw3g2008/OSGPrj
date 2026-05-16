@@ -3,40 +3,47 @@ import type { RouteRecordRaw } from 'vue-router'
 
 import MainLayout from '@/layouts/MainLayout.vue'
 import { getToken } from '@osg/shared/utils'
+import { i18n } from '@osg/shared'
+
+const t = (key: string, params?: Record<string, unknown>) =>
+  (i18n.global.t as (k: string, p?: Record<string, unknown>) => string)(key, params)
 
 interface PlaceholderRouteOptions {
   path: string
   name: string
   pageId: string
-  title: string
-  titleEn: string
-  description: string
+  titleKey: string
+  titleEnKey: string
+  descKey: string
 }
 
 function buildPlaceholderBullets(title: string): string[] {
   return [
-    '该功能入口已保留，方便后续快速访问。',
-    `当前版本暂未开放${title}。`,
-    '完整内容将在后续版本上线，敬请期待。',
+    t('assistant.router.placeholder.bulletEntryReserved'),
+    t('assistant.router.placeholder.bulletCurrentClosed', { title }),
+    t('assistant.router.placeholder.bulletLaterRelease'),
   ]
 }
 
 function createPlaceholderRoute(options: PlaceholderRouteOptions): RouteRecordRaw {
+  const title = t(options.titleKey)
+  const titleEn = t(options.titleEnKey)
+  const description = t(options.descKey)
   return {
     path: options.path,
     name: options.name,
     component: () => import('@/views/placeholder/index.vue'),
     meta: {
-      title: options.title,
+      title,
       placeholderContent: {
         pageId: options.pageId,
-        title: options.title,
-        titleEn: options.titleEn,
-        description: options.description,
-        cardTitle: `${options.title}敬请期待`,
-        cardDescription: `当前版本暂未开放${options.title}，相关内容将在后续版本上线。`,
-        statusText: '敬请期待',
-        bullets: buildPlaceholderBullets(options.title),
+        title,
+        titleEn,
+        description,
+        cardTitle: t('assistant.router.placeholder.cardTitleSuffix', { title }),
+        cardDescription: t('assistant.router.placeholder.cardDescription', { title }),
+        statusText: t('assistant.router.placeholder.statusComingSoon'),
+        bullets: buildPlaceholderBullets(title),
       },
     },
   }
@@ -47,7 +54,7 @@ const routes: RouteRecordRaw[] = [
     path: '/login',
     name: 'Login',
     component: () => import('@/views/login/index.vue'),
-    meta: { title: '登录', public: true },
+    meta: { title: t('assistant.router.title.login'), public: true },
   },
   {
     path: '/',
@@ -58,113 +65,113 @@ const routes: RouteRecordRaw[] = [
         path: 'home',
         name: 'Home',
         component: () => import('@/views/home/index.vue'),
-        meta: { title: '首页' },
+        meta: { title: t('assistant.router.title.home') },
       },
       {
         path: 'career/positions',
         name: 'CareerPositions',
         component: () => import('@/views/career/positions/index.vue'),
-        meta: { title: '岗位信息' },
+        meta: { title: t('assistant.router.title.positions') },
       },
       {
         path: 'career/job-overview',
         name: 'CareerJobOverview',
         component: () => import('@/views/career/job-overview/index.vue'),
-        meta: { title: '学员求职总览' },
+        meta: { title: t('assistant.router.title.jobOverview') },
       },
       {
         path: 'career/mock-practice',
         name: 'CareerMockPractice',
         component: () => import('@/views/career/mock-practice/index.vue'),
-        meta: { title: '模拟应聘管理' },
+        meta: { title: t('assistant.router.title.mockPractice') },
       },
       {
         path: 'students',
         name: 'Students',
         component: () => import('@/views/students/index.vue'),
-        meta: { title: '学员列表' },
+        meta: { title: t('assistant.router.title.students') },
       },
       createPlaceholderRoute({
         path: 'communication',
         name: 'Communication',
         pageId: 'page-communication',
-        title: '人际关系沟通记录',
-        titleEn: 'Communication Records',
-        description: '与学员沟通相关的内容将在这里开放。',
+        titleKey: 'assistant.router.placeholder.communicationTitle',
+        titleEnKey: 'assistant.router.placeholder.communicationTitleEn',
+        descKey: 'assistant.router.placeholder.communicationDesc',
       }),
       {
         path: 'class-records',
         name: 'ClassRecords',
         component: () => import('@/views/class-records/index.vue'),
-        meta: { title: '课程记录' },
+        meta: { title: t('assistant.router.title.classRecords') },
       },
       createPlaceholderRoute({
         path: 'settlement',
         name: 'Settlement',
         pageId: 'page-settlement',
-        title: '课时结算',
-        titleEn: 'Settlement',
-        description: '课时结算相关的内容将在这里开放。',
+        titleKey: 'assistant.router.placeholder.settlementTitle',
+        titleEnKey: 'assistant.router.placeholder.settlementTitleEn',
+        descKey: 'assistant.router.placeholder.settlementDesc',
       }),
       createPlaceholderRoute({
         path: 'expense',
         name: 'Expense',
         pageId: 'page-expense',
-        title: '报销管理',
-        titleEn: 'Expense',
-        description: '报销处理相关的内容将在这里开放。',
+        titleKey: 'assistant.router.placeholder.expenseTitle',
+        titleEnKey: 'assistant.router.placeholder.expenseTitleEn',
+        descKey: 'assistant.router.placeholder.expenseDesc',
       }),
       createPlaceholderRoute({
         path: 'files',
         name: 'Files',
         pageId: 'page-files',
-        title: '文件',
-        titleEn: 'Files',
-        description: '文件资料相关的内容将在这里开放。',
+        titleKey: 'assistant.router.placeholder.filesTitle',
+        titleEnKey: 'assistant.router.placeholder.filesTitleEn',
+        descKey: 'assistant.router.placeholder.filesDesc',
       }),
       createPlaceholderRoute({
         path: 'online-test-bank',
         name: 'OnlineTestBank',
         pageId: 'page-online-test-bank',
-        title: '在线测试题库',
-        titleEn: 'Online Test Bank',
-        description: '在线测试题库相关的内容将在这里开放。',
+        titleKey: 'assistant.router.placeholder.onlineTestTitle',
+        titleEnKey: 'assistant.router.placeholder.onlineTestTitleEn',
+        descKey: 'assistant.router.placeholder.onlineTestDesc',
       }),
       createPlaceholderRoute({
         path: 'interview-bank',
         name: 'InterviewBank',
         pageId: 'page-interview-bank',
-        title: '真人面试题库',
-        titleEn: 'Interview Bank',
-        description: '真人面试题库相关的内容将在这里开放。',
+        titleKey: 'assistant.router.placeholder.interviewBankTitle',
+        titleEnKey: 'assistant.router.placeholder.interviewBankTitleEn',
+        descKey: 'assistant.router.placeholder.interviewBankDesc',
       }),
       {
         path: 'profile',
         name: 'Profile',
         component: () => import('@/views/profile/index.vue'),
-        meta: { title: '基本信息' },
+        meta: { title: t('assistant.router.title.profile') },
       },
       {
         path: 'schedule',
         name: 'Schedule',
         component: () => import('@/views/schedule/index.vue'),
-        meta: { title: '课程排期' },
+        meta: { title: t('assistant.router.title.schedule') },
       },
       createPlaceholderRoute({
         path: 'notice',
         name: 'Notice',
         pageId: 'page-notice',
-        title: '消息',
-        titleEn: 'Notice',
-        description: '消息通知相关的内容将在这里开放。',
+        titleKey: 'assistant.router.placeholder.noticeTitle',
+        titleEnKey: 'assistant.router.placeholder.noticeTitleEn',
+        descKey: 'assistant.router.placeholder.noticeDesc',
       }),
       createPlaceholderRoute({
         path: 'faq',
         name: 'Faq',
         pageId: 'page-faq',
-        title: '常见问题',
-        titleEn: 'FAQ',
-        description: '常见问题与帮助内容将在这里开放。',
+        titleKey: 'assistant.router.placeholder.faqTitle',
+        titleEnKey: 'assistant.router.placeholder.faqTitleEn',
+        descKey: 'assistant.router.placeholder.faqDesc',
       }),
     ],
   },

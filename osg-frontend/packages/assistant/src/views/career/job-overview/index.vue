@@ -1,10 +1,10 @@
 <template>
   <div class="osg-page assistant-job-overview">
-    <PageHeader title-zh="学员求职总览" title-en="Job Overview">
+    <PageHeader :title-zh="t('assistant.jobOverview.title')" title-en="Job Overview">
       <template #actions>
         <a-button @click="handleExport">
           <template #icon><ExportOutlined /></template>
-          导出
+          {{ t('assistant.jobOverview.export') }}
         </a-button>
       </template>
     </PageHeader>
@@ -15,30 +15,30 @@
     <!-- 筛选条件（卡片式） -->
     <a-card :bordered="false" class="ajo-filter-card">
       <a-form layout="vertical" :model="filters" class="ajo-filter-form">
-        <a-form-item label="公司">
+        <a-form-item :label="t('assistant.jobOverview.k8')">
           <a-select
             v-model:value="filters.companyName"
-            placeholder="全部公司"
+            :placeholder="t('assistant.jobOverview.k18')"
             allow-clear
             show-search
             :options="companyOptions.map((c) => ({ value: c, label: c }))"
             style="width: 100%"
           />
         </a-form-item>
-        <a-form-item label="面试阶段">
+        <a-form-item :label="t('assistant.jobOverview.k10')">
           <a-select
             v-model:value="filters.currentStage"
-            placeholder="全部状态"
+            :placeholder="t('assistant.jobOverview.k19')"
             allow-clear
             :options="stageOptions.map((s) => ({ value: s, label: s }))"
             style="width: 100%"
           />
         </a-form-item>
-        <a-form-item label="面试时间">
+        <a-form-item :label="t('assistant.jobOverview.k11')">
           <a-range-picker
             v-model:value="filters.interviewRange"
             value-format="YYYY-MM-DD"
-            :placeholder="['开始日期', '结束日期']"
+            :placeholder="t('assistant.jobOverview.k20')"
             style="width: 100%"
             allow-clear
           />
@@ -47,9 +47,9 @@
           <a-space>
             <a-button type="primary" @click="handleSearch">
               <template #icon><SearchOutlined /></template>
-              搜索
+              {{ t('assistant.jobOverview.k1') }}
             </a-button>
-            <a-button @click="handleReset">重置</a-button>
+            <a-button @click="handleReset">{{ t('assistant.jobOverview.k2') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
@@ -58,7 +58,7 @@
     <!-- 错误提示 -->
     <a-alert v-if="errorMessage" type="error" show-icon :message="errorMessage" style="border-radius: 8px;">
       <template #action>
-        <a-button size="small" @click="loadOverview">重新加载</a-button>
+        <a-button size="small" @click="loadOverview">{{ t('assistant.jobOverview.k3') }}</a-button>
       </template>
     </a-alert>
 
@@ -66,7 +66,7 @@
     <a-card v-else :bordered="false" class="ajo-data-card">
       <template #title>
         <div class="ajo-data-card__title">
-          <span class="ajo-data-card__title-zh">我管理的学员</span>
+          <span class="ajo-data-card__title-zh">{{ t('assistant.jobOverview.k4') }}</span>
           <span class="ajo-data-card__title-en">Managed Students</span>
           <a-tag class="ajo-data-card__count">{{ filteredRecords.length }}</a-tag>
         </div>
@@ -80,7 +80,7 @@
         :pagination="tablePagination"
         :scroll="{ x: 1280 }"
         :row-class-name="(record: ExtendedRecord) => rowClassName(record)"
-        :locale="{ emptyText: '当前暂无管理学员的求职记录' }"
+        :locale="t('assistant.jobOverview.k21')"
         class="ajo-table"
       >
         <template #bodyCell="{ column, record }">
@@ -118,7 +118,7 @@
             <span v-else class="ajo-muted">-</span>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button type="link" size="small" class="ajo-link-button" @click="openDetail(record)">查看详情</a-button>
+            <a-button type="link" size="small" class="ajo-link-button" @click="openDetail(record)">{{ t('assistant.jobOverview.k5') }}</a-button>
           </template>
         </template>
       </a-table>
@@ -128,7 +128,7 @@
     <OverlaySurfaceModal
       :open="detailOpen"
       surface-id="assistant-job-overview-detail"
-      title="跟进详情"
+      :title="t('assistant.jobOverview.k6')"
       width="880px"
       max-height="78vh"
       variant="default"
@@ -137,7 +137,7 @@
     >
       <template #title>
         <div class="ajo-detail-header">
-          <span class="ajo-detail-header__title">跟进详情</span>
+          <span class="ajo-detail-header__title">{{ t('assistant.jobOverview.k6') }}</span>
           <span v-if="detailRecord?.studentName" class="ajo-detail-header__sub">
             {{ detailRecord.studentName }}
             <template v-if="detailRecord.studentId">· ID: {{ detailRecord.studentId }}</template>
@@ -151,27 +151,27 @@
           <section class="ajo-detail__summary">
             <div class="ajo-detail__summary-grid">
               <div class="ajo-detail__field">
-                <span class="ajo-detail__label">岗位</span>
+                <span class="ajo-detail__label">{{ t('assistant.jobOverview.k7') }}</span>
                 <span class="ajo-detail__value">{{ detailRecord.position || detailRecord.positionName || '-' }}</span>
               </div>
               <div class="ajo-detail__field">
-                <span class="ajo-detail__label">公司</span>
+                <span class="ajo-detail__label">{{ t('assistant.jobOverview.k8') }}</span>
                 <span class="ajo-detail__value">{{ detailRecord.company || detailRecord.companyName || '-' }}</span>
               </div>
               <div class="ajo-detail__field">
-                <span class="ajo-detail__label">城市</span>
+                <span class="ajo-detail__label">{{ t('assistant.jobOverview.k9') }}</span>
                 <span class="ajo-detail__value">{{ detailRecord.cityLabel || detailRecord.location || '-' }}</span>
               </div>
               <div class="ajo-detail__field">
-                <span class="ajo-detail__label">面试阶段</span>
+                <span class="ajo-detail__label">{{ t('assistant.jobOverview.k10') }}</span>
                 <span class="ajo-detail__value"><StageTag :stage="detailRecord.interviewStage" /></span>
               </div>
               <div class="ajo-detail__field">
-                <span class="ajo-detail__label">面试时间</span>
+                <span class="ajo-detail__label">{{ t('assistant.jobOverview.k11') }}</span>
                 <span class="ajo-detail__value">{{ formatDateTime(detailRecord.interviewTime) }}</span>
               </div>
               <div class="ajo-detail__field">
-                <span class="ajo-detail__label">导师</span>
+                <span class="ajo-detail__label">{{ t('assistant.jobOverview.k12') }}</span>
                 <span class="ajo-detail__value">{{ detailRecord.mentorNames || detailRecord.mentorName || '-' }}</span>
               </div>
             </div>
@@ -180,11 +180,11 @@
           <!-- KPI -->
           <section class="ajo-detail__metrics">
             <div class="ajo-detail__metric ajo-detail__metric--hours">
-              <span class="ajo-detail__metric-label">总课时</span>
+              <span class="ajo-detail__metric-label">{{ t('assistant.jobOverview.k13') }}</span>
               <span class="ajo-detail__metric-value">{{ detailTotals.totalHours }}<small>h</small></span>
             </div>
             <div class="ajo-detail__metric ajo-detail__metric--rating">
-              <span class="ajo-detail__metric-label">平均评分</span>
+              <span class="ajo-detail__metric-label">{{ t('assistant.jobOverview.k14') }}</span>
               <span class="ajo-detail__metric-value">
                 <template v-if="detailTotals.avgRating !== null">
                   <StarFilled />{{ detailTotals.avgRating }}
@@ -193,23 +193,23 @@
               </span>
             </div>
             <div class="ajo-detail__metric ajo-detail__metric--count">
-              <span class="ajo-detail__metric-label">课消条数</span>
+              <span class="ajo-detail__metric-label">{{ t('assistant.jobOverview.k15') }}</span>
               <span class="ajo-detail__metric-value">{{ detailTotals.lessonCount }}</span>
             </div>
           </section>
 
           <!-- 课消记录（按导师分组） -->
           <section class="ajo-detail__records">
-            <div class="ajo-detail__records-title">课消记录</div>
-            <div v-if="!mentorGroups.length" class="ajo-detail__empty">该求职申请暂无课消记录</div>
+            <div class="ajo-detail__records-title">{{ t('assistant.jobOverview.k16') }}</div>
+            <div v-if="!mentorGroups.length" class="ajo-detail__empty">{{ t('assistant.jobOverview.k17') }}</div>
             <div v-for="group in mentorGroups" :key="group.mentorId ?? 'unknown'" class="ajo-mentor-card">
               <div class="ajo-mentor-card__head">
                 <div class="ajo-mentor-card__avatar">{{ mentorInitial(group.mentorName) }}</div>
                 <div class="ajo-mentor-card__meta">
-                  <div class="ajo-mentor-card__name">{{ group.mentorName || '导师待补' }}</div>
+                  <div class="ajo-mentor-card__name">{{ group.mentorName || t('assistant.jobOverview.k42') }}</div>
                   <div class="ajo-mentor-card__stats">
                     <span><ClockCircleOutlined />共 {{ Number(group.totalHours || 0) }}h</span>
-                    <span v-if="group.avgRating !== null && group.avgRating !== undefined"><StarFilled />平均 {{ group.avgRating }}</span>
+                    <span v-if="group.avgRating !== null && group.avgRating !== undefined"><StarFilled />{{ t('assistant.jobOverview.k43', { n: group.avgRating }) }}</span>
                     <span><FileTextOutlined />{{ (group.records || []).length }} 条</span>
                   </div>
                 </div>
@@ -225,7 +225,7 @@
                 <template #bodyCell="{ column, record }">
                   <template v-if="column.key === 'memberStatus'">
                     <a-tag :color="record.memberStatus === 'absent' ? 'red' : 'green'">
-                      {{ record.memberStatus === 'absent' ? '旷课' : '出席' }}
+                      {{ record.memberStatus === 'absent' ? t('assistant.jobOverview.k44') : t('assistant.jobOverview.k45') }}
                     </a-tag>
                   </template>
                   <template v-else-if="column.key === 'rate'">
@@ -247,6 +247,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   ExportOutlined,
   SearchOutlined,
@@ -267,30 +268,32 @@ import {
   type AssistantJobOverviewRecord,
 } from '@osg/shared/api'
 
+const { t } = useI18n()
+
 interface ExtendedRecord extends AssistantJobOverviewRecord {
   coachingId?: number
 }
 
 const columns = [
-  { title: '学生 ID', dataIndex: 'studentId', key: 'studentId', width: 100, fixed: 'left' as const },
-  { title: '学员', dataIndex: 'studentName', key: 'studentName', width: 170 },
-  { title: '岗位', dataIndex: 'position', key: 'position', width: 160 },
-  { title: '公司', dataIndex: 'company', key: 'company', width: 160 },
-  { title: '城市', dataIndex: 'location', key: 'location', width: 110 },
-  { title: '面试阶段', dataIndex: 'interviewStage', key: 'interviewStage', width: 130 },
-  { title: '面试时间', dataIndex: 'interviewTime', key: 'interviewTime', width: 150 },
-  { title: '导师', dataIndex: 'mentorName', key: 'mentorName', width: 140 },
-  { title: '最近评分', dataIndex: 'latestRating', key: 'latestRating', width: 110 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 100, fixed: 'right' as const },
+  { title: t('assistant.jobOverview.k22'), dataIndex: 'studentId', key: 'studentId', width: 100, fixed: 'left' as const },
+  { title: t('assistant.jobOverview.k23'), dataIndex: 'studentName', key: 'studentName', width: 170 },
+  { title: t('assistant.jobOverview.k7'), dataIndex: 'position', key: 'position', width: 160 },
+  { title: t('assistant.jobOverview.k8'), dataIndex: 'company', key: 'company', width: 160 },
+  { title: t('assistant.jobOverview.k9'), dataIndex: 'location', key: 'location', width: 110 },
+  { title: t('assistant.jobOverview.k10'), dataIndex: 'interviewStage', key: 'interviewStage', width: 130 },
+  { title: t('assistant.jobOverview.k11'), dataIndex: 'interviewTime', key: 'interviewTime', width: 150 },
+  { title: t('assistant.jobOverview.k12'), dataIndex: 'mentorName', key: 'mentorName', width: 140 },
+  { title: t('assistant.jobOverview.k24'), dataIndex: 'latestRating', key: 'latestRating', width: 110 },
+  { title: t('assistant.jobOverview.k25'), dataIndex: 'action', key: 'action', width: 100, fixed: 'right' as const },
 ]
 
 const recordColumns = [
-  { title: '上课日期', dataIndex: 'classDate', key: 'classDate', width: 130 },
-  { title: '课程类型', dataIndex: 'courseType', key: 'courseType', width: 110 },
-  { title: '状态', dataIndex: 'memberStatus', key: 'memberStatus', width: 80 },
-  { title: '时长(h)', dataIndex: 'durationHours', key: 'durationHours', width: 80 },
-  { title: '评分', dataIndex: 'rate', key: 'rate', width: 90 },
-  { title: '反馈', dataIndex: 'feedbackContent', key: 'feedbackContent' },
+  { title: t('assistant.jobOverview.k26'), dataIndex: 'classDate', key: 'classDate', width: 130 },
+  { title: t('assistant.jobOverview.k27'), dataIndex: 'courseType', key: 'courseType', width: 110 },
+  { title: t('assistant.jobOverview.k28'), dataIndex: 'memberStatus', key: 'memberStatus', width: 80 },
+  { title: t('assistant.jobOverview.k29'), dataIndex: 'durationHours', key: 'durationHours', width: 80 },
+  { title: t('assistant.jobOverview.k30'), dataIndex: 'rate', key: 'rate', width: 90 },
+  { title: t('assistant.jobOverview.k31'), dataIndex: 'feedbackContent', key: 'feedbackContent' },
 ]
 
 const loading = ref(true)
@@ -315,7 +318,7 @@ const tablePagination = computed(() => ({
   total: filteredRecords.value.length,
   pageSize: 10,
   showSizeChanger: true,
-  showTotal: (total: number) => `共 ${total} 条`,
+  showTotal: (total: number) => `共 ${total} 条`, // TODO(i18n-complex)
 }))
 
 const companyOptions = computed(() =>
@@ -358,27 +361,27 @@ const detailTotals = computed(() => {
 })
 
 function formatDateTime(value?: string) {
-  if (!value) return '未安排'
+  if (!value) return t('assistant.jobOverview.k32')
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
   return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
 function formatScheduleHint(value?: string) {
-  if (!value) return '尚未安排面试'
+  if (!value) return t('assistant.jobOverview.k33')
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '时间待解析'
+  if (Number.isNaN(date.getTime())) return t('assistant.jobOverview.k34')
   const diff = date.getTime() - Date.now()
   const day = Math.ceil(diff / (24 * 60 * 60 * 1000))
-  if (day < 0) return '已过面试时间'
-  if (day === 0) return '今天'
-  return `还剩 ${day} 天`
+  if (day < 0) return t('assistant.jobOverview.k35')
+  if (day === 0) return t('assistant.jobOverview.k36')
+  return t('assistant.jobOverview.k46', { n: day })
 }
 
 function rowClassName(record: ExtendedRecord): string {
   const stage = (record.interviewStage || '').toLowerCase()
   if (stage.includes('offer')) return 'row-coaching'
-  if (stage.includes('reject') || stage.includes('withdrawn') || stage.includes('withdraw') || stage.includes('cancel') || stage.includes('拒绝') || stage.includes('放弃')) {
+  if (stage.includes('reject') || stage.includes('withdrawn') || stage.includes('withdraw') || stage.includes('cancel') || stage.includes(t('assistant.jobOverview.k37')) || stage.includes(t('assistant.jobOverview.k38'))) {
     return 'row-ended'
   }
   if (!record.interviewTime) return ''
@@ -417,7 +420,7 @@ async function handleExport() {
   const rows = filteredRecords.value
   if (!rows.length) return
 
-  const header = '学员,公司,岗位,城市,面试阶段,面试时间,导师,最近评分\n'
+  const header = t('assistant.jobOverview.k39')
   const body = rows
     .map((r) =>
       [
@@ -438,7 +441,7 @@ async function handleExport() {
   const blob = new Blob(['﻿' + header + body], { type: 'text/csv;charset=utf-8' })
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blob)
-  link.download = `求职总览_${new Date().toISOString().slice(0, 10)}.csv`
+  link.download = `${t('assistant.jobOverview.k47')}_${new Date().toISOString().slice(0, 10)}.csv`
   link.click()
   URL.revokeObjectURL(link.href)
 }
@@ -462,7 +465,7 @@ async function loadOverview() {
     records.value = (listResponse.rows || []) as ExtendedRecord[]
     calendarRecords.value = calendarResponse || []
   } catch (error: any) {
-    errorMessage.value = error?.message || '求职总览暂时无法加载，请稍后重试。'
+    errorMessage.value = error?.message || t('assistant.jobOverview.k40')
   } finally {
     loading.value = false
   }
@@ -484,7 +487,7 @@ async function openDetail(record: ExtendedRecord) {
       mentorGroups.value = detail.classRecordsByMentor || []
     }
   } catch (error: any) {
-    errorMessage.value = error?.message || '加载课消详情失败'
+    errorMessage.value = error?.message || t('assistant.jobOverview.k41')
   } finally {
     detailLoading.value = false
   }

@@ -1,34 +1,34 @@
 <template>
   <div class="osg-page">
     <PageHeader
-      title-zh="模拟应聘管理"
+      :title-zh="t('assistant.mockPractice.title')"
       title-en="Mock Practice"
     />
 
     <!-- 错误提示 -->
     <a-alert v-if="errorMessage" type="error" show-icon :message="errorMessage" style="border-radius: 8px;">
       <template #action>
-        <a-button size="small" @click="loadRecords">重新加载</a-button>
+        <a-button size="small" @click="loadRecords">{{ t('assistant.mockPractice.k1') }}</a-button>
       </template>
     </a-alert>
 
     <!-- 单栏：我管理的学员 -->
     <a-card v-else :bordered="false" id="mock-content-managed">
       <template #title>
-        <span class="page-title">我管理的学员 Managed Students</span>
+        <span class="page-title">{{ t('assistant.mockPractice.managedStudents') }}</span>
       </template>
 
       <div class="filters-row">
-        <a-select v-model:value="filters.practiceType" placeholder="全部类型" allow-clear style="width: 140px;">
+        <a-select v-model:value="filters.practiceType" :placeholder="t('assistant.mockPractice.k6')" allow-clear style="width: 140px;">
           <a-select-option v-for="option in practiceTypeOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
         </a-select>
         <a-button type="primary" @click="handleSearch">
           <template #icon><SearchOutlined /></template>
-          筛选
+          {{ t('assistant.mockPractice.k2') }}
         </a-button>
         <a-button type="text" @click="resetFilters">
           <template #icon><ReloadOutlined /></template>
-          重置
+          {{ t('assistant.mockPractice.k3') }}
         </a-button>
       </div>
 
@@ -39,7 +39,7 @@
         :loading="loading"
         :pagination="tablePagination"
         :scroll="{ x: 1100 }"
-        :locale="{ emptyText: '当前筛选下没有可展示的模拟应聘记录' }"
+        :locale="t('assistant.mockPractice.k7')"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'studentName'">
@@ -53,8 +53,8 @@
           </template>
           <template v-else-if="column.dataIndex === 'mentorName'">
             <div>
-              <div style="font-weight: 500;">{{ record.mentorNames || '待分配' }}</div>
-              <div style="font-size: 11px; color: var(--muted);">{{ record.mentorBackgrounds || '信息待补充' }}</div>
+              <div style="font-weight: 500;">{{ record.mentorNames || t('assistant.mockPractice.k22') }}</div>
+              <div style="font-size: 11px; color: var(--muted);">{{ record.mentorBackgrounds || t('assistant.mockPractice.k23') }}</div>
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'reportedLessonCount'">
@@ -64,7 +64,7 @@
             <span v-else style="color: var(--muted);">-</span>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button type="link" size="small" class="link-button" @click="openDetail(record)">查看详情</a-button>
+            <a-button type="link" size="small" class="link-button" @click="openDetail(record)">{{ t('assistant.mockPractice.k4') }}</a-button>
           </template>
         </template>
       </a-table>
@@ -74,7 +74,7 @@
     <OverlaySurfaceModal
       :open="detailModal.visible"
       surface-id="assistant-mock-practice-detail"
-      :title="detailModal.record ? `模拟应聘详情 · ${detailModal.record.studentName || '-'}` : '模拟应聘详情'"
+      :title="t('assistant.mockPractice.k8')"
       width="720px"
       :show-footer="false"
       :body-class="['assistant-mock-practice-detail__body', 'osg-modal-form']"
@@ -82,24 +82,24 @@
     >
       <template v-if="detailModal.record">
         <a-descriptions :column="2" size="small" bordered>
-          <a-descriptions-item label="学生 ID">{{ detailModal.record.studentId ?? '-' }}</a-descriptions-item>
-          <a-descriptions-item label="学生姓名">{{ detailModal.record.studentName || '-' }}</a-descriptions-item>
-          <a-descriptions-item label="类型">{{ practiceTypeLabel(detailModal.record.practiceType) }}</a-descriptions-item>
-          <a-descriptions-item label="申请时间">{{ formatDateTime(detailModal.record.submittedAt) }}</a-descriptions-item>
-          <a-descriptions-item label="辅导老师">{{ detailModal.record.mentorNames || '待分配' }}</a-descriptions-item>
-          <a-descriptions-item label="已上报课消数">{{ resolveReportedCount(detailModal.record) ?? '-' }}</a-descriptions-item>
+          <a-descriptions-item :label="t('assistant.mockPractice.k9')">{{ detailModal.record.studentId ?? '-' }}</a-descriptions-item>
+          <a-descriptions-item :label="t('assistant.mockPractice.k10')">{{ detailModal.record.studentName || '-' }}</a-descriptions-item>
+          <a-descriptions-item :label="t('assistant.mockPractice.k11')">{{ practiceTypeLabel(detailModal.record.practiceType) }}</a-descriptions-item>
+          <a-descriptions-item :label="t('assistant.mockPractice.k12')">{{ formatDateTime(detailModal.record.submittedAt) }}</a-descriptions-item>
+          <a-descriptions-item :label="t('assistant.mockPractice.k13')">{{ detailModal.record.mentorNames || t('assistant.mockPractice.k22') }}</a-descriptions-item>
+          <a-descriptions-item :label="t('assistant.mockPractice.k14')">{{ resolveReportedCount(detailModal.record) ?? '-' }}</a-descriptions-item>
         </a-descriptions>
 
         <div class="detail-section">
-          <span class="detail-label">申请内容</span>
-          <div class="detail-panel">{{ detailModal.record.requestContent || '暂无申请内容' }}</div>
+          <span class="detail-label">{{ t('assistant.mockPractice.k5') }}</span>
+          <div class="detail-panel">{{ detailModal.record.requestContent || t('assistant.mockPractice.k24') }}</div>
         </div>
 
         <a-alert
           type="info"
           show-icon
           style="margin-top: 16px; border-radius: 8px;"
-          message="导师上报的多条课消反馈待后端详情接口接入后展示"
+          :message="t('assistant.mockPractice.k15')"
         />
       </template>
     </OverlaySurfaceModal>
@@ -108,6 +108,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { OverlaySurfaceModal, PracticeTypeTag, StudentAvatarCell } from '@osg/shared/components'
@@ -116,21 +117,23 @@ import {
   type AssistantMockPracticeRecord,
 } from '@osg/shared/api'
 
+const { t } = useI18n()
+
 const practiceTypeOptions = [
-  { value: 'mock_interview', label: '模拟面试' },
-  { value: 'communication_test', label: '沟通测试' },
-  { value: 'relation_test', label: '人际关系测试' },
-  { value: 'midterm', label: '期中考试' },
+  { value: 'mock_interview', label: t('assistant.mockPractice.k16') },
+  { value: 'communication_test', label: t('assistant.mockPractice.k17') },
+  { value: 'relation_test', label: t('assistant.mockPractice.k18') },
+  { value: 'midterm', label: t('assistant.mockPractice.k19') },
 ]
 
 const columns = [
-  { title: '学生 ID', dataIndex: 'studentId', key: 'studentId', width: 100, fixed: 'left' as const },
-  { title: '学生姓名', dataIndex: 'studentName', key: 'studentName', width: 180 },
-  { title: '类型', dataIndex: 'practiceType', key: 'practiceType', width: 130 },
-  { title: '申请时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 130 },
-  { title: '辅导老师', dataIndex: 'mentorName', key: 'mentorName', width: 160 },
-  { title: '已上报课消数', dataIndex: 'reportedLessonCount', key: 'reportedLessonCount', width: 130 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 110, fixed: 'right' as const },
+  { title: t('assistant.mockPractice.k9'), dataIndex: 'studentId', key: 'studentId', width: 100, fixed: 'left' as const },
+  { title: t('assistant.mockPractice.k10'), dataIndex: 'studentName', key: 'studentName', width: 180 },
+  { title: t('assistant.mockPractice.k11'), dataIndex: 'practiceType', key: 'practiceType', width: 130 },
+  { title: t('assistant.mockPractice.k12'), dataIndex: 'submittedAt', key: 'submittedAt', width: 130 },
+  { title: t('assistant.mockPractice.k13'), dataIndex: 'mentorName', key: 'mentorName', width: 160 },
+  { title: t('assistant.mockPractice.k14'), dataIndex: 'reportedLessonCount', key: 'reportedLessonCount', width: 130 },
+  { title: t('assistant.mockPractice.k20'), dataIndex: 'action', key: 'action', width: 110, fixed: 'right' as const },
 ]
 
 const loading = ref(true)
@@ -157,7 +160,7 @@ const tablePagination = computed(() => ({
   total: filteredRecords.value.length,
   pageSize: 10,
   showSizeChanger: true,
-  showTotal: (t: number) => `共 ${t} 条`,
+  showTotal: (t: number) => `共 ${t} 条`, // TODO(i18n-complex)
 }))
 
 function practiceTypeLabel(value?: string) {
@@ -208,7 +211,7 @@ async function loadRecords() {
     const response = await getAssistantMockPracticeList()
     records.value = response.rows || []
   } catch (error: any) {
-    errorMessage.value = error?.message || '模拟应聘记录暂时无法加载，请稍后重试。'
+    errorMessage.value = error?.message || t('assistant.mockPractice.k21')
   } finally {
     loading.value = false
   }

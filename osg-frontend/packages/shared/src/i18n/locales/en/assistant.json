@@ -1,1 +1,1030 @@
-{}
+{
+  "common": {
+    "loading": "Loading",
+    "retry": "Reload",
+    "empty": "No data",
+    "notFilled": "Not filled",
+    "notRecorded": "Not recorded",
+    "comingSoon": "Coming Soon"
+  },
+  "login": {
+    "brandTitle": "OSG Platform",
+    "brandDesc": "One-stop career training platform where Students and Mentors grow together",
+    "feature1": "Student side: one-on-one Mentor coaching",
+    "feature2": "Mentor side: efficient Session management",
+    "feature3": "Real-time Position information sharing",
+    "feature4": "Comprehensive learning material library",
+    "appName": "OSG Assistant",
+    "welcome": "Welcome back",
+    "subtitle": "Sign in with email (Assistant)",
+    "roleTag": "Assistant",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Please enter your email",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Please enter your password",
+    "submitting": "Signing in...",
+    "submit": "Sign in",
+    "forgot": "Forgot password?",
+    "forgotLink": "Reset here",
+    "errors": {
+      "emailRequired": "Please enter your email",
+      "passwordRequired": "Please enter your password",
+      "notAssistant": "This account does not have Assistant access",
+      "default": "Incorrect email or password"
+    }
+  },
+  "layout": {
+    "appName": "OSG Assistant",
+    "fallbackName": "Assistant User",
+    "fallbackRole": "Assistant",
+    "groups": {
+      "career": "Career",
+      "students": "Students",
+      "teaching": "Teaching",
+      "finance": "Finance",
+      "resources": "Resources",
+      "profile": "Profile"
+    },
+    "nav": {
+      "positions": "Positions",
+      "jobOverview": "Job Overview",
+      "mockPractice": "Mock Practice",
+      "studentList": "Student List",
+      "communication": "Communication",
+      "classRecords": "Session Record",
+      "settlement": "Session Settlement",
+      "expense": "Reimbursement",
+      "files": "Files",
+      "onlineTest": "Online Test",
+      "interviewBank": "Live Interview Bank",
+      "profile": "Profile",
+      "schedule": "Session Scheduling",
+      "notice": "Notice",
+      "faq": "FAQ"
+    }
+  },
+  "router": {
+    "title": {
+      "login": "Sign in",
+      "home": "Home",
+      "positions": "Positions",
+      "jobOverview": "Job Overview",
+      "mockPractice": "Mock Practice",
+      "students": "Student List",
+      "classRecords": "Session Record",
+      "profile": "Profile",
+      "schedule": "Session Scheduling"
+    },
+    "placeholder": {
+      "communicationTitle": "Communication Records",
+      "communicationTitleEn": "Communication Records",
+      "communicationDesc": "Content related to communication with Students will be available here.",
+      "settlementTitle": "Session Settlement",
+      "settlementTitleEn": "Settlement",
+      "settlementDesc": "Content related to Session Settlement will be available here.",
+      "expenseTitle": "Reimbursement",
+      "expenseTitleEn": "Expense",
+      "expenseDesc": "Reimbursement processing content will be available here.",
+      "filesTitle": "Files",
+      "filesTitleEn": "Files",
+      "filesDesc": "File and document content will be available here.",
+      "onlineTestTitle": "Online Test Bank",
+      "onlineTestTitleEn": "Online Test Bank",
+      "onlineTestDesc": "Online Test bank content will be available here.",
+      "interviewBankTitle": "Live Interview Bank",
+      "interviewBankTitleEn": "Interview Bank",
+      "interviewBankDesc": "Live Interview bank content will be available here.",
+      "noticeTitle": "Notice",
+      "noticeTitleEn": "Notice",
+      "noticeDesc": "Notification content will be available here.",
+      "faqTitle": "FAQ",
+      "faqTitleEn": "FAQ",
+      "faqDesc": "FAQ and help content will be available here.",
+      "bulletEntryReserved": "The entry has been reserved for future quick access.",
+      "bulletCurrentClosed": "{title} is not available in the current version.",
+      "bulletLaterRelease": "Full content will be released in a future version. Stay tuned.",
+      "cardTitleSuffix": "{title} coming soon",
+      "cardDescription": "{title} is not available in the current version, content will be released in a future version.",
+      "statusComingSoon": "Coming Soon"
+    }
+  },
+  "placeholderShell": {
+    "fallback": {
+      "pageId": "page-coming-soon",
+      "title": "Coming Soon",
+      "titleEn": "Coming Soon",
+      "description": "This feature is being prepared. Full content will open in a future version.",
+      "cardTitle": "Feature coming online soon",
+      "cardDescription": "This page has reserved the entry. Future versions will provide full content here.",
+      "statusText": "Coming Soon",
+      "bullet1": "Entry reserved for future quick access.",
+      "bullet2": "This feature is not available in the current version.",
+      "bullet3": "Full content will be released in a future version."
+    },
+    "defaultCardTitle": "Coming Soon",
+    "defaultCardDescription": "This page has reserved the entry. Full content will open in a future version.",
+    "defaultStatusText": "Coming Soon"
+  },
+  "home": {
+    "eyebrow": "Assistant Home",
+    "greeting": "Welcome back, {name}",
+    "fallbackName": "Assistant",
+    "description": "This page summarizes the weekly teaching coordination, Job Coaching follow-up, and Session arrangements to help you quickly access the most used pages.",
+    "viewClassRecords": "View Session Record",
+    "metricsAriaLabel": "Home primary metrics",
+    "statsAriaLabel": "Home secondary stats",
+    "quickLinksAriaLabel": "Home quick links",
+    "quickLinks": {
+      "title": "Quick Links",
+      "note": "Go straight to the pages you use most often."
+    },
+    "primary": {
+      "pendingClasses": "Sessions to confirm",
+      "pendingClassesUnit": "",
+      "pendingClassesHint": "Go to Session Record to process pending feedback and records.",
+      "weeklyHours": "Weekly Session hours",
+      "weeklyHoursUnit": "h",
+      "weeklyHoursHint": "Quickly view this week's Session arrangements and collaboration pace.",
+      "mockFollowups": "Mock Practice to follow up",
+      "mockFollowupsUnit": "",
+      "mockFollowupsHint": "Focus on Mock Practice items needing follow-up this week."
+    },
+    "stats": {
+      "studentCount": "Student count",
+      "studentCountUnit": "",
+      "weeklySchedule": "Weekly schedule",
+      "weeklyScheduleFilled": "Filled",
+      "positionFollowups": "Position follow-ups",
+      "positionFollowupsUnit": "",
+      "todayClasses": "Today's Sessions",
+      "todayClassesUnit": ""
+    },
+    "quick": {
+      "positions": "Positions",
+      "positionsDesc": "View Position availability and related Application Progress.",
+      "students": "Student List",
+      "studentsDesc": "Quickly access the Student list to view status and progress.",
+      "classRecords": "Session Record",
+      "classRecordsDesc": "Go to Session Record to process teaching records.",
+      "schedule": "Session Scheduling",
+      "scheduleDesc": "View upcoming Session arrangements and pending items."
+    }
+  },
+  "dashboard": {
+    "stats": {
+      "pendingSchedule": "Pending scheduling",
+      "pendingScheduleUnit": "",
+      "todayConsult": "Today's consultations",
+      "todayConsultUnit": "",
+      "pendingMaterials": "Materials to organize",
+      "pendingMaterialsUnit": "",
+      "pendingFeedback": "Feedback to collect",
+      "pendingFeedbackUnit": ""
+    },
+    "todayTasks": "Today's tasks",
+    "quickEntries": "Quick links",
+    "actions": {
+      "scheduleAssist": "Session Scheduling assist",
+      "studentService": "Student services",
+      "feedbackCollect": "Collect Feedback"
+    },
+    "priority": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "tasks": {
+      "scheduleStudent": "Help Student Zhang book a Session",
+      "organizeMaterials": "Organize learning materials this week",
+      "collectFeedback": "Collect Feedback from cohort 01 Students",
+      "updateInterview": "Update Live Interview bank"
+    },
+    "k1": "排课协助",
+    "k2": "学员服务",
+    "k3": "反馈收集",
+    "k4": "待处理排课",
+    "k5": "个",
+    "k6": "今日咨询",
+    "k7": "次",
+    "k8": "待整理资料",
+    "k9": "份",
+    "k10": "待收集反馈",
+    "k11": "条",
+    "k12": "协助张同学约课",
+    "k13": "高",
+    "k14": "整理本周学习资料",
+    "k15": "中",
+    "k16": "收集 01 期学员反馈",
+    "k17": "更新面试题库",
+    "k18": "低"
+  },
+  "feedback": {
+    "title": "Feedback Collection",
+    "columns": {
+      "student": "Student",
+      "type": "Type",
+      "content": "Content",
+      "status": "Status"
+    },
+    "status": {
+      "pending": "Pending",
+      "done": "Handled"
+    },
+    "samples": {
+      "studentZhang": "Student Zhang",
+      "studentLi": "Student Li",
+      "typeCourse": "Session Feedback",
+      "typeMentor": "Mentor Feedback",
+      "contentMore": "Hope to add more hands-on projects",
+      "contentPraise": "Mentor Wang explains very clearly"
+    },
+    "k1": "学员",
+    "k2": "类型",
+    "k3": "内容",
+    "k4": "状态",
+    "k5": "张同学",
+    "k6": "课程反馈",
+    "k7": "希望增加实战项目",
+    "k8": "李同学",
+    "k9": "导师反馈",
+    "k10": "王老师讲解很清晰",
+    "k11": "Pending",
+    "k12": "Processed"
+  },
+  "materials": {
+    "title": "Material Management",
+    "upload": "Upload material",
+    "columns": {
+      "name": "Material name",
+      "category": "Category",
+      "uploadTime": "Upload time",
+      "downloads": "Downloads"
+    },
+    "samples": {
+      "javaNotes": "Java Core Notes",
+      "springBoot": "Spring Boot Practical Guide",
+      "category": "Study document"
+    },
+    "k1": "资料名称",
+    "k2": "分类",
+    "k3": "上传时间",
+    "k4": "下载量",
+    "k5": "Java 核心笔记",
+    "k6": "学习文档",
+    "k7": "Spring Boot 实战"
+  },
+  "profile": {
+    "title": "Profile",
+    "titleEn": "Profile",
+    "overviewBadge": "Profile overview",
+    "actions": {
+      "edit": "Edit Profile",
+      "reload": "Reload",
+      "refresh": "Refresh Profile",
+      "cancel": "Cancel",
+      "save": "Save changes",
+      "saving": "Saving..."
+    },
+    "states": {
+      "loadFailedTitle": "Failed to load Profile",
+      "loadingTitle": "Loading Profile",
+      "loadingHint": "Loading basic information and contact details for the current account, please wait.",
+      "loadFailedFallback": "Profile cannot be loaded right now, please try again later."
+    },
+    "identity": {
+      "fallbackName": "Assistant",
+      "metaSuffix": "Assistant"
+    },
+    "status": {
+      "active": "Active",
+      "disabled": "Disabled"
+    },
+    "summary": {
+      "statusLabel": "Account status",
+      "statusHint": "Availability of the current logged-in account",
+      "contactLabel": "Contact",
+      "contactHint": "Completion of email and phone fields",
+      "loginDateLabel": "Last login",
+      "loginDateHint": "Most recent login time",
+      "loginIpLabel": "Login IP",
+      "loginIpHint": "Most recent login IP information"
+    },
+    "detail": {
+      "title": "Profile details",
+      "subtitle": "The following information is used for account display, contact confirmation, and internal collaboration identification.",
+      "nickName": "English name",
+      "sex": "Gender",
+      "email": "Email",
+      "phone": "Phone",
+      "account": "Account",
+      "remark": "Remark"
+    },
+    "tips": {
+      "title": "Update notes",
+      "subtitle": "You can directly edit common contact fields. After a successful save, the page will sync the latest result automatically.",
+      "chip1": "Name display",
+      "chip2": "Contact",
+      "chip3": "Login info",
+      "copy": "If saving fails, first check that the email format and phone number are correct, then save again."
+    },
+    "editor": {
+      "title": "Edit Profile",
+      "subtitle": "Changes will be submitted to the current account Profile immediately.",
+      "nickNamePlaceholder": "Please enter the English name",
+      "emailPlaceholder": "Please enter the email",
+      "phonePlaceholder": "Please enter an 11-digit phone number"
+    },
+    "sex": {
+      "male": "Male",
+      "female": "Female",
+      "unset": "Not set"
+    },
+    "errors": {
+      "cannotSaveTitle": "Cannot save",
+      "cannotSaveText": "Please correct the errors in the form first.",
+      "nickNameTooShort": "Please enter an English name of at least 2 characters.",
+      "emailInvalid": "Please enter a valid email format.",
+      "phoneInvalid": "Phone number must be 11 digits.",
+      "sexInvalid": "Please select a valid gender.",
+      "saveFailedTitle": "Save failed",
+      "saveFailedFallback": "Profile cannot be saved right now, please try again later."
+    },
+    "success": {
+      "title": "Saved",
+      "text": "Profile has been updated and the latest content is shown."
+    }
+  },
+  "students": {
+    "title": "Student List",
+    "titleEn": "Student List",
+    "filters": {
+      "keyword": "Search by name",
+      "school": "School",
+      "majorDirection": "Track",
+      "accountStatus": "Account status",
+      "search": "Search",
+      "reset": "Reset"
+    },
+    "errors": {
+      "loadFailedTitle": "Failed to load Student list",
+      "loadFailedFallback": "Student list cannot be loaded right now, please try again later."
+    },
+    "emptyText": "No viewable Students",
+    "totalRecords": "{total} records",
+    "columns": {
+      "id": "ID",
+      "studentName": "English name",
+      "email": "Email",
+      "leadMentor": "Lead Mentor",
+      "school": "School",
+      "majorDirection": "Track",
+      "jobCoaching": "Job Coaching",
+      "basicCourse": "Basic Session",
+      "mockInterview": "Mock Practice",
+      "remainingHours": "Remaining hours",
+      "targetPosition": "Target Position",
+      "contractStatus": "Service status",
+      "accountStatus": "Account status",
+      "action": "Action"
+    },
+    "actions": {
+      "viewJob": "View Job"
+    },
+    "accountStatus": {
+      "active": "Active",
+      "frozen": "Frozen",
+      "ended": "Ended",
+      "refunded": "Refunded"
+    },
+    "contractStatus": {
+      "normal": "Active service",
+      "expiring": "Expiring soon",
+      "expired": "Expired",
+      "cancelled": "Cancelled",
+      "pendingReview": "Pending review",
+      "blacklist": "Blacklist"
+    },
+    "fallbackMentor": "Lead Mentor pending",
+    "reminder": {
+      "pendingReview": "Profile changes pending review",
+      "blacklisted": "This Student is currently in the Blacklist",
+      "lowHours": "Low remaining hours, suggest priority follow-up",
+      "contractExpiring": "Contract expiring soon",
+      "none": "No additional reminders"
+    },
+    "k1": "搜索",
+    "k2": "重置",
+    "k3": "重新加载",
+    "k4": "待审核",
+    "k5": "查看求职",
+    "k6": "搜索姓名",
+    "k7": "学校",
+    "k8": "主攻方向",
+    "k9": "账号状态",
+    "k10": "'学员列表加载失败'",
+    "k11": "{ emptyText: '暂无可查看学员' }",
+    "k12": "正常",
+    "k13": "冻结",
+    "k14": "已结束",
+    "k15": "退款",
+    "k16": "英文姓名",
+    "k17": "邮箱",
+    "k18": "班主任",
+    "k19": "求职辅导",
+    "k20": "基础课",
+    "k21": "模拟应聘",
+    "k22": "剩余课时",
+    "k23": "求职目标",
+    "k24": "服务状态",
+    "k25": "操作",
+    "k26": "黑名单",
+    "k27": "即将到期",
+    "k28": "已到期",
+    "k29": "已终止",
+    "k30": "正常服务",
+    "k31": "到期",
+    "k32": "资料变更待审核",
+    "k33": "当前学员已被纳入黑名单",
+    "k34": "剩余课时偏低，建议优先跟进",
+    "k35": "合同即将到期",
+    "k36": "当前暂无额外提醒",
+    "k37": "学员列表暂时无法加载，请稍后重试。",
+    "k38": "No additional reminders",
+    "k39": "{n} records total"
+  },
+  "schedule": {
+    "title": "My Schedule",
+    "titleEn": "My Schedule",
+    "bannerAria": "Schedule reminder",
+    "banner": {
+      "title": "Please update this week's schedule promptly",
+      "syncedHint": "The schedule is synced. You can continue fine-tuning and save.",
+      "noAvailabilityHint": "Please select at least one day with available teaching time.",
+      "tag": "Updates based on real status"
+    },
+    "loading": {
+      "title": "Loading schedule",
+      "hint": "Loading this week's schedule and last week's copyable content, please wait."
+    },
+    "errors": {
+      "loadFailedTitle": "Failed to load schedule",
+      "loadFailedFallback": "Schedule cannot be loaded right now, please try again later.",
+      "saveFailedTitle": "Save failed",
+      "saveFailedFallback": "Schedule cannot be saved right now, please try again later.",
+      "copyFailedTitle": "Copy failed",
+      "copyFailedFallback": "Cannot read last week's schedule right now.",
+      "copyEmptyTitle": "Nothing to copy",
+      "copyEmptyText": "Last week has no schedule records. You can fill in this week's schedule manually.",
+      "cannotSaveTitle": "Cannot save",
+      "noAvailability": "Please select at least one day with available teaching time.",
+      "totalHoursRequired": "Please enter a total weekly hours value greater than 0.",
+      "totalHoursMax": "Total weekly hours cannot exceed 80."
+    },
+    "success": {
+      "saveTitle": "Saved",
+      "saveText": "Session Scheduling has been updated and will remain after refresh.",
+      "copyTitle": "Copied",
+      "copyText": "Last week's schedule has been loaded. You can fine-tune it for this week."
+    },
+    "weekViewPrefix": "Week view",
+    "userRole": "Assistant",
+    "summary": {
+      "metaPrefix": "Current logged-in Assistant · Week {range}",
+      "weeklyAvailable": "Weekly available",
+      "availableDays": "Available days",
+      "statusLabel": "Schedule status",
+      "statusCopyable": "Copyable",
+      "statusPending": "Pending"
+    },
+    "card": {
+      "currentWeekTitle": "This week's schedule",
+      "readOnlyTag": "Read-only",
+      "availableHours": "Available hours",
+      "availableDays": "Available days",
+      "configuredAvailability": "Configured available time",
+      "readOnlyNote": "(read-only)",
+      "editTitle": "Edit schedule",
+      "saveTag": "Savable",
+      "totalWeekHours": "Total weekly hours",
+      "hoursUnit": "hours",
+      "totalHoursUnitInline": "{hours} hours",
+      "copyLastWeek": "Copy last week",
+      "copying": "Copying...",
+      "saveSchedule": "Save schedule",
+      "saving": "Saving..."
+    },
+    "days": {
+      "monday": "Mon",
+      "tuesday": "Tue",
+      "wednesday": "Wed",
+      "thursday": "Thu",
+      "friday": "Fri",
+      "saturday": "Sat",
+      "sunday": "Sun"
+    },
+    "slots": {
+      "unavailable": "Unavailable",
+      "morning": "Morning",
+      "afternoon": "Afternoon",
+      "evening": "Evening",
+      "all_day": "All day"
+    },
+    "k1": "请及时维护本周排期",
+    "k2": "按真实状态更新",
+    "k3": "排期加载失败",
+    "k4": "重新加载",
+    "k5": "本周可用",
+    "k6": "可用天数",
+    "k7": "排期状态",
+    "k8": "本周排期",
+    "k9": "只读视图",
+    "k10": "可用时长",
+    "k11": "已设置的可用时间",
+    "k12": "(只读)",
+    "k13": "编辑排期",
+    "k14": "可保存",
+    "k15": "本周总时长",
+    "k16": "小时",
+    "k17": "排期加载中",
+    "k18": "正在读取本周排期与上一周可复制内容，请稍候。",
+    "k19": "周一",
+    "k20": "周二",
+    "k21": "周三",
+    "k22": "周四",
+    "k23": "周五",
+    "k24": "周六",
+    "k25": "周日",
+    "k26": "不可用",
+    "k27": "上午",
+    "k28": "下午",
+    "k29": "晚上",
+    "k30": "全天",
+    "k31": "无法保存",
+    "k32": "请至少选择一天可授课时间段。",
+    "k33": "请填写大于 0 的本周总时长。",
+    "k34": "本周总时长不能超过 80 小时。",
+    "k35": "排期暂时无法加载，请稍后重试。",
+    "k36": "暂无可复制内容",
+    "k37": "上一周暂无排期记录，可直接手动填写本周排期。",
+    "k38": "复制成功",
+    "k39": "已载入上一周排期，可继续按本周实际情况微调。",
+    "k40": "复制失败",
+    "k41": "暂时无法读取上一周排期。",
+    "k42": "保存成功",
+    "k43": "课程排期已更新，刷新页面后仍会保留最新结果。",
+    "k44": "保存失败",
+    "k45": "排期暂时无法保存，请稍后重试。",
+    "k46": "Schedule Reminder",
+    "k47": "Schedule synced. You can fine-tune and save.",
+    "k48": "Please select at least one available day.",
+    "k49": "Current Assistant · Week {range}",
+    "k50": "Copyable",
+    "k51": "Pending",
+    "k52": "Copying...",
+    "k53": "Copy Last Week",
+    "k54": "Saving...",
+    "k55": "Save Schedule",
+    "k56": "{n} hours",
+    "k57": "Week View {date}"
+  },
+  "positions": {
+    "title": "Positions",
+    "titleEn": "Job Tracker",
+    "viewMode": {
+      "list": "List view",
+      "drilldown": "Drilldown view"
+    },
+    "filters": {
+      "category": "All categories",
+      "industry": "All industries",
+      "company": "All companies",
+      "region": "All regions",
+      "keyword": "Search Position / company / city...",
+      "reset": "Reset"
+    },
+    "loadingTip": "Loading Position data...",
+    "errors": {
+      "loadFailedFallback": "Position list cannot be loaded right now, please try again later.",
+      "linkedStudentsFallback": "Linked Students cannot be loaded right now.",
+      "reload": "Reload"
+    },
+    "uncategorizedIndustry": "Uncategorized industry",
+    "uncategorized": "Uncategorized",
+    "categoryLabel": {
+      "summer": "Summer internship",
+      "fulltime": "Full-time recruiting",
+      "offcycle": "Off-cycle",
+      "spring": "Spring internship",
+      "events": "Recruiting events"
+    },
+    "studentModal": {
+      "titleDefault": "Linked Students",
+      "titlePattern": "Linked Students · {position} · {company}",
+      "loadingTip": "Loading linked Students...",
+      "emptyText": "No linked Student details to show for this Position",
+      "columns": {
+        "student": "Student",
+        "status": "Current status",
+        "usedHours": "Hours used"
+      }
+    },
+    "k1": "列表视图",
+    "k2": "下钻视图",
+    "k3": "重置",
+    "k4": "重新加载",
+    "k5": "全部分类",
+    "k6": "全部行业",
+    "k7": "全部公司",
+    "k8": "全部地区",
+    "k9": "搜索岗位/公司/城市...",
+    "k10": "正在读取关联学员...",
+    "k11": "{ emptyText: '当前岗位暂无可展示的关联学员明细' }",
+    "k12": "暑期实习",
+    "k13": "全职招聘",
+    "k14": "春季实习",
+    "k15": "招聘活动",
+    "k16": "学员",
+    "k17": "当前状态",
+    "k18": "已用课时",
+    "k19": "关联学员",
+    "k20": "岗位列表暂时无法加载，请稍后重试。",
+    "k21": "关联学员暂时无法加载。",
+    "k22": "Related Students · {position} · {company}"
+  },
+  "jobOverview": {
+    "title": "Job Overview",
+    "titleEn": "Job Overview",
+    "export": "Export",
+    "exportFileName": "Job Overview",
+    "filters": {
+      "company": "Company",
+      "stage": "Interview stage",
+      "interviewRange": "Interview time",
+      "allCompanies": "All companies",
+      "allStages": "All statuses",
+      "rangeStart": "Start date",
+      "rangeEnd": "End date",
+      "search": "Search",
+      "reset": "Reset"
+    },
+    "errors": {
+      "loadFailedFallback": "Job Overview cannot be loaded right now, please try again later.",
+      "loadDetailFailed": "Failed to load Session detail",
+      "reload": "Reload"
+    },
+    "card": {
+      "titleZh": "Managed Students",
+      "titleEn": "Managed Students",
+      "totalSuffix": "{total} records",
+      "emptyText": "No Job Search records for managed Students yet"
+    },
+    "columns": {
+      "studentId": "Student ID",
+      "student": "Student",
+      "position": "Position",
+      "company": "Company",
+      "location": "City",
+      "interviewStage": "Interview stage",
+      "interviewTime": "Interview time",
+      "mentor": "Mentor",
+      "latestRating": "Latest rating",
+      "action": "Action"
+    },
+    "csvHeader": "Student,Company,Position,City,Interview stage,Interview time,Mentor,Latest rating",
+    "actions": {
+      "viewDetail": "View detail"
+    },
+    "recordColumns": {
+      "classDate": "Session date",
+      "courseType": "Session type",
+      "memberStatus": "Status",
+      "durationHours": "Duration (h)",
+      "rate": "Rating",
+      "feedbackContent": "Feedback"
+    },
+    "memberStatus": {
+      "absent": "Absent",
+      "present": "Present"
+    },
+    "schedule": {
+      "unscheduled": "Not scheduled",
+      "notScheduled": "No interview scheduled",
+      "parseFail": "Time pending parse",
+      "passed": "Interview time passed",
+      "today": "Today",
+      "daysLeft": "{days} days left"
+    },
+    "detail": {
+      "title": "Follow-up detail",
+      "subId": "ID: {id}",
+      "labels": {
+        "position": "Position",
+        "company": "Company",
+        "city": "City",
+        "stage": "Interview stage",
+        "interviewTime": "Interview time",
+        "mentor": "Mentor"
+      },
+      "metrics": {
+        "totalHours": "Total hours",
+        "avgRating": "Average rating",
+        "lessonCount": "Session entries"
+      },
+      "records": {
+        "title": "Session records",
+        "empty": "No Session records for this application yet",
+        "mentorFallback": "Mentor pending",
+        "totalHoursLabel": "Total {hours}h",
+        "avgLabel": "Avg {rating}",
+        "countLabel": "{count} entries"
+      }
+    },
+    "k1": "搜索",
+    "k2": "重置",
+    "k3": "重新加载",
+    "k4": "我管理的学员",
+    "k5": "查看详情",
+    "k6": "跟进详情",
+    "k7": "岗位",
+    "k8": "公司",
+    "k9": "城市",
+    "k10": "面试阶段",
+    "k11": "面试时间",
+    "k12": "导师",
+    "k13": "总课时",
+    "k14": "平均评分",
+    "k15": "课消条数",
+    "k16": "课消记录",
+    "k17": "该求职申请暂无课消记录",
+    "k18": "全部公司",
+    "k19": "全部状态",
+    "k20": "['开始日期', '结束日期']",
+    "k21": "{ emptyText: '当前暂无管理学员的求职记录' }",
+    "k22": "学生 ID",
+    "k23": "学员",
+    "k24": "最近评分",
+    "k25": "操作",
+    "k26": "上课日期",
+    "k27": "课程类型",
+    "k28": "状态",
+    "k29": "时长(h)",
+    "k30": "评分",
+    "k31": "反馈",
+    "k32": "未安排",
+    "k33": "尚未安排面试",
+    "k34": "时间待解析",
+    "k35": "已过面试时间",
+    "k36": "今天",
+    "k37": "拒绝",
+    "k38": "放弃",
+    "k39": "学员,公司,岗位,城市,面试阶段,面试时间,导师,最近评分\\n",
+    "k40": "求职总览暂时无法加载，请稍后重试。",
+    "k41": "加载课消详情失败",
+    "k42": "Mentor pending",
+    "k43": "Avg {n}",
+    "k44": "Absent",
+    "k45": "Present",
+    "k46": "{n} day(s) left",
+    "k47": "Job Overview"
+  },
+  "mockPractice": {
+    "title": "Mock Practice",
+    "titleEn": "Mock Practice",
+    "managedStudents": "Managed Students",
+    "filters": {
+      "practiceType": "All types",
+      "filter": "Filter",
+      "reset": "Reset"
+    },
+    "errors": {
+      "loadFailedFallback": "Mock Practice records cannot be loaded right now, please try again later.",
+      "reload": "Reload"
+    },
+    "emptyText": "No Mock Practice records under the current filters",
+    "totalSuffix": "{total} records",
+    "practiceType": {
+      "mock_interview": "Mock Interview",
+      "communication_test": "Communication test",
+      "relation_test": "Interpersonal test",
+      "midterm": "Midterm exam"
+    },
+    "columns": {
+      "studentId": "Student ID",
+      "studentName": "Student name",
+      "practiceType": "Type",
+      "submittedAt": "Submitted at",
+      "mentor": "Coaching Mentor",
+      "reportedLessonCount": "Reported Sessions",
+      "action": "Action"
+    },
+    "mentor": {
+      "unassigned": "Unassigned",
+      "bgFallback": "Information pending"
+    },
+    "actions": {
+      "viewDetail": "View detail"
+    },
+    "detail": {
+      "titleFallback": "Mock Practice detail",
+      "titlePattern": "Mock Practice detail · {name}",
+      "labels": {
+        "studentId": "Student ID",
+        "studentName": "Student name",
+        "type": "Type",
+        "submittedAt": "Submitted at",
+        "mentor": "Coaching Mentor",
+        "reportedLessonCount": "Reported Sessions",
+        "requestContent": "Request content"
+      },
+      "emptyRequest": "No request content",
+      "noticeFeedbackPending": "Mentor-reported Session feedback will display once the backend detail endpoint is available"
+    },
+    "k1": "重新加载",
+    "k2": "筛选",
+    "k3": "重置",
+    "k4": "查看详情",
+    "k5": "申请内容",
+    "k6": "全部类型",
+    "k7": "{ emptyText: '当前筛选下没有可展示的模拟应聘记录' }",
+    "k8": "detailModal.record ? `模拟应聘详情 · ${detailModal.record.studentName || '-'}` : '模拟应聘详情'",
+    "k9": "学生 ID",
+    "k10": "学生姓名",
+    "k11": "类型",
+    "k12": "申请时间",
+    "k13": "辅导老师",
+    "k14": "已上报课消数",
+    "k15": "导师上报的多条课消反馈待后端详情接口接入后展示",
+    "k16": "模拟面试",
+    "k17": "沟通测试",
+    "k18": "人际关系测试",
+    "k19": "期中考试",
+    "k20": "操作",
+    "k21": "模拟应聘记录暂时无法加载，请稍后重试。",
+    "k22": "Pending Assignment",
+    "k23": "Info Pending",
+    "k24": "No application content"
+  },
+  "classRecords": {
+    "title": "Session Record",
+    "titleEn": "Session Record",
+    "actions": {
+      "create": "Report Session record",
+      "search": "Search",
+      "reset": "Reset",
+      "viewDetail": "View detail",
+      "viewRejectReason": "View reason",
+      "reload": "Reload"
+    },
+    "scope": {
+      "mine": "My submissions",
+      "managed": "Managed Students"
+    },
+    "flow": {
+      "title": "Session record flow",
+      "step1": "Session delivery",
+      "step2": "Record submission",
+      "step3": "Review processing",
+      "step4": "Feedback recap"
+    },
+    "summary": {
+      "all": "All Sessions",
+      "pending": "Pending review",
+      "approved": "Approved",
+      "settlement": "Pending settlement amount"
+    },
+    "filters": {
+      "keyword": "Search Student name / ID",
+      "coachingType": "Coaching type",
+      "courseContent": "Session content",
+      "reporterRole": "Reporter"
+    },
+    "errors": {
+      "loadFailedTitle": "Failed to load Session records",
+      "loadFailedFallback": "Session records cannot be loaded right now, please try again later."
+    },
+    "emptyText": "No Session records under the current filters",
+    "totalSuffix": "{total} records",
+    "tabs": {
+      "all": "All",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "coachingType": {
+      "job_coaching": "Position Coaching",
+      "mock_practice": "Mock Practice",
+      "basic_course": "Basic Session"
+    },
+    "courseContent": {
+      "technical": "Technical",
+      "behavioral": "Behavioral training",
+      "resume_update": "Resume update",
+      "mock_interview": "Mock Interview Session",
+      "networking_midterm": "Networking Session",
+      "mock_midterm": "Mock midterm exam",
+      "case_prep": "Consulting case prep",
+      "other": "Other",
+      "absent": "Absent"
+    },
+    "reporterRole": {
+      "mentor": "Mentor",
+      "headteacher": "Lead Mentor",
+      "assistant": "Assistant"
+    },
+    "columns": {
+      "recordId": "Record ID",
+      "student": "Student",
+      "reporter": "Reporter",
+      "coachingType": "Coaching content",
+      "courseContent": "Session content",
+      "classDate": "Session date",
+      "duration": "Duration",
+      "studentRating": "Student rating",
+      "status": "Review status",
+      "action": "Action"
+    },
+    "detail": {
+      "title": "Session record detail",
+      "rejectTitle": "Reject reason",
+      "labels": {
+        "recordId": "Record ID",
+        "student": "Student",
+        "studentIdSuffix": " (ID: {id})",
+        "reporter": "Reporter",
+        "coachingType": "Coaching content",
+        "courseContent": "Session content",
+        "classDate": "Session date",
+        "duration": "Duration",
+        "absenceRemark": "Absence remark",
+        "studentRating": "Student rating",
+        "status": "Review status",
+        "rejectReason": "Reject reason",
+        "feedbackSummary": "Feedback summary"
+      },
+      "absenceFallback": "Not filled",
+      "rejectReasonFallback": "(No reject reason provided)",
+      "feedbackFallback": "No feedback summary yet"
+    },
+    "k1": "上报课程记录",
+    "k2": "我的申报",
+    "k3": "我管理的学员",
+    "k4": "课程记录流程",
+    "k5": "搜索",
+    "k6": "重置",
+    "k7": "重新加载",
+    "k8": "搜索学员姓名/ID",
+    "k9": "辅导类型",
+    "k10": "课程内容",
+    "k11": "申报人",
+    "k12": "'课程记录加载失败'",
+    "k13": "{ emptyText: '当前筛选下暂无课程记录' }",
+    "k14": "selectedRecord?.status === 'rejected' ? '驳回原因' : '课程记录详情'",
+    "k15": "记录ID",
+    "k16": "学员",
+    "k17": "辅导内容",
+    "k18": "上课日期",
+    "k19": "时长",
+    "k20": "旷课备注",
+    "k21": "学员评价",
+    "k22": "审核状态",
+    "k23": "驳回原因",
+    "k24": "反馈摘要",
+    "k25": "全部",
+    "k26": "待审核",
+    "k27": "已通过",
+    "k28": "已驳回",
+    "k29": "岗位辅导",
+    "k30": "模拟应聘",
+    "k31": "基础课程",
+    "k32": "技术的",
+    "k33": "行为训练",
+    "k34": "简历更新",
+    "k35": "模拟面试的课程",
+    "k36": "人际关系的课程",
+    "k37": "模拟期中考试",
+    "k38": "咨询案例准备",
+    "k39": "其他",
+    "k40": "旷课",
+    "k41": "导师",
+    "k42": "班主任",
+    "k43": "助教",
+    "k44": "课程执行",
+    "k45": "记录提交",
+    "k46": "审核处理",
+    "k47": "反馈回看",
+    "k48": "操作",
+    "k49": "全部课程",
+    "k50": "待结算金额",
+    "k51": "通过",
+    "k52": "驳回",
+    "k53": "课程记录暂时无法加载，请稍后重试。",
+    "k54": "View Reason",
+    "k55": "View Details",
+    "k56": "Not filled",
+    "k57": "(No rejection reason)",
+    "k58": "No feedback summary"
+  },
+  "assistantClassReportPayload": {
+    "k1": "学员状态: 正常上课"
+  }
+}

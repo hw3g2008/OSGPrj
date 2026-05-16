@@ -2,10 +2,10 @@
   <section id="page-home" class="assistant-home" data-page-id="assistant-home">
     <div id="assistant-home-hero" class="assistant-home__hero">
       <div class="assistant-home__hero-copy">
-        <p class="assistant-home__eyebrow">Assistant Home</p>
+        <p class="assistant-home__eyebrow">{{ t('assistant.home.eyebrow') }}</p>
         <h1 class="assistant-home__hero-title">{{ greetingText }}</h1>
         <p class="assistant-home__hero-description">
-          这里汇总本周教学协同、求职跟进和课程安排概览，帮助你快速进入常用工作页面。
+          {{ t('assistant.home.description') }}
         </p>
       </div>
 
@@ -16,11 +16,11 @@
         @click="goTo('/class-records')"
       >
         <i class="mdi mdi-book-open-variant" aria-hidden="true" />
-        查看课程记录
+        {{ t('assistant.home.viewClassRecords') }}
       </button>
     </div>
 
-    <section id="assistant-home-primary-metrics" class="assistant-home__metrics" aria-label="首页主统计区">
+    <section id="assistant-home-primary-metrics" class="assistant-home__metrics" :aria-label="t('assistant.home.metricsAriaLabel')">
       <article
         v-for="metric in primaryMetrics"
         :key="metric.label"
@@ -40,7 +40,7 @@
       </article>
     </section>
 
-    <section id="assistant-home-summary-stats" class="assistant-home__stats-grid" aria-label="首页次级概览区">
+    <section id="assistant-home-summary-stats" class="assistant-home__stats-grid" :aria-label="t('assistant.home.statsAriaLabel')">
       <article
         v-for="stat in secondaryStats"
         :key="stat.label"
@@ -58,11 +58,11 @@
       </article>
     </section>
 
-    <section id="assistant-home-quick-links" class="assistant-home__quick-links card" aria-label="首页快捷入口区">
+    <section id="assistant-home-quick-links" class="assistant-home__quick-links card" :aria-label="t('assistant.home.quickLinksAriaLabel')">
       <header class="card-header">
         <div>
-          <h2 class="card-title">快捷入口</h2>
-          <p class="assistant-home__section-note">直接进入日常使用频率较高的页面。</p>
+          <h2 class="card-title">{{ t('assistant.home.quickLinks.title') }}</h2>
+          <p class="assistant-home__section-note">{{ t('assistant.home.quickLinks.note') }}</p>
         </div>
       </header>
 
@@ -91,6 +91,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getUser } from '@osg/shared/utils'
 
 interface HomeMetric {
@@ -120,6 +121,7 @@ interface QuickEntry {
   toneClass: string
 }
 
+const { t } = useI18n()
 const router = useRouter()
 const userInfo = computed(() =>
   getUser<{
@@ -127,103 +129,103 @@ const userInfo = computed(() =>
     userName?: string
   }>(),
 )
-const displayName = computed(() => userInfo.value?.nickName || userInfo.value?.userName || '助教老师')
-const greetingText = computed(() => `欢迎回来，${displayName.value}`)
+const displayName = computed(() => userInfo.value?.nickName || userInfo.value?.userName || t('assistant.home.fallbackName'))
+const greetingText = computed(() => t('assistant.home.greeting', { name: displayName.value }))
 
-const primaryMetrics: HomeMetric[] = [
+const primaryMetrics = computed<HomeMetric[]>(() => [
   {
     cardId: 'pending-classes',
-    label: '待确认课程',
+    label: t('assistant.home.primary.pendingClasses'),
     value: '3',
-    unit: '节',
-    hint: '进入课程记录页面处理待确认反馈与记录。',
+    unit: t('assistant.home.primary.pendingClassesUnit'),
+    hint: t('assistant.home.primary.pendingClassesHint'),
     iconClass: 'mdi-book-clock-outline',
     toneClass: 'assistant-home__metric-card--warm',
   },
   {
     cardId: 'weekly-hours',
-    label: '本周课时',
+    label: t('assistant.home.primary.weeklyHours'),
     value: '12.5',
-    unit: 'h',
-    hint: '快速了解本周课时安排与协同节奏。',
+    unit: t('assistant.home.primary.weeklyHoursUnit'),
+    hint: t('assistant.home.primary.weeklyHoursHint'),
     iconClass: 'mdi-clock-outline',
     toneClass: 'assistant-home__metric-card--cool',
   },
   {
     cardId: 'mock-followups',
-    label: '模拟应聘待跟进',
+    label: t('assistant.home.primary.mockFollowups'),
     value: '2',
-    unit: '项',
-    hint: '聚焦本周需要继续跟进的模拟应聘事项。',
+    unit: t('assistant.home.primary.mockFollowupsUnit'),
+    hint: t('assistant.home.primary.mockFollowupsHint'),
     iconClass: 'mdi-account-voice',
     toneClass: 'assistant-home__metric-card--accent',
   },
-]
+])
 
-const secondaryStats: HomeStat[] = [
+const secondaryStats = computed<HomeStat[]>(() => [
   {
     cardId: 'student-count',
-    label: '学员数量',
+    label: t('assistant.home.stats.studentCount'),
     value: '15',
-    unit: '人',
+    unit: t('assistant.home.stats.studentCountUnit'),
     iconClass: 'mdi-account-group',
     toneClass: 'assistant-home__stat-icon--primary',
   },
   {
     cardId: 'schedule-status',
-    label: '本周排期',
-    value: '已填充',
+    label: t('assistant.home.stats.weeklySchedule'),
+    value: t('assistant.home.stats.weeklyScheduleFilled'),
     iconClass: 'mdi-calendar-check',
     toneClass: 'assistant-home__stat-icon--success',
   },
   {
     cardId: 'position-followups',
-    label: '岗位跟进',
+    label: t('assistant.home.stats.positionFollowups'),
     value: '6',
-    unit: '条',
+    unit: t('assistant.home.stats.positionFollowupsUnit'),
     iconClass: 'mdi-briefcase-search',
     toneClass: 'assistant-home__stat-icon--info',
   },
   {
     cardId: 'today-classes',
-    label: '今日课程',
+    label: t('assistant.home.stats.todayClasses'),
     value: '2',
-    unit: '节',
+    unit: t('assistant.home.stats.todayClassesUnit'),
     iconClass: 'mdi-calendar-clock',
     toneClass: 'assistant-home__stat-icon--warning',
   },
-]
+])
 
-const quickEntries: QuickEntry[] = [
+const quickEntries = computed<QuickEntry[]>(() => [
   {
-    label: '岗位信息',
+    label: t('assistant.home.quick.positions'),
     route: '/career/positions',
-    description: '查看岗位开放状态与关联申请进展。',
+    description: t('assistant.home.quick.positionsDesc'),
     iconClass: 'mdi-briefcase-search',
     toneClass: 'assistant-home__quick-icon--primary',
   },
   {
-    label: '学员列表',
+    label: t('assistant.home.quick.students'),
     route: '/students',
-    description: '快速进入学员列表查看状态与进度。',
+    description: t('assistant.home.quick.studentsDesc'),
     iconClass: 'mdi-account-group',
     toneClass: 'assistant-home__quick-icon--info',
   },
   {
-    label: '课程记录',
+    label: t('assistant.home.quick.classRecords'),
     route: '/class-records',
-    description: '进入课程记录页面处理教学记录。',
+    description: t('assistant.home.quick.classRecordsDesc'),
     iconClass: 'mdi-book-open-variant',
     toneClass: 'assistant-home__quick-icon--success',
   },
   {
-    label: '课程排期',
+    label: t('assistant.home.quick.schedule'),
     route: '/schedule',
-    description: '查看近期课程安排与待处理事项。',
+    description: t('assistant.home.quick.scheduleDesc'),
     iconClass: 'mdi-calendar-clock',
     toneClass: 'assistant-home__quick-icon--warning',
   },
-]
+])
 
 function goTo(path: string) {
   void router.push(path)

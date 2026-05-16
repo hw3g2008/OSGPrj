@@ -1,30 +1,30 @@
 <template>
   <div id="page-schedule" class="page-schedule">
     <PageHeader
-      title-zh="我的排期"
+      :title-zh="t('assistant.schedule.title')"
       title-en="My Schedule"
     />
 
-    <section class="schedule-banner" aria-label="排期提醒">
+    <section class="schedule-banner" :aria-label="t('assistant.schedule.k46')">
       <div class="schedule-banner__icon">
         <i class="mdi mdi-calendar-alert" aria-hidden="true" />
       </div>
       <div class="schedule-banner__content">
         <div class="schedule-banner__title">
           <i class="mdi mdi-alert" aria-hidden="true" />
-          请及时维护本周排期
+          {{ t('assistant.schedule.k1') }}
         </div>
         <div class="schedule-banner__sub">
-          {{ hasAvailability ? '当前排期已同步，可继续微调后保存。' : '请至少选择一天可授课时间段。' }}
+          {{ hasAvailability ? t('assistant.schedule.k47') : t('assistant.schedule.k48') }}
         </div>
       </div>
-      <span class="schedule-banner__tag">按真实状态更新</span>
+      <span class="schedule-banner__tag">{{ t('assistant.schedule.k2') }}</span>
     </section>
 
     <section v-if="errorMessage" class="state-card state-card--error">
-      <h2>排期加载失败</h2>
+      <h2>{{ t('assistant.schedule.k3') }}</h2>
       <p>{{ errorMessage }}</p>
-      <button type="button" class="btn btn-outline" @click="loadSchedule">重新加载</button>
+      <button type="button" class="btn btn-outline" @click="loadSchedule">{{ t('assistant.schedule.k4') }}</button>
     </section>
 
     <template v-else-if="!loading">
@@ -35,21 +35,21 @@
               <div class="user-avatar">A</div>
               <div>
                 <div class="mentor-name">Assistant</div>
-                <div class="mentor-meta">当前登录助教 · 周区间 {{ weekRangeLabel }}</div>
+                <div class="mentor-meta">{{ t('assistant.schedule.k49', { range: weekRangeLabel }) }}</div>
               </div>
             </div>
             <div class="status-metrics">
               <div class="status-metric">
                 <div class="status-metric__value status-metric__value--hours">{{ totalHoursLabel }}</div>
-                <div class="status-metric__label">本周可用</div>
+                <div class="status-metric__label">{{ t('assistant.schedule.k5') }}</div>
               </div>
               <div class="status-metric">
                 <div class="status-metric__value status-metric__value--days">{{ availableDayCount }}</div>
-                <div class="status-metric__label">可用天数</div>
+                <div class="status-metric__label">{{ t('assistant.schedule.k6') }}</div>
               </div>
               <div class="status-metric">
-                <div class="status-metric__value status-metric__value--pending">{{ lastWeekAvailable ? '可复制' : '待完善' }}</div>
-                <div class="status-metric__label">排期状态</div>
+                <div class="status-metric__value status-metric__value--pending">{{ lastWeekAvailable ? t('assistant.schedule.k50') : t('assistant.schedule.k51') }}</div>
+                <div class="status-metric__label">{{ t('assistant.schedule.k7') }}</div>
               </div>
             </div>
           </div>
@@ -60,28 +60,28 @@
         <div class="card-header">
           <span class="card-title">
             <i class="mdi mdi-calendar-week" aria-hidden="true" />
-            本周排期
+            {{ t('assistant.schedule.k8') }}
           </span>
-          <span class="card-tag">只读视图</span>
+          <span class="card-tag">{{ t('assistant.schedule.k9') }}</span>
           <span class="card-range">{{ weekRangeLabel }}</span>
         </div>
         <div class="card-body">
           <div class="schedule-stats">
             <div class="schedule-stat">
               <div class="schedule-stat__value">{{ totalHoursLabel }}</div>
-              <div class="schedule-stat__label">可用时长</div>
+              <div class="schedule-stat__label">{{ t('assistant.schedule.k10') }}</div>
             </div>
             <div class="schedule-stat">
               <div class="schedule-stat__value schedule-stat__value--success">{{ availableDayCount }}</div>
-              <div class="schedule-stat__label">可用天数</div>
+              <div class="schedule-stat__label">{{ t('assistant.schedule.k6') }}</div>
             </div>
           </div>
 
           <div class="readonly-block">
             <label class="form-label">
               <i class="mdi mdi-calendar-check" aria-hidden="true" />
-              已设置的可用时间
-              <span class="form-label-note">(只读)</span>
+              {{ t('assistant.schedule.k11') }}
+              <span class="form-label-note">{{ t('assistant.schedule.k12') }}</span>
             </label>
             <div class="readonly-grid">
               <article v-for="day in dayOptions" :key="day.key" class="readonly-day">
@@ -97,11 +97,11 @@
         <div class="card-header card-header--warning">
           <span class="card-title card-title--warning">
             <i class="mdi mdi-calendar-arrow-right" aria-hidden="true" />
-            编辑排期
+            {{ t('assistant.schedule.k13') }}
           </span>
           <span class="card-range card-range--warning">
             {{ weekRangeLabel }}
-            <span class="card-tag card-tag--warning">可保存</span>
+            <span class="card-tag card-tag--warning">{{ t('assistant.schedule.k14') }}</span>
           </span>
         </div>
         <div class="card-body">
@@ -119,7 +119,7 @@
           <div class="form-group">
             <label class="form-label form-label--large">
               <i class="mdi mdi-clock-outline" aria-hidden="true" />
-              本周总时长
+              {{ t('assistant.schedule.k15') }}
               <span class="required-mark">*</span>
             </label>
             <div class="hours-row">
@@ -131,7 +131,7 @@
                 max="80"
                 class="form-input form-input--hours"
               />
-              <span class="hours-unit">小时</span>
+              <span class="hours-unit">{{ t('assistant.schedule.k16') }}</span>
             </div>
           </div>
 
@@ -147,10 +147,10 @@
 
           <div class="form-footer">
             <button id="assistant-schedule-copy-last-week" type="button" class="btn btn-outline" :disabled="copyingLastWeek" @click="copyLastWeek">
-              {{ copyingLastWeek ? '复制中...' : '复制上周排期' }}
+              {{ copyingLastWeek ? t('assistant.schedule.k52') : t('assistant.schedule.k53') }}
             </button>
             <button id="assistant-schedule-save" type="button" class="btn btn-primary btn-primary--warning" :disabled="saving" @click="saveSchedule">
-              {{ saving ? '保存中...' : '保存排期' }}
+              {{ saving ? t('assistant.schedule.k54') : t('assistant.schedule.k55') }}
             </button>
           </div>
         </div>
@@ -158,14 +158,15 @@
     </template>
 
     <section v-else class="state-card">
-      <h2>排期加载中</h2>
-      <p>正在读取本周排期与上一周可复制内容，请稍候。</p>
+      <h2>{{ t('assistant.schedule.k17') }}</h2>
+      <p>{{ t('assistant.schedule.k18') }}</p>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import {
   getAssistantCurrentSchedule,
@@ -173,6 +174,8 @@ import {
   saveAssistantSchedule,
   type AssistantSchedule,
 } from '@osg/shared/api'
+
+const { t } = useI18n()
 
 interface NoticeState {
   type: 'success' | 'error'
@@ -183,21 +186,21 @@ interface NoticeState {
 type DayKey = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
 
 const dayOptions: Array<{ key: DayKey; label: string }> = [
-  { key: 'monday', label: '周一' },
-  { key: 'tuesday', label: '周二' },
-  { key: 'wednesday', label: '周三' },
-  { key: 'thursday', label: '周四' },
-  { key: 'friday', label: '周五' },
-  { key: 'saturday', label: '周六' },
-  { key: 'sunday', label: '周日' },
+  { key: 'monday', label: t('assistant.schedule.k19') },
+  { key: 'tuesday', label: t('assistant.schedule.k20') },
+  { key: 'wednesday', label: t('assistant.schedule.k21') },
+  { key: 'thursday', label: t('assistant.schedule.k22') },
+  { key: 'friday', label: t('assistant.schedule.k23') },
+  { key: 'saturday', label: t('assistant.schedule.k24') },
+  { key: 'sunday', label: t('assistant.schedule.k25') },
 ]
 
 const slotOptions = [
-  { value: 'unavailable', label: '不可用' },
-  { value: 'morning', label: '上午' },
-  { value: 'afternoon', label: '下午' },
-  { value: 'evening', label: '晚上' },
-  { value: 'all_day', label: '全天' },
+  { value: 'unavailable', label: t('assistant.schedule.k26') },
+  { value: 'morning', label: t('assistant.schedule.k27') },
+  { value: 'afternoon', label: t('assistant.schedule.k28') },
+  { value: 'evening', label: t('assistant.schedule.k29') },
+  { value: 'all_day', label: t('assistant.schedule.k30') },
 ]
 
 const loading = ref(true)
@@ -211,7 +214,7 @@ const schedule = reactive<AssistantSchedule>(createEmptySchedule())
 
 const availableDayCount = computed(() => dayOptions.filter((day) => schedule[day.key] !== 'unavailable').length)
 const hasAvailability = computed(() => availableDayCount.value > 0)
-const totalHoursLabel = computed(() => `${Number(schedule.totalHours || 0)} 小时`)
+const totalHoursLabel = computed(() => t('assistant.schedule.k56', { n: Number(schedule.totalHours || 0) }))
 const currentWeekStart = computed(() => getCurrentWeekStart())
 const weekRangeLabel = computed(() => buildWeekRange(schedule.weekStartDate || currentWeekStart.value))
 const lastWeekAvailable = computed(() => hasSchedulePayload(lastWeekSnapshot.value))
@@ -240,7 +243,7 @@ function getCurrentWeekStart() {
 function buildWeekRange(weekStartDate: string) {
   const parsed = new Date(weekStartDate)
   if (Number.isNaN(parsed.getTime())) {
-    return `周视图 ${weekStartDate}`
+    return t('assistant.schedule.k57', { date: weekStartDate })
   }
   const weekEnd = new Date(parsed)
   weekEnd.setDate(parsed.getDate() + 6)
@@ -256,7 +259,7 @@ function normalizeSlotValue(value?: string) {
 }
 
 function slotLabel(value?: string) {
-  return slotOptions.find((option) => option.value === value)?.label || '不可用'
+  return slotOptions.find((option) => option.value === value)?.label || t('assistant.schedule.k26')
 }
 
 function hasSchedulePayload(value: AssistantSchedule | null | undefined) {
@@ -288,15 +291,15 @@ function validateSchedule() {
   scheduleNotice.value = null
   const totalHours = Number(schedule.totalHours || 0)
   if (!hasAvailability.value) {
-    scheduleNotice.value = { type: 'error', title: '无法保存', text: '请至少选择一天可授课时间段。' }
+    scheduleNotice.value = { type: 'error', title: t('assistant.schedule.k31'), text: t('assistant.schedule.k32') }
     return false
   }
   if (!Number.isFinite(totalHours) || totalHours <= 0) {
-    scheduleNotice.value = { type: 'error', title: '无法保存', text: '请填写大于 0 的本周总时长。' }
+    scheduleNotice.value = { type: 'error', title: t('assistant.schedule.k31'), text: t('assistant.schedule.k33') }
     return false
   }
   if (totalHours > 80) {
-    scheduleNotice.value = { type: 'error', title: '无法保存', text: '本周总时长不能超过 80 小时。' }
+    scheduleNotice.value = { type: 'error', title: t('assistant.schedule.k31'), text: t('assistant.schedule.k34') }
     return false
   }
   return true
@@ -314,7 +317,7 @@ async function loadSchedule() {
     applySchedule(currentSchedule)
     lastWeekSnapshot.value = lastWeekSchedule
   } catch (error: any) {
-    errorMessage.value = error?.message || '排期暂时无法加载，请稍后重试。'
+    errorMessage.value = error?.message || t('assistant.schedule.k35')
   } finally {
     loading.value = false
   }
@@ -327,13 +330,13 @@ async function copyLastWeek() {
     const source = lastWeekSnapshot.value || (await getAssistantLastWeekSchedule())
     lastWeekSnapshot.value = source
     if (!hasSchedulePayload(source)) {
-      scheduleNotice.value = { type: 'error', title: '暂无可复制内容', text: '上一周暂无排期记录，可直接手动填写本周排期。' }
+      scheduleNotice.value = { type: 'error', title: t('assistant.schedule.k36'), text: t('assistant.schedule.k37') }
       return
     }
     applySchedule({ ...(source as AssistantSchedule), id: schedule.id, mentorId: schedule.mentorId, weekStartDate: schedule.weekStartDate || currentWeekStart.value })
-    scheduleNotice.value = { type: 'success', title: '复制成功', text: '已载入上一周排期，可继续按本周实际情况微调。' }
+    scheduleNotice.value = { type: 'success', title: t('assistant.schedule.k38'), text: t('assistant.schedule.k39') }
   } catch (error: any) {
-    scheduleNotice.value = { type: 'error', title: '复制失败', text: error?.message || '暂时无法读取上一周排期。' }
+    scheduleNotice.value = { type: 'error', title: t('assistant.schedule.k40'), text: error?.message || t('assistant.schedule.k41') }
   } finally {
     copyingLastWeek.value = false
   }
@@ -345,9 +348,9 @@ async function saveSchedule() {
   try {
     await saveAssistantSchedule({ ...schedule, totalHours: Number(schedule.totalHours || 0), weekStartDate: schedule.weekStartDate || currentWeekStart.value })
     await loadSchedule()
-    scheduleNotice.value = { type: 'success', title: '保存成功', text: '课程排期已更新，刷新页面后仍会保留最新结果。' }
+    scheduleNotice.value = { type: 'success', title: t('assistant.schedule.k42'), text: t('assistant.schedule.k43') }
   } catch (error: any) {
-    scheduleNotice.value = { type: 'error', title: '保存失败', text: error?.message || '排期暂时无法保存，请稍后重试。' }
+    scheduleNotice.value = { type: 'error', title: t('assistant.schedule.k44'), text: error?.message || t('assistant.schedule.k45') }
   } finally {
     saving.value = false
   }

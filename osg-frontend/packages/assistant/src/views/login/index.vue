@@ -5,25 +5,25 @@
     <div class="login-decor login-decor--3" />
 
     <section class="login-left">
-      <h1 class="login-left__title">OSG Platform</h1>
-      <p class="login-left__desc">职业培训一站式平台，学生与导师共同成长</p>
+      <h1 class="login-left__title">{{ t('assistant.login.brandTitle') }}</h1>
+      <p class="login-left__desc">{{ t('assistant.login.brandDesc') }}</p>
 
       <div class="login-features">
         <div class="login-feature">
           <i class="mdi mdi-check-circle" />
-          <span>学生端：一对一导师辅导</span>
+          <span>{{ t('assistant.login.feature1') }}</span>
         </div>
         <div class="login-feature">
           <i class="mdi mdi-check-circle" />
-          <span>导师端：高效课程管理</span>
+          <span>{{ t('assistant.login.feature2') }}</span>
         </div>
         <div class="login-feature">
           <i class="mdi mdi-check-circle" />
-          <span>实时岗位信息共享</span>
+          <span>{{ t('assistant.login.feature3') }}</span>
         </div>
         <div class="login-feature">
           <i class="mdi mdi-check-circle" />
-          <span>完善的学习资料库</span>
+          <span>{{ t('assistant.login.feature4') }}</span>
         </div>
       </div>
     </section>
@@ -34,12 +34,12 @@
           <div class="login-logo-icon">
             <i class="mdi mdi-account-star" />
           </div>
-          <span>OSG Assistant</span>
+          <span>{{ t('assistant.login.appName') }}</span>
         </div>
 
-        <h2 class="login-title">欢迎回来</h2>
-        <p class="login-subtitle">使用邮箱登录（助教）</p>
-        <div class="login-role-tag">助教端</div>
+        <h2 class="login-title">{{ t('assistant.login.welcome') }}</h2>
+        <p class="login-subtitle">{{ t('assistant.login.subtitle') }}</p>
+        <div class="login-role-tag">{{ t('assistant.login.roleTag') }}</div>
 
         <div v-if="errorMessage" class="login-error">
           <i class="mdi mdi-alert-circle" />
@@ -48,12 +48,12 @@
 
         <div class="login-form">
           <div class="form-group">
-            <label for="login-username">邮箱</label>
+            <label for="login-username">{{ t('assistant.login.emailLabel') }}</label>
             <input
               id="login-username"
               v-model="formState.username"
               type="email"
-              placeholder="请输入邮箱"
+              :placeholder="t('assistant.login.emailPlaceholder')"
               autocomplete="email"
               :class="{ error: errors.username }"
               @input="clearFieldError('username')"
@@ -63,13 +63,13 @@
           </div>
 
           <div class="form-group">
-            <label for="login-password">密码</label>
+            <label for="login-password">{{ t('assistant.login.passwordLabel') }}</label>
             <div class="pwd-wrapper">
               <input
                 id="login-password"
                 v-model="formState.password"
                 :type="showPassword ? 'text' : 'password'"
-                placeholder="请输入密码"
+                :placeholder="t('assistant.login.passwordPlaceholder')"
                 autocomplete="current-password"
                 :class="{ error: errors.password }"
                 @input="clearFieldError('password')"
@@ -90,19 +90,19 @@
             @click="handleLogin"
           >
             <i v-if="!loading" class="mdi mdi-login" />
-            {{ loading ? '登录中...' : '登录' }}
+            {{ loading ? t('assistant.login.submitting') : t('assistant.login.submit') }}
           </button>
         </div>
 
         <div class="login-links">
-          忘记密码？
+          {{ t('assistant.login.forgot') }}
           <a
             href="javascript:void(0)"
             class="link-anchor"
             data-surface-trigger="modal-forgot-password"
             @click.prevent="openForgotPassword"
           >
-            点击重置
+            {{ t('assistant.login.forgotLink') }}
           </a>
         </div>
       </div>
@@ -128,8 +128,10 @@ import {
 } from '@osg/shared/api'
 import { removeToken, removeUser, setToken, setUser } from '@osg/shared/utils'
 import { ForgotPasswordModal } from '@osg/shared/components'
+import { useI18n } from 'vue-i18n'
 import { useMustChangePassword } from '@osg/shared/composables'
 
+const { t } = useI18n()
 const { setMustChangePassword } = useMustChangePassword()
 
 type FieldKey = 'username' | 'password'
@@ -170,8 +172,8 @@ function clearFieldError(field: FieldKey) {
 
 function validateForm() {
   const username = formState.username.trim()
-  errors.username = username ? '' : '请输入邮箱'
-  errors.password = formState.password ? '' : '请输入密码'
+  errors.username = username ? '' : t('assistant.login.errors.emailRequired')
+  errors.password = formState.password ? '' : t('assistant.login.errors.passwordRequired')
   return !errors.username && !errors.password
 }
 
@@ -208,7 +210,7 @@ async function handleLogin() {
     if (!canAccessAssistant(info.roles)) {
       removeToken()
       removeUser()
-      errorMessage.value = '该账号无助教端访问权限'
+      errorMessage.value = t('assistant.login.errors.notAssistant')
       return
     }
 
@@ -218,7 +220,7 @@ async function handleLogin() {
   } catch (error: any) {
     removeToken()
     removeUser()
-    errorMessage.value = error?.message || '邮箱或密码错误'
+    errorMessage.value = error?.message || t('assistant.login.errors.default')
   } finally {
     loading.value = false
   }

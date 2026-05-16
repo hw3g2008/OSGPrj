@@ -1,16 +1,16 @@
 <template>
   <div class="osg-page page-positions">
     <PageHeader
-      title-zh="岗位信息"
+      :title-zh="t('assistant.positions.title')"
       title-en="Job Tracker"
     >
       <template #actions>
         <a-radio-group v-model:value="viewMode" button-style="solid" size="small">
           <a-radio-button value="list">
-            <i class="mdi mdi-format-list-bulleted" style="margin-right: 4px" />列表视图
+            <i class="mdi mdi-format-list-bulleted" style="margin-right: 4px" />{{ t('assistant.positions.k1') }}
           </a-radio-button>
           <a-radio-button value="drilldown">
-            <i class="mdi mdi-file-tree" style="margin-right: 4px" />下钻视图
+            <i class="mdi mdi-file-tree" style="margin-right: 4px" />{{ t('assistant.positions.k2') }}
           </a-radio-button>
         </a-radio-group>
       </template>
@@ -21,7 +21,7 @@
         <a-form-item>
           <a-select
             v-model:value="filters.category"
-            placeholder="全部分类"
+            :placeholder="t('assistant.positions.k5')"
             allow-clear
             style="width: 140px"
           >
@@ -33,7 +33,7 @@
         <a-form-item>
           <a-select
             v-model:value="filters.industry"
-            placeholder="全部行业"
+            :placeholder="t('assistant.positions.k6')"
             allow-clear
             show-search
             style="width: 160px"
@@ -46,7 +46,7 @@
         <a-form-item>
           <a-select
             v-model:value="filters.companyName"
-            placeholder="全部公司"
+            :placeholder="t('assistant.positions.k7')"
             allow-clear
             show-search
             style="width: 180px"
@@ -59,7 +59,7 @@
         <a-form-item>
           <a-select
             v-model:value="filters.region"
-            placeholder="全部地区"
+            :placeholder="t('assistant.positions.k8')"
             allow-clear
             style="width: 140px"
           >
@@ -72,19 +72,19 @@
           <a-input
             id="assistant-positions-keyword"
             v-model:value="filters.keyword"
-            placeholder="搜索岗位/公司/城市..."
+            :placeholder="t('assistant.positions.k9')"
             allow-clear
             style="width: 200px"
           />
         </a-form-item>
         <a-form-item>
           <a-space>
-            <a-button @click="handleReset">重置</a-button>
+            <a-button @click="handleReset">{{ t('assistant.positions.k3') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
 
-      <a-spin :spinning="loading" tip="正在加载岗位数据...">
+      <a-spin :spinning="loading" :tip="t('assistant.positions.loadingTip')">
         <a-alert
           v-if="errorMessage"
           type="error"
@@ -93,7 +93,7 @@
           style="margin-bottom: 12px"
         >
           <template #action>
-            <a-button size="small" type="primary" @click="loadPositions">重新加载</a-button>
+            <a-button size="small" type="primary" @click="loadPositions">{{ t('assistant.positions.k4') }}</a-button>
           </template>
         </a-alert>
 
@@ -137,7 +137,7 @@
       :body-class="['assistant-position-students__body', 'osg-modal-form']"
       @cancel="closeStudents"
     >
-      <a-spin :spinning="studentModal.loading" tip="正在读取关联学员...">
+      <a-spin :spinning="studentModal.loading" :tip="t('assistant.positions.k10')">
         <a-alert
           v-if="studentModal.error"
           type="error"
@@ -150,7 +150,7 @@
           :data-source="studentModal.rows"
           :row-key="(r: AssistantPositionStudent) => `${r.studentId}-${r.positionName}`"
           :pagination="false"
-          :locale="{ emptyText: '当前岗位暂无可展示的关联学员明细' }"
+          :locale="t('assistant.positions.k11')"
           size="small"
         >
           <template #bodyCell="{ column, record }">
@@ -173,6 +173,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 import { useDictFacade, mergeDictWithExistingValues } from '@osg/shared'
@@ -193,6 +194,8 @@ import {
   type PositionCompanyGroup,
   type IndustryTone,
 } from '@osg/shared'
+
+const { t } = useI18n()
 
 type ViewMode = 'drilldown' | 'list'
 
@@ -260,7 +263,7 @@ function resolveIndustryGroupMeta(industryRaw: string) {
   }
   return {
     id: trimmed || 'uncategorized',
-    label: trimmed || '未归类',
+    label: trimmed || t('assistant.positions.uncategorized'),
     tone: FALLBACK_TONE,
     icon: FALLBACK_ICON,
   }
@@ -294,11 +297,11 @@ const studentModal = reactive<{
 })
 
 const categoryLabelMap: Record<string, string> = {
-  summer: '暑期实习',
-  fulltime: '全职招聘',
+  summer: t('assistant.positions.k12'),
+  fulltime: t('assistant.positions.k13'),
   offcycle: 'Off-cycle',
-  spring: '春季实习',
-  events: '招聘活动',
+  spring: t('assistant.positions.k14'),
+  events: t('assistant.positions.k15'),
 }
 
 const expandedIndustries = ref(new Set<string>())
@@ -311,13 +314,13 @@ const tablePagination = reactive({
   showSizeChanger: true,
   showQuickJumper: true,
   pageSizeOptions: ['10', '20', '50', '100'],
-  showTotal: (total: number) => `共 ${total} 条`,
+  showTotal: (total: number) => `共 ${total} 条`, // TODO(i18n-complex)
 })
 
 const studentColumns = [
-  { title: '学员', dataIndex: 'studentName', key: 'studentName' },
-  { title: '当前状态', dataIndex: 'status', key: 'status', width: 140 },
-  { title: '已用课时', dataIndex: 'usedHours', key: 'usedHours', width: 110 },
+  { title: t('assistant.positions.k16'), dataIndex: 'studentName', key: 'studentName' },
+  { title: t('assistant.positions.k17'), dataIndex: 'status', key: 'status', width: 140 },
+  { title: t('assistant.positions.k18'), dataIndex: 'usedHours', key: 'usedHours', width: 110 },
 ]
 
 const filteredPositions = computed(() =>
@@ -420,7 +423,7 @@ const groupedPositions = computed<GroupedIndustry[]>(() => {
   const industries = new Map<string, GroupedIndustry>()
 
   filteredPositions.value.forEach((position) => {
-    const industryKey = position.industry || '未归类行业'
+    const industryKey = position.industry || t('assistant.positions.uncategorizedIndustry')
     const meta = resolveIndustryGroupMeta(industryKey)
     const industry =
       industries.get(industryKey) || {
@@ -549,8 +552,8 @@ function handleDrilldownOpenPositionStudents(row: PositionTableRow) {
 
 const studentModalTitle = computed(() => {
   const p = studentModal.position
-  if (!p) return '关联学员'
-  return `关联学员 · ${p.positionName || '-'} · ${p.companyName || '-'}`
+  if (!p) return t('assistant.positions.k19')
+  return t('assistant.positions.k22', { position: p.positionName || '-', company: p.companyName || '-' })
 })
 
 function formatDate(value?: string) {
@@ -625,7 +628,7 @@ async function loadPositions() {
     const result = await getAssistantPositionList()
     allPositions.value = (result || []).map(mapListItemToRecord)
   } catch (error: any) {
-    errorMessage.value = error?.message || '岗位列表暂时无法加载，请稍后重试。'
+    errorMessage.value = error?.message || t('assistant.positions.k20')
   } finally {
     loading.value = false
   }
@@ -666,7 +669,7 @@ async function openStudents(position: PositionRecord) {
     const result = await getAssistantPositionStudents(position.positionId)
     studentModal.rows = result.rows
   } catch (error: any) {
-    studentModal.error = error?.message || '关联学员暂时无法加载。'
+    studentModal.error = error?.message || t('assistant.positions.k21')
   } finally {
     studentModal.loading = false
   }
