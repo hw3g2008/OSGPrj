@@ -12,7 +12,7 @@
     <a-card :bordered="false">
       <a-form layout="inline" style="gap: var(--osg-space-3); flex-wrap: wrap">
         <a-form-item>
-          <a-select v-model:value="filters.status" style="width: 120px"><!-- i18n-skip-line: data-field-name removed -->
+          <a-select v-model:value="filters.status" style="width: 120px">
             <a-select-option value="pending">{{ t('admin.career.studentPositions.status.pending') }}</a-select-option>
             <a-select-option value="">{{ t('admin.career.studentPositions.filter.statusAll') }}</a-select-option>
             <a-select-option value="approved">{{ t('admin.career.studentPositions.status.approved') }}</a-select-option>

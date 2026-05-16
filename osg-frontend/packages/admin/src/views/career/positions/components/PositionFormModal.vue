@@ -20,26 +20,26 @@
       <section class="position-form-modal__section">
         <h4><span class="mdi mdi-briefcase" aria-hidden="true"></span>{{ t('admin.career.positions.formModal.sections.basicInfo') }}</h4>
         <div class="position-form-modal__grid">
-          <fieldset class="position-form-modal__field" data-field-name="岗位分类" <!-- i18n-skip-line: playwright selector -->>
+          <fieldset class="position-form-modal__field" data-field-name="岗位分类">
             <span>{{ t('admin.career.positions.formModal.fields.positionCategory') }} <em>*</em></span>
             <a-select v-model:value="form.positionCategory" :placeholder="t('admin.career.positions.formModal.placeholders.select')">
               <a-select-option v-for="option in categoryOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
             </a-select>
           </fieldset>
 
-          <fieldset class="position-form-modal__field" data-field-name="岗位名称" <!-- i18n-skip-line: playwright selector -->>
+          <fieldset class="position-form-modal__field" data-field-name="岗位名称">
             <span>{{ t('admin.career.positions.formModal.fields.positionName') }} <em>*</em></span>
             <a-input v-model:value="form.positionName" :placeholder="t('admin.career.positions.formModal.placeholders.positionName')" />
           </fieldset>
 
-          <fieldset class="position-form-modal__field" data-field-name="部门" <!-- i18n-skip-line: playwright selector -->>
+          <fieldset class="position-form-modal__field" data-field-name="部门">
             <span>{{ t('admin.career.positions.formModal.fields.department') }}</span>
             <a-select v-model:value="form.department" :placeholder="t('admin.career.positions.formModal.placeholders.select')" allow-clear show-search>
               <a-select-option v-for="option in departmentOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
             </a-select>
           </fieldset>
 
-          <fieldset class="position-form-modal__field" data-field-name="项目时间" <!-- i18n-skip-line: playwright selector -->>
+          <fieldset class="position-form-modal__field" data-field-name="项目时间">
             <span>{{ t('admin.career.positions.formModal.fields.projectYear') }} <em>*</em></span>
             <a-select v-model:value="form.projectYear" :placeholder="t('admin.career.positions.formModal.placeholders.select')">
               <a-select-option v-for="option in projectYearOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
@@ -47,7 +47,7 @@
           </fieldset>
         </div>
 
-        <fieldset class="position-form-modal__cycle-wrap" data-field-name="招聘周期" <!-- i18n-skip-line: playwright selector -->>
+        <fieldset class="position-form-modal__cycle-wrap" data-field-name="招聘周期">
           <span>{{ t('admin.career.positions.formModal.fields.recruitmentCycle') }} <em>*</em> <small>({{ t('admin.career.positions.formModal.placeholders.multiSelect') }})</small></span>
           <div class="position-form-modal__cycle-list">
             <a-checkbox
@@ -63,7 +63,7 @@
           </div>
         </fieldset>
 
-        <fieldset class="position-form-modal__cycle-wrap" data-field-name="对应学生主攻方向" <!-- i18n-skip-line: playwright selector -->>
+        <fieldset class="position-form-modal__cycle-wrap" data-field-name="对应学生主攻方向">
           <span>{{ t('admin.career.positions.formModal.fields.targetMajors') }} <em>*</em> <small>({{ t('admin.career.positions.formModal.placeholders.multiSelect') }})</small></span>
           <div class="position-form-modal__cycle-list">
             <a-checkbox
@@ -83,7 +83,7 @@
       <section class="position-form-modal__section">
         <h4><span class="mdi mdi-domain" aria-hidden="true"></span>{{ t('admin.career.positions.formModal.sections.companyInfo') }}</h4>
         <div class="position-form-modal__grid">
-          <fieldset class="position-form-modal__field" data-field-name="公司名称" <!-- i18n-skip-line: playwright selector -->>
+          <fieldset class="position-form-modal__field" data-field-name="公司名称">
             <span>{{ t('admin.career.positions.formModal.fields.companyName') }} <em>*</em></span>
             <a-auto-complete
               v-model:value="form.companyName"
@@ -95,23 +95,23 @@
             />
           </fieldset>
 
-          <fieldset class="position-form-modal__field" data-field-name="公司类别" <!-- i18n-skip-line: playwright selector -->>
+          <fieldset class="position-form-modal__field" data-field-name="公司类别">
             <span>{{ t('admin.career.positions.formModal.fields.companyType') }}</span>
             <a-select v-model:value="form.companyType" :placeholder="t('admin.career.positions.formModal.placeholders.select')" allow-clear>
               <a-select-option v-for="option in companyTypeOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
             </a-select>
           </fieldset>
 
-          <fieldset class="position-form-modal__location-group" data-field-name="岗位地区/城市" <!-- i18n-skip-line: playwright selector -->>
+          <fieldset class="position-form-modal__location-group" data-field-name="岗位地区/城市">
             <div class="position-form-modal__location-grid">
-              <fieldset class="position-form-modal__field" data-field-name="岗位地区" <!-- i18n-skip-line: playwright selector -->>
+              <fieldset class="position-form-modal__field" data-field-name="岗位地区">
                 <span>{{ t('admin.career.positions.formModal.fields.region') }} <em>*</em></span>
                 <a-select v-model:value="form.region" :placeholder="t('admin.career.positions.formModal.placeholders.select')">
                   <a-select-option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
                 </a-select>
               </fieldset>
 
-              <fieldset class="position-form-modal__field" data-field-name="城市" <!-- i18n-skip-line: playwright selector -->>
+              <fieldset class="position-form-modal__field" data-field-name="城市">
                 <span>{{ t('admin.career.positions.formModal.fields.city') }}</span>
                 <a-select v-model:value="form.city" :placeholder="form.region ? t('admin.career.positions.formModal.placeholders.select') : t('admin.career.positions.formModal.placeholders.selectRegionFirst')">
                   <a-select-option v-for="option in currentCityOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
@@ -120,17 +120,17 @@
             </div>
           </fieldset>
 
-          <fieldset class="position-form-modal__field" data-field-name="公司官网" <!-- i18n-skip-line: playwright selector -->>
+          <fieldset class="position-form-modal__field" data-field-name="公司官网">
             <span>{{ t('admin.career.positions.formModal.fields.companyWebsite') }}</span>
             <a-input v-model:value="form.companyWebsite" placeholder="https://company.com" />
           </fieldset>
 
-          <fieldset class="position-form-modal__field" data-field-name="岗位链接" <!-- i18n-skip-line: playwright selector -->>
+          <fieldset class="position-form-modal__field" data-field-name="岗位链接">
             <span>{{ t('admin.career.positions.formModal.fields.positionUrl') }}</span>
             <a-input v-model:value="form.positionUrl" placeholder="https://company.com/jobs/..." />
           </fieldset>
 
-          <fieldset class="position-form-modal__field" data-field-name="截止日期" <!-- i18n-skip-line: playwright selector -->>
+          <fieldset class="position-form-modal__field" data-field-name="截止日期">
             <span>{{ t('admin.career.positions.formModal.fields.deadline') }} <small>({{ t('admin.career.positions.formModal.placeholders.optional') }})</small></span>
             <a-date-picker
               v-model:value="form.deadline"
@@ -141,7 +141,7 @@
             />
           </fieldset>
 
-          <fieldset class="position-form-modal__field" data-field-name="截止文案" <!-- i18n-skip-line: playwright selector -->>
+          <fieldset class="position-form-modal__field" data-field-name="截止文案">
             <span>{{ t('admin.career.positions.formModal.fields.deadlineText') }} <small>({{ t('admin.career.positions.formModal.placeholders.optional') }}, {{ t('admin.career.positions.formModal.placeholders.deadlineTextHint') }})</small></span>
             <a-input v-model:value="form.deadlineText" :placeholder="t('admin.career.positions.formModal.placeholders.deadlineText')" :aria-label="t('admin.career.positions.formModal.fields.deadlineText')" />
           </fieldset>
@@ -149,11 +149,11 @@
       </section>
 
       <div class="position-form-modal__display-grid">
-        <section class="position-form-modal__section" data-field-name="展示时间" <!-- i18n-skip-line: playwright selector -->>
+        <section class="position-form-modal__section" data-field-name="展示时间">
           <h4><span class="mdi mdi-clock-outline" aria-hidden="true"></span>{{ t('admin.career.positions.formModal.sections.displayTime') }}</h4>
-          <fieldset class="position-form-modal__display-group" data-field-name="开始时间/结束时间" <!-- i18n-skip-line: playwright selector -->>
+          <fieldset class="position-form-modal__display-group" data-field-name="开始时间/结束时间">
             <div class="position-form-modal__display-stack">
-              <fieldset class="position-form-modal__field" data-field-name="开始时间" <!-- i18n-skip-line: playwright selector -->>
+              <fieldset class="position-form-modal__field" data-field-name="开始时间">
                 <span>{{ t('admin.career.positions.formModal.fields.displayStartTime') }} <em>*</em></span>
                 <a-date-picker
                   v-model:value="form.displayStartTime"
@@ -165,7 +165,7 @@
                   style="width: 100%"
                 />
               </fieldset>
-              <fieldset class="position-form-modal__field" data-field-name="结束时间" <!-- i18n-skip-line: playwright selector -->>
+              <fieldset class="position-form-modal__field" data-field-name="结束时间">
                 <span>{{ t('admin.career.positions.formModal.fields.displayEndTime') }} <em>*</em></span>
                 <a-date-picker
                   v-model:value="form.displayEndTime"
@@ -181,7 +181,7 @@
           </fieldset>
         </section>
 
-        <section class="position-form-modal__section" data-field-name="添加人" <!-- i18n-skip-line: playwright selector -->>
+        <section class="position-form-modal__section" data-field-name="添加人">
           <h4><span class="mdi mdi-account-edit" aria-hidden="true"></span>{{ t('admin.career.positions.formModal.sections.createdBy') }}</h4>
           <fieldset class="position-form-modal__field">
             <span class="position-form-modal__sr-only">{{ t('admin.career.positions.formModal.sections.createdBy') }}</span>
@@ -189,7 +189,7 @@
           </fieldset>
         </section>
 
-        <section class="position-form-modal__section" data-field-name="投递备注" <!-- i18n-skip-line: playwright selector -->>
+        <section class="position-form-modal__section" data-field-name="投递备注">
           <h4><span class="mdi mdi-note-text" aria-hidden="true"></span>{{ t('admin.career.positions.formModal.sections.applicationNote') }}</h4>
           <fieldset class="position-form-modal__field">
             <span class="position-form-modal__sr-only">{{ t('admin.career.positions.formModal.sections.applicationNote') }}</span>
@@ -199,7 +199,7 @@
               :placeholder="t('admin.career.positions.formModal.placeholders.applicationNote')"
             />
           </fieldset>
-          <fieldset class="position-form-modal__field" data-field-name="投递备注附件" <!-- i18n-skip-line: playwright selector -->>
+          <fieldset class="position-form-modal__field" data-field-name="投递备注附件">
             <span>
               {{ t('admin.career.positions.formModal.fields.attachments') }}
               <small>({{ t('admin.career.positions.formModal.upload.hint') }})</small>

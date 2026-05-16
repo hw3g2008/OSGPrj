@@ -61,12 +61,12 @@
         </div>
       </section>
 
-      <section v-if="detail?.feedbackContent" class="class-record-review-modal__section" data-field-name="课程反馈"><!-- i18n-skip-line: playwright selector -->
+      <section v-if="detail?.feedbackContent" class="class-record-review-modal__section" data-field-name="课程反馈">
         <div class="class-record-review-modal__section-head"><span>{{ t('admin.teaching.classRecords.fields.feedback') }}</span></div>
         <div class="class-record-review-modal__feedback">{{ detail.feedbackContent }}</div>
       </section>
 
-      <section class="class-record-review-modal__section" data-field-name="附件"><!-- i18n-skip-line: playwright selector -->
+      <section class="class-record-review-modal__section" data-field-name="附件">
         <div class="class-record-review-modal__section-head"><span>{{ t('admin.teaching.classRecords.fields.attachments') }}</span></div>
         <div v-if="detail?.attachments && detail.attachments.length > 0" class="class-record-review-modal__attachments">
           <div v-for="att in detail.attachments" :key="att.attachmentId" class="class-record-review-modal__att-card" @click="handleDownload(att.filePath)">
@@ -82,7 +82,7 @@
 
       <section
         class="class-record-review-modal__section"
-        data-field-name="审核结果" data-field-name-alias="课程审核弹窗审核结果"><!-- i18n-skip-line: playwright selector -->
+        data-field-name="审核结果" data-field-name-alias="课程审核弹窗审核结果">
         <div class="class-record-review-modal__section-head">
           <span>{{ t('admin.teaching.classRecords.fields.reviewResult') }}</span>
           <div class="class-record-review-modal__result-toggle">
@@ -109,10 +109,10 @@
       <section
         v-if="reviewResult === 'rejected'"
         class="class-record-review-modal__section"
-        data-field-name="驳回原因" data-field-name-alias="课程审核弹窗驳回原因"><!-- i18n-skip-line: playwright selector -->
+        data-field-name="驳回原因" data-field-name-alias="课程审核弹窗驳回原因">
         <a-form-item
           :label="t('admin.teaching.classRecords.reviewModal.rejectReasonLabel')"
-          data-field-name="驳回原因" data-field-name-alias="课程审核弹窗驳回原因"><!-- i18n-skip-line: playwright selector -->
+          data-field-name="驳回原因" data-field-name-alias="课程审核弹窗驳回原因">
           <a-select
             v-model:value="rejectReason"
             :placeholder="t('admin.teaching.classRecords.reviewModal.rejectReasonPlaceholder')"
@@ -124,7 +124,7 @@
 
         <a-form-item
           :label="t('admin.teaching.classRecords.reviewModal.rejectRemarkLabel')"
-          data-field-name="驳回说明" data-field-name-alias="课程审核弹窗驳回说明"><!-- i18n-skip-line: playwright selector -->
+          data-field-name="驳回说明" data-field-name-alias="课程审核弹窗驳回说明">
           <a-textarea
             v-model:value="rejectRemark"
             :rows="4"
@@ -137,10 +137,10 @@
 
       <section
         class="class-record-review-modal__section"
-        data-field-name="审核备注" data-field-name-alias="课程审核弹窗审核备注"><!-- i18n-skip-line: playwright selector -->
+        data-field-name="审核备注" data-field-name-alias="课程审核弹窗审核备注">
         <a-form-item
           :label="t('admin.teaching.classRecords.reviewModal.reviewRemarkLabel')"
-          data-field-name="审核备注" data-field-name-alias="课程审核弹窗审核备注"><!-- i18n-skip-line: playwright selector -->
+          data-field-name="审核备注" data-field-name-alias="课程审核弹窗审核备注">
           <a-textarea
             v-model:value="reviewRemark"
             :rows="3"
@@ -154,12 +154,13 @@
       <section
         class="class-record-review-modal__section class-record-review-modal__section--compat"
         aria-hidden="true"
-        data-field-name="课程审核弹窗审核结果"><!-- i18n-skip-line: playwright compat -->
+        data-field-name="课程审核弹窗审核结果">
         <div class="class-record-review-modal__compat-alias">
-          <span>课程审核弹窗审核结果</span><!-- i18n-skip-line: playwright compat alias -->
-          <span>课程审核弹窗驳回原因</span><!-- i18n-skip-line: playwright compat alias -->
-          <span>课程审核弹窗驳回说明</span><!-- i18n-skip-line: playwright compat alias -->
-          <span>课程审核弹窗审核备注</span><!-- i18n-skip-line: playwright compat alias -->
+          <!-- i18n-skip-block: playwright compat aliases (hidden, screen-reader/test only) -->
+          <span>课程审核弹窗审核结果</span><!-- i18n-skip-line: playwright selector -->
+          <span>课程审核弹窗驳回原因</span><!-- i18n-skip-line: playwright selector -->
+          <span>课程审核弹窗驳回说明</span><!-- i18n-skip-line: playwright selector -->
+          <span>课程审核弹窗审核备注</span><!-- i18n-skip-line: playwright selector -->
         </div>
       </section>
     </template>

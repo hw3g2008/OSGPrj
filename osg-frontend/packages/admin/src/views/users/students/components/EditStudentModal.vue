@@ -18,7 +18,6 @@
       layout="vertical"
       :required-mark="false"
     >
-      <!-- i18n-skip-line: dev comment ══ Part 1: 基本信息 ══ -->
       <div class="student-form-modal__part-title student-form-modal__part-title--blue">
         <div class="student-form-modal__part-title-heading">
           <i class="mdi mdi-account-circle" aria-hidden="true"></i>
@@ -26,28 +25,26 @@
         </div>
         <p>ID {{ student?.studentId ?? '-' }} · {{ formatStatus(student?.accountStatus) }}</p>
       </div>
-
-      <!-- i18n-skip-line: dev comment ① 核心信息 -->
       <section class="student-form-modal__section student-form-modal__section--highlight">
         <div class="student-form-modal__section-header">
           <span class="student-form-modal__section-badge student-form-modal__section-badge--primary">{{ t('admin.students.editModal.sections.coreInfo') }}</span>
         </div>
         <div class="student-form-modal__grid">
-          <a-form-item data-field-name="英文姓名"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="英文姓名">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.englishName') }}</span>
             </template>
             <a-input v-model:value="form.studentName" :disabled="submitting" :placeholder="t('admin.students.editModal.placeholders.englishName')" allow-clear />
           </a-form-item>
 
-          <a-form-item data-field-name="性别"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="性别">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.gender') }}</span>
             </template>
             <a-select v-model:value="form.gender" :disabled="submitting" :options="genderOptions" :placeholder="t('admin.students.editModal.placeholders.gender')" />
           </a-form-item>
 
-          <a-form-item class="student-form-modal__field--wide" data-field-name="邮箱"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item class="student-form-modal__field--wide" data-field-name="邮箱">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.email') }}</span>
             </template>
@@ -55,8 +52,6 @@
           </a-form-item>
         </div>
       </section>
-
-      <!-- i18n-skip-line: dev comment ② 导师配置 -->
       <section class="student-form-modal__section">
         <div class="student-form-modal__section-header">
           <span class="student-form-modal__section-badge student-form-modal__section-badge--indigo">
@@ -65,7 +60,7 @@
           <span class="student-form-modal__section-desc">{{ t('admin.students.editModal.sections.mentorConfigDesc') }}</span>
         </div>
         <div class="student-form-modal__grid">
-          <a-form-item data-field-name="班主任"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="班主任">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.leadMentor') }}</span>
             </template>
@@ -80,7 +75,7 @@
             />
           </a-form-item>
 
-          <a-form-item data-field-name="助教"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="助教">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.assistant') }}</span>
             </template>
@@ -96,8 +91,6 @@
           </a-form-item>
         </div>
       </section>
-
-      <!-- i18n-skip-line: dev comment ③ 学业信息 -->
       <section class="student-form-modal__section">
         <div class="student-form-modal__section-header">
           <span class="student-form-modal__section-badge student-form-modal__section-badge--blue">
@@ -105,7 +98,7 @@
           </span>
         </div>
         <div class="student-form-modal__grid">
-          <a-form-item data-field-name="学校"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="学校">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.school') }}</span>
             </template>
@@ -117,14 +110,14 @@
             />
           </a-form-item>
 
-          <a-form-item data-field-name="专业"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="专业">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.major') }}</span>
             </template>
             <a-input v-model:value="form.major" :disabled="submitting" :placeholder="t('admin.students.editModal.placeholders.major')" allow-clear />
           </a-form-item>
 
-          <a-form-item data-field-name="毕业年月"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="毕业年月">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.graduationMonth') }}</span>
             </template>
@@ -140,14 +133,14 @@
             />
           </a-form-item>
 
-          <a-form-item data-field-name="高中"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="高中">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.highSchool') }}</span>
             </template>
             <a-input v-model:value="form.highSchool" :disabled="submitting" :placeholder="t('admin.students.editModal.placeholders.highSchool')" allow-clear />
           </a-form-item>
 
-          <a-form-item data-field-name="学业状态"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="学业状态">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.studyPlan') }}</span>
             </template>
@@ -158,7 +151,7 @@
             </a-radio-group>
           </a-form-item>
 
-          <a-form-item data-field-name="签证"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="签证">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.visa') }}</span>
             </template>
@@ -172,8 +165,6 @@
           </a-form-item>
         </div>
       </section>
-
-      <!-- i18n-skip-line: dev comment ④ 求职方向 -->
       <section class="student-form-modal__section">
         <div class="student-form-modal__section-header">
           <span class="student-form-modal__section-badge student-form-modal__section-badge--amber">
@@ -182,7 +173,7 @@
           <span class="student-form-modal__section-desc">{{ t('admin.students.editModal.sections.careerDirectionDesc') }}</span>
         </div>
         <div class="student-form-modal__grid">
-          <a-form-item data-field-name="求职地区"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="求职地区">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.targetRegion') }}</span>
             </template>
@@ -194,7 +185,7 @@
             />
           </a-form-item>
 
-          <a-form-item data-field-name="招聘周期" class="student-form-modal__field--wide"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="招聘周期" class="student-form-modal__field--wide">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.recruitmentCycle') }}</span>
             </template>
@@ -206,7 +197,7 @@
             />
           </a-form-item>
 
-          <a-form-item data-field-name="主攻方向"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="主攻方向">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.majorDirections') }}</span>
             </template>
@@ -218,7 +209,7 @@
             />
           </a-form-item>
 
-          <a-form-item data-field-name="子方向"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="子方向">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.subDirections') }}</span>
             </template>
@@ -231,8 +222,6 @@
           </a-form-item>
         </div>
       </section>
-
-      <!-- i18n-skip-line: dev comment ⑤ 联系方式与备注 -->
       <section class="student-form-modal__section">
         <div class="student-form-modal__section-header">
           <span class="student-form-modal__section-badge student-form-modal__section-badge--green">
@@ -240,7 +229,7 @@
           </span>
         </div>
         <div class="student-form-modal__grid">
-          <a-form-item data-field-name="电话"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="电话">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.phone') }}</span>
             </template>
@@ -262,14 +251,14 @@
             </div>
           </a-form-item>
 
-          <a-form-item data-field-name="微信"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="微信">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.wechat') }}</span>
             </template>
             <a-input v-model:value="form.wechat" :disabled="submitting" :placeholder="t('admin.students.editModal.placeholders.wechat')" allow-clear />
           </a-form-item>
 
-          <a-form-item data-field-name="备注" class="student-form-modal__field--wide"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="备注" class="student-form-modal__field--wide">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.remark') }}</span>
             </template>
@@ -283,8 +272,6 @@
           </a-form-item>
         </div>
       </section>
-
-      <!-- i18n-skip-line: dev comment ⑥ 合同 -->
       <section class="student-form-modal__section">
         <div class="student-form-modal__section-header">
           <span class="student-form-modal__section-badge student-form-modal__section-badge--blue">
@@ -296,7 +283,7 @@
           {{ t('admin.students.editModal.noActiveContract') }}
         </div>
         <div v-else class="student-form-modal__grid">
-          <a-form-item data-field-name="币种" class="student-form-modal__field--wide"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="币种" class="student-form-modal__field--wide">
             <template #label>
               <span class="student-form-modal__label">
                 {{ t('admin.students.editModal.fields.currency') }}
@@ -309,7 +296,7 @@
             </a-radio-group>
           </a-form-item>
 
-          <a-form-item v-if="contractForm.currency === 'GBP'" data-field-name="英镑金额"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item v-if="contractForm.currency === 'GBP'" data-field-name="英镑金额">
             <template #label>
               <span class="student-form-modal__label">
                 {{ t('admin.students.editModal.fields.amountGbp') }}
@@ -328,7 +315,7 @@
             />
           </a-form-item>
 
-          <a-form-item data-field-name="美元金额"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="美元金额">
             <template #label>
               <span class="student-form-modal__label">
                 {{ contractForm.currency === 'GBP' ? t('admin.students.editModal.fields.usdEquivalent') : t('admin.students.editModal.fields.amountUsd') }}
@@ -347,7 +334,7 @@
             />
           </a-form-item>
 
-          <a-form-item data-field-name="课时（小时）"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="课时（小时）">
             <template #label>
               <span class="student-form-modal__label">
                 {{ t('admin.students.editModal.fields.totalHours') }}
@@ -366,7 +353,7 @@
             />
           </a-form-item>
 
-          <a-form-item data-field-name="合同开始日期"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="合同开始日期">
             <template #label>
               <span class="student-form-modal__label">
                 {{ t('admin.students.editModal.fields.startDate') }}
@@ -383,7 +370,7 @@
             />
           </a-form-item>
 
-          <a-form-item data-field-name="合同结束日期"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="合同结束日期">
             <template #label>
               <span class="student-form-modal__label">
                 {{ t('admin.students.editModal.fields.endDate') }}
@@ -400,7 +387,7 @@
             />
           </a-form-item>
 
-          <a-form-item data-field-name="合同附件" class="student-form-modal__field--wide"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="合同附件" class="student-form-modal__field--wide">
             <template #label>
               <span class="student-form-modal__label">
                 {{ t('admin.students.editModal.fields.contractAttachment') }}
@@ -437,7 +424,7 @@
             </div>
           </a-form-item>
 
-          <a-form-item data-field-name="合同备注" class="student-form-modal__field--wide"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="合同备注" class="student-form-modal__field--wide">
             <template #label>
               <span class="student-form-modal__label">{{ t('admin.students.editModal.fields.contractRemark') }}</span>
             </template>
@@ -1031,8 +1018,6 @@ const formatStatus = (status?: string) => {
   }
 }
 </script>
-
-<!-- i18n-skip-line: dev comment student-form.scss 注入 portal 出去的 body 节点（OverlaySurfaceModal），必须非 scoped -->
 <style lang="scss">
 @use './student-form.scss';
 </style>

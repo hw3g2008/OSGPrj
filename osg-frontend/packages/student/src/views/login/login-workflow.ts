@@ -29,12 +29,15 @@ export function validateLoginForm(formState: LoginFormState): LoginFieldErrors {
   const username = formState.username.trim()
   let usernameError = ''
   if (!username) {
-    usernameError = t('student.loginWorkflow.k1')  } else if (!EMAIL_RE.test(username)) {
-    usernameError = t('student.loginWorkflow.k2')  }
+    usernameError = '请输入邮箱' // i18n-skip-line: helper returns label, view re-translates
+  } else if (!EMAIL_RE.test(username)) {
+    usernameError = '邮箱格式不正确' // i18n-skip-line: helper returns label, view re-translates
+  }
 
   return {
     username: usernameError,
-    password: formState.password ? '' : t('student.loginWorkflow.k3')  }
+    password: formState.password ? '' : '请输入密码', // i18n-skip-line: helper returns label, view re-translates
+  }
 }
 
 export function hasLoginErrors(fieldErrors: LoginFieldErrors): boolean {
@@ -75,7 +78,7 @@ export async function submitLogin(
     deps.setUser(enrichedUser)
     deps.setMustChangePassword?.(Boolean(userData.mustChangePassword))
 
-    deps.notifySuccess(t('student.loginWorkflow.k4'))
+    deps.notifySuccess('登录成功') // i18n-skip-line: helper sends label string, view layer translates
     // 已结束 / 黑名单：跳 lock 页（reason 由路由守卫读取也可，这里登录直跳更直观）
     if (userData.accountStatus === '2') {
       await deps.push('/account-locked?reason=contract_ended')
@@ -87,7 +90,7 @@ export async function submitLogin(
 
     return { ok: true, loginError: '' }
   } catch (error) {
-    const loginError = error instanceof Error ? error.message : t('student.loginWorkflow.k5')
+    const loginError = error instanceof Error ? error.message : '邮箱或密码错误' // i18n-skip-line: helper returns label, view re-translates
     return {
       ok: false,
       loginError

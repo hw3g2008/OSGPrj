@@ -31,7 +31,7 @@
       <label
         v-if="props.action === 'remove'"
         class="staff-status-modal__field"
-        data-field-name="移出原因" <!-- i18n-skip-line: playwright selector -->
+        data-field-name="移出原因"
       >
         <a-form-item name="reason" class="staff-status-modal__form-item">
           <span class="staff-status-modal__label">
@@ -49,7 +49,7 @@
       <label
         v-else-if="requiresReason"
         class="staff-status-modal__field"
-        :data-field-name="reasonFieldNameZH" <!-- i18n-skip-line: playwright selector -->
+        :data-field-name="reasonFieldNameZH"
       >
         <a-form-item name="reason" class="staff-status-modal__form-item">
           <span class="staff-status-modal__label">
@@ -67,7 +67,7 @@
       <label
         v-if="formState.reason === 'other'"
         class="staff-status-modal__field"
-        data-field-name="其他原因说明" <!-- i18n-skip-line: playwright selector -->
+        data-field-name="其他原因说明"
       >
         <a-form-item name="otherReason" class="staff-status-modal__form-item">
           <span class="staff-status-modal__label">{{ t('admin.users.staff.statusModal.otherReasonLabel') }}</span>
@@ -82,7 +82,7 @@
 
       <label
         class="staff-status-modal__field"
-        data-field-name="备注说明" <!-- i18n-skip-line: playwright selector -->
+        data-field-name="备注说明"
       >
         <a-form-item name="remark" class="staff-status-modal__form-item">
           <span class="staff-status-modal__label">{{ t('admin.users.staff.statusModal.remarkLabel') }}</span>

@@ -32,7 +32,7 @@
         <a-input v-model:value="formState.dictLabel" :placeholder="t('admin.permission.dicts.modal.nameInputPlaceholder', { field: nameFieldLabel })" />
       </a-form-item>
 
-      <a-form-item name="dictValue" data-field-name="字典键值"><!-- i18n-skip-line: playwright selector -->
+      <a-form-item name="dictValue" data-field-name="字典键值">
         <template #label>
           <span class="base-data-modal__label">{{ t('admin.permission.dicts.modal.dictValueLabel') }}<span class="base-data-modal__required">*</span></span>
         </template>
@@ -63,7 +63,7 @@
         v-if="props.tab === 'osg_company_name'"
         name="website"
         :label="t('admin.permission.dicts.modal.websiteLabel')"
-        data-field-name="官网地址"><!-- i18n-skip-line: playwright selector -->
+        data-field-name="官网地址">
         <a-input v-model:value="formState.website" :placeholder="t('admin.permission.dicts.modal.websitePlaceholder')" />
       </a-form-item>
 
@@ -72,7 +72,7 @@
         v-if="props.tab === 'osg_school'"
         name="country"
         :label="t('admin.permission.dicts.modal.countryLabel')"
-        data-field-name="国家/地区"><!-- i18n-skip-line: playwright selector -->
+        data-field-name="国家/地区">
         <a-select
           v-model:value="formState.country"
           :placeholder="t('admin.permission.dicts.modal.countryPlaceholder')"
@@ -85,14 +85,14 @@
       <a-form-item
         v-if="props.tab === 'osg_country_code'"
         name="callingCode"
-        data-field-name="国际区号"><!-- i18n-skip-line: playwright selector -->
+        data-field-name="国际区号">
         <template #label>
           <span class="base-data-modal__label">{{ t('admin.permission.dicts.modal.callingCodeLabel') }}<span class="base-data-modal__required">*</span></span>
         </template>
         <a-input v-model:value="formState.callingCode" :placeholder="t('admin.permission.dicts.modal.callingCodePlaceholder')" />
       </a-form-item>
 
-      <a-form-item :label="t('admin.permission.dicts.modal.sortLabel')" name="dictSort" data-field-name="排序"><!-- i18n-skip-line: playwright selector -->
+      <a-form-item :label="t('admin.permission.dicts.modal.sortLabel')" name="dictSort" data-field-name="排序">
         <a-input-number
           v-model:value="formState.dictSort"
           :min="0"
@@ -101,7 +101,7 @@
         />
       </a-form-item>
 
-      <a-form-item :label="t('admin.permission.dicts.modal.statusLabel')" name="status" data-field-name="状态"><!-- i18n-skip-line: playwright selector -->
+      <a-form-item :label="t('admin.permission.dicts.modal.statusLabel')" name="status" data-field-name="状态">
         <a-switch
           v-model:checked="statusChecked"
           :checked-children="t('admin.permission.dicts.modal.statusEnabled')"

@@ -69,7 +69,7 @@
     </div>
 
     <!-- Hours input -->
-    <section class="esm-section" data-field-name="调整导师排期弹窗可上课时长"> <!-- i18n-skip-line: playwright selector -->
+    <section class="esm-section" data-field-name="调整导师排期弹窗可上课时长">
       <header class="esm-section__head">
         <span class="esm-section__icon mdi mdi-clock-outline" aria-hidden="true"></span>
         <span class="esm-section__title">{{ t('admin.users.mentorSchedule.editModal.hoursTitle') }}</span>
@@ -101,7 +101,7 @@
     </section>
 
     <!-- Day grid -->
-    <section class="esm-section" data-field-name="调整导师排期弹窗每天可上课时间"> <!-- i18n-skip-line: playwright selector -->
+    <section class="esm-section" data-field-name="调整导师排期弹窗每天可上课时间">
       <header class="esm-section__head">
         <span class="esm-section__icon mdi mdi-calendar-check" aria-hidden="true"></span>
         <span class="esm-section__title">{{ t('admin.users.mentorSchedule.editModal.slotsTitle') }}</span>
@@ -113,7 +113,7 @@
           v-for="day in weekdays"
           :key="day.value"
           :class="['esm-day-row', { 'esm-day-row--weekend': day.weekend }]"
-          :data-field-name="`${day.label}可用时段`" <!-- i18n-skip-line: playwright selector -->
+          :data-field-name="`${day.label}可用时段`"
         >
           <legend class="sr-only">{{ day.displayLabel }}{{ t('admin.users.mentorSchedule.editModal.slotSuffix') }}</legend>
           <div class="esm-day-row__lead">
@@ -172,7 +172,7 @@
     </section>
 
     <!-- Notify -->
-    <fieldset class="esm-notify-card" data-field-name="同步通知导师复选框"> <!-- i18n-skip-line: playwright selector -->
+    <fieldset class="esm-notify-card" data-field-name="同步通知导师复选框">
       <legend class="sr-only">{{ t('admin.users.mentorSchedule.editModal.notifyTitle') }}</legend>
       <span class="esm-notify-card__icon mdi mdi-bell-ring-outline" aria-hidden="true"></span>
       <label class="esm-notify-label">

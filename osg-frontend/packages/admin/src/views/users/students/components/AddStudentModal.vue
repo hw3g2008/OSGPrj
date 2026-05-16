@@ -35,7 +35,7 @@
           <span class="add-student-modal__section-badge add-student-modal__section-badge--primary">{{ t('admin.students.addModal.sections.coreInfo') }}</span>
         </div>
         <div class="add-student-modal__grid">
-          <a-form-item name="studentName" data-field-name="英文姓名"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="studentName" data-field-name="英文姓名">
             <template #label>
               <span class="add-student-modal__label">
                 {{ t('admin.students.addModal.fields.englishName') }}
@@ -49,7 +49,7 @@
             />
           </a-form-item>
 
-          <a-form-item name="gender" data-field-name="性别"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="gender" data-field-name="性别">
             <template #label>
               <span class="add-student-modal__label">
                 {{ t('admin.students.addModal.fields.gender') }}
@@ -63,7 +63,7 @@
             />
           </a-form-item>
 
-          <a-form-item class="add-student-modal__field--wide" name="email" data-field-name="邮箱"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item class="add-student-modal__field--wide" name="email" data-field-name="邮箱">
             <template #label>
               <span class="add-student-modal__label">
                 {{ t('admin.students.addModal.fields.email') }}
@@ -88,7 +88,7 @@
           <span class="add-student-modal__section-desc">{{ t('admin.students.addModal.sections.optionalMulti') }}</span>
         </div>
         <div class="add-student-modal__grid">
-          <a-form-item name="leadMentorIds" data-field-name="班主任"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="leadMentorIds" data-field-name="班主任">
             <template #label>
               <span class="add-student-modal__label">{{ t('admin.students.addModal.fields.leadMentor') }}</span>
             </template>
@@ -103,7 +103,7 @@
             />
           </a-form-item>
 
-          <a-form-item name="assistantIds" data-field-name="助教"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="assistantIds" data-field-name="助教">
             <template #label>
               <span class="add-student-modal__label">{{ t('admin.students.addModal.fields.assistant') }}</span>
             </template>
@@ -128,7 +128,7 @@
           </span>
         </div>
         <div class="add-student-modal__grid">
-          <a-form-item name="school" data-field-name="学校"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="school" data-field-name="学校">
             <template #label>
               <span class="add-student-modal__label">{{ t('admin.students.addModal.fields.school') }}</span>
             </template>
@@ -139,7 +139,7 @@
             />
           </a-form-item>
 
-          <a-form-item name="major" data-field-name="专业"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="major" data-field-name="专业">
             <template #label>
               <span class="add-student-modal__label">{{ t('admin.students.addModal.fields.major') }}</span>
             </template>
@@ -150,7 +150,7 @@
             />
           </a-form-item>
 
-          <a-form-item name="graduationYear" data-field-name="毕业年月"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="graduationYear" data-field-name="毕业年月">
             <template #label>
               <span class="add-student-modal__label">{{ t('admin.students.addModal.fields.graduationMonth') }}</span>
             </template>
@@ -165,7 +165,7 @@
             />
           </a-form-item>
 
-          <a-form-item name="highSchool" data-field-name="高中"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="highSchool" data-field-name="高中">
             <template #label>
               <span class="add-student-modal__label">{{ t('admin.students.addModal.fields.highSchool') }}</span>
             </template>
@@ -176,7 +176,7 @@
             />
           </a-form-item>
 
-          <a-form-item name="studyPlan" data-field-name="学业状态"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="studyPlan" data-field-name="学业状态">
             <template #label>
               <span class="add-student-modal__label">{{ t('admin.students.addModal.fields.studyPlan') }}</span>
             </template>
@@ -187,7 +187,7 @@
             </a-radio-group>
           </a-form-item>
 
-          <a-form-item name="visaStatus" data-field-name="签证"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="visaStatus" data-field-name="签证">
             <template #label>
               <span class="add-student-modal__label">{{ t('admin.students.addModal.fields.visaStatus') }}</span>
             </template>
@@ -209,7 +209,7 @@
           <span class="add-student-modal__section-desc">{{ t('admin.students.addModal.sections.careerDirectionDesc') }}</span>
         </div>
         <div class="add-student-modal__grid">
-          <a-form-item name="targetRegion" data-field-name="求职地区"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="targetRegion" data-field-name="求职地区">
             <template #label>
               <span class="add-student-modal__label">
                 {{ t('admin.students.addModal.fields.targetRegion') }}
@@ -223,7 +223,7 @@
             />
           </a-form-item>
 
-          <a-form-item name="recruitmentCycle" data-field-name="招聘周期" class="add-student-modal__field--wide"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="recruitmentCycle" data-field-name="招聘周期" class="add-student-modal__field--wide">
             <template #label>
               <span class="add-student-modal__label">
                 {{ t('admin.students.addModal.fields.recruitmentCycle') }}
@@ -237,7 +237,7 @@
             />
           </a-form-item>
 
-          <a-form-item name="majorDirections" data-field-name="主攻方向"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="majorDirections" data-field-name="主攻方向">
             <template #label>
               <span class="add-student-modal__label">
                 {{ t('admin.students.addModal.fields.majorDirections') }}
@@ -251,7 +251,7 @@
             />
           </a-form-item>
 
-          <a-form-item name="subDirections" data-field-name="子方向"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="subDirections" data-field-name="子方向">
             <template #label>
               <span class="add-student-modal__label">
                 {{ t('admin.students.addModal.fields.subDirections') }}
@@ -275,7 +275,7 @@
           </span>
         </div>
         <div class="add-student-modal__grid">
-          <a-form-item name="phone" data-field-name="电话"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="phone" data-field-name="电话">
             <template #label>
               <span class="add-student-modal__label">
                 {{ t('admin.students.addModal.fields.phone') }}
@@ -299,7 +299,7 @@
             </div>
           </a-form-item>
 
-          <a-form-item name="wechat" data-field-name="微信"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="wechat" data-field-name="微信">
             <template #label>
               <span class="add-student-modal__label">{{ t('admin.students.addModal.fields.wechat') }}</span>
             </template>
@@ -310,7 +310,7 @@
             />
           </a-form-item>
 
-          <a-form-item name="remark" data-field-name="备注" class="add-student-modal__field--wide"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="remark" data-field-name="备注" class="add-student-modal__field--wide">
             <template #label>
               <span class="add-student-modal__label">{{ t('admin.students.addModal.fields.remark') }}</span>
             </template>
@@ -333,7 +333,7 @@
           <span class="add-student-modal__section-desc">{{ t('admin.students.addModal.sections.studentAccountDesc') }}</span>
         </div>
         <div class="add-student-modal__grid">
-          <a-form-item data-field-name="登录账号"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="登录账号">
             <template #label>
               <span class="add-student-modal__label">{{ t('admin.students.addModal.fields.loginAccount') }}</span>
             </template>
@@ -344,7 +344,7 @@
             />
           </a-form-item>
 
-          <a-form-item data-field-name="初始密码"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item data-field-name="初始密码">
             <template #label>
               <span class="add-student-modal__label">{{ t('admin.students.addModal.fields.initialPassword') }}</span>
             </template>
@@ -372,7 +372,7 @@
       <!-- ⑦ 合同字段 i18n-skip-line: dev comment -->
       <div class="add-student-modal__section">
         <div class="add-student-modal__grid">
-          <a-form-item name="currency" data-field-name="币种" class="add-student-modal__field--wide"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="currency" data-field-name="币种" class="add-student-modal__field--wide">
             <template #label>
               <span class="add-student-modal__label">
                 {{ t('admin.students.addModal.fields.currency') }}
@@ -385,7 +385,7 @@
             </a-radio-group>
           </a-form-item>
 
-          <a-form-item v-if="formState.currency === 'GBP'" name="amountGbp" data-field-name="英镑金额"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item v-if="formState.currency === 'GBP'" name="amountGbp" data-field-name="英镑金额">
             <template #label>
               <span class="add-student-modal__label">
                 {{ t('admin.students.addModal.fields.amountGbp') }}
@@ -404,7 +404,7 @@
             />
           </a-form-item>
 
-          <a-form-item name="amountUsd" data-field-name="美元金额"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="amountUsd" data-field-name="美元金额">
             <template #label>
               <span class="add-student-modal__label">
                 {{ formState.currency === 'GBP' ? t('admin.students.addModal.fields.usdEquivalent') : t('admin.students.addModal.fields.amountUsd') }}
@@ -423,7 +423,7 @@
             />
           </a-form-item>
 
-          <a-form-item name="totalHours" data-field-name="课时（小时）"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="totalHours" data-field-name="课时（小时）">
             <template #label>
               <span class="add-student-modal__label">
                 {{ t('admin.students.addModal.fields.totalHours') }}
@@ -441,7 +441,7 @@
             />
           </a-form-item>
 
-          <a-form-item name="startDate" data-field-name="合同开始日期"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="startDate" data-field-name="合同开始日期">
             <template #label>
               <span class="add-student-modal__label">
                 {{ t('admin.students.addModal.fields.startDate') }}
@@ -456,7 +456,7 @@
             />
           </a-form-item>
 
-          <a-form-item name="endDate" data-field-name="合同结束日期"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="endDate" data-field-name="合同结束日期">
             <template #label>
               <span class="add-student-modal__label">
                 {{ t('admin.students.addModal.fields.endDate') }}
@@ -471,7 +471,7 @@
             />
           </a-form-item>
 
-          <a-form-item name="contractAttachment" data-field-name="合同附件" class="add-student-modal__field--wide"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="contractAttachment" data-field-name="合同附件" class="add-student-modal__field--wide">
             <template #label>
               <span class="add-student-modal__label">
                 {{ t('admin.students.addModal.fields.contractAttachment') }}
@@ -496,7 +496,7 @@
             </a-upload-dragger>
           </a-form-item>
 
-          <a-form-item name="contractRemark" data-field-name="合同备注" class="add-student-modal__field--wide"> <!-- i18n-skip-line: playwright selector -->
+          <a-form-item name="contractRemark" data-field-name="合同备注" class="add-student-modal__field--wide">
             <template #label>
               <span class="add-student-modal__label">{{ t('admin.students.addModal.fields.remark') }}</span>
             </template>

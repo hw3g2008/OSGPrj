@@ -35,24 +35,24 @@
           </span>
         </div>
       </template>
-      <a-form layout="inline" style="margin-bottom: 16px" data-field-name="导师排期管理页"> <!-- i18n-skip-line: playwright selector -->
+      <a-form layout="inline" style="margin-bottom: 16px" data-field-name="导师排期管理页">
         <a-form-item>
-          <a-input v-model:value="filters.keyword" :placeholder="t('admin.users.mentorSchedule.filter.keyword')" allow-clear style="width: 200px" data-field-name="搜索框" /> <!-- i18n-skip-line: playwright selector -->
+          <a-input v-model:value="filters.keyword" :placeholder="t('admin.users.mentorSchedule.filter.keyword')" allow-clear style="width: 200px" data-field-name="搜索框" />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.staffType" :placeholder="t('admin.users.mentorSchedule.filter.allTypes')" allow-clear style="width: 120px" data-field-name="类型"> <!-- i18n-skip-line: playwright selector -->
+          <a-select v-model:value="filters.staffType" :placeholder="t('admin.users.mentorSchedule.filter.allTypes')" allow-clear style="width: 120px" data-field-name="类型">
             <a-select-option value="lead_mentor">{{ t('admin.users.mentorSchedule.staffTypes.lead_mentor') }}</a-select-option>
             <a-select-option value="mentor">{{ t('admin.users.mentorSchedule.staffTypes.mentor') }}</a-select-option>
             <a-select-option value="assistant">{{ t('admin.users.mentorSchedule.staffTypes.assistant') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.weekday" :placeholder="t('admin.users.mentorSchedule.filter.allDays')" allow-clear style="width: 110px" data-field-name="日期"> <!-- i18n-skip-line: playwright selector -->
+          <a-select v-model:value="filters.weekday" :placeholder="t('admin.users.mentorSchedule.filter.allDays')" allow-clear style="width: 110px" data-field-name="日期">
             <a-select-option v-for="day in weekdays" :key="day.value" :value="String(day.value)">{{ day.label }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.timeSlot" :placeholder="t('admin.users.mentorSchedule.filter.allSlots')" allow-clear style="width: 110px" data-field-name="时段"> <!-- i18n-skip-line: playwright selector -->
+          <a-select v-model:value="filters.timeSlot" :placeholder="t('admin.users.mentorSchedule.filter.allSlots')" allow-clear style="width: 110px" data-field-name="时段">
             <a-select-option v-for="slot in timeSlots" :key="slot.value" :value="slot.value">{{ slot.label }}</a-select-option>
           </a-select>
         </a-form-item>

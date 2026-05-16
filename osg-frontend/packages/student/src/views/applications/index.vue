@@ -1202,12 +1202,6 @@ function handleUpdateHirevueUpload(info: { file: any; fileList?: any[] }) {
   }
 }
 
-function renderModalTitle(Icon: any, text: string) {
-  return h('span', { class: 'modal-title-inline' }, [
-    h(Icon, { class: 'modal-title-icon', 'aria-hidden': 'true' }),
-    h('span', { class: 'modal-title-text' }, text)
-  ])
-}
 
 function resolveStageLabel(stage: string) {
   return stageLabelByValue.value.get(stage) || stage

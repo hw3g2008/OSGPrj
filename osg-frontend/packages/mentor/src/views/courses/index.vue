@@ -312,10 +312,10 @@ function formatDate(d: string) {
   if (Number.isNaN(date.getTime())) return s
   return date.toISOString().slice(0, 10)
 }
-function coachingLabel(t: string) { return { job_coaching: t('mentor.courses.k3'), mock_interview: t('mentor.courses.k4'), networking: t('mentor.courses.k46'), mock_midterm: t('mentor.courses.k47'), basic: t('mentor.courses.k48'), basic_course: t('mentor.courses.k48') }[t] || t }
-function contentLabel(t: string) {
-  const normalized = String(t ?? '').trim().replace(/-/g, '_').toLowerCase()
-  return {
+function coachingLabel(key: string) { return ({ job_coaching: t('mentor.courses.k3'), mock_interview: t('mentor.courses.k4'), networking: t('mentor.courses.k46'), mock_midterm: t('mentor.courses.k47'), basic: t('mentor.courses.k48'), basic_course: t('mentor.courses.k48') } as Record<string, string>)[key] || key }
+function contentLabel(key: string) {
+  const normalized = String(key ?? '').trim().replace(/-/g, '_').toLowerCase()
+  return ({
     // RULE-E: 课程内容字典中文 label（覆盖 courseType / classStatus / courseSource 三个口径）
     job_coaching: t('mentor.courses.k3'),
     relation_test: t('mentor.courses.k46'),
@@ -342,7 +342,7 @@ function contentLabel(t: string) {
     mentor_report: t('mentor.courses.k51'),
     student_request: t('mentor.courses.k52'),
     other: t('mentor.courses.k36'),
-  }[normalized] || t
+  } as Record<string, string>)[normalized] || key
 }
 function evaluationTag(record: Record<string, any>) {
   if (record.studentEvaluation !== '' && record.studentEvaluation != null) {

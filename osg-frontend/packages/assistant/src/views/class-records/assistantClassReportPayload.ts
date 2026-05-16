@@ -104,7 +104,7 @@ export function resolveComments(
 ): string | undefined {
   const segments: string[] = []
   segments.push(
-    form.attendanceStatus === 'absent' ? '学员状态: 旷课未到场' : t('assistant.assistantClassReportPayload.k1'), // i18n-skip-line: backend payload format
+    form.attendanceStatus === 'absent' ? '学员状态: 旷课未到场' : '学员状态: 已到课', // i18n-skip-line: backend payload format
   )
   if (form.absenceRemark.trim()) segments.push(`旷课备注: ${form.absenceRemark.trim()}`) // i18n-skip-line: backend payload format
 

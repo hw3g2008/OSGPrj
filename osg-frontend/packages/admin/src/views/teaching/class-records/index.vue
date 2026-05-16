@@ -37,16 +37,16 @@
     <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
       <a-form layout="inline" style="margin-bottom: 16px; gap: 12px; flex-wrap: wrap">
         <a-form-item>
-          <a-input v-model:value="keyword" :placeholder="t('admin.teaching.classRecords.filter.searchPlaceholder')" allow-clear style="width: 180px" @pressEnter="loadData" data-field-name="搜索"/><!-- i18n-skip-line: playwright selector -->
+          <a-input v-model:value="keyword" :placeholder="t('admin.teaching.classRecords.filter.searchPlaceholder')" allow-clear style="width: 180px" @pressEnter="loadData" data-field-name="搜索"/>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filterCoachingType" :placeholder="t('admin.teaching.classRecords.filter.coachingTypePlaceholder')" allow-clear style="width: 130px" data-field-name="辅导类型"><!-- i18n-skip-line: playwright selector -->
+          <a-select v-model:value="filterCoachingType" :placeholder="t('admin.teaching.classRecords.filter.coachingTypePlaceholder')" allow-clear style="width: 130px" data-field-name="辅导类型">
             <a-select-option value="position_coaching">{{ t('admin.teaching.classRecords.filter.coachingTypes.position') }}</a-select-option>
             <a-select-option value="mock_application">{{ t('admin.teaching.classRecords.filter.coachingTypes.mock') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filterCourseContent" :placeholder="t('admin.teaching.classRecords.filter.courseContentPlaceholder')" allow-clear style="width: 140px" data-field-name="课程内容"><!-- i18n-skip-line: playwright selector -->
+          <a-select v-model:value="filterCourseContent" :placeholder="t('admin.teaching.classRecords.filter.courseContentPlaceholder')" allow-clear style="width: 140px" data-field-name="课程内容">
             <a-select-option value="new_resume">{{ t('admin.teaching.classRecords.filter.courseContents.new_resume') }}</a-select-option>
             <a-select-option value="resume_update">{{ t('admin.teaching.classRecords.filter.courseContents.resume_update') }}</a-select-option>
             <a-select-option value="case_prep">{{ t('admin.teaching.classRecords.filter.courseContents.case_prep') }}</a-select-option>
@@ -57,7 +57,7 @@
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filterReporterRole" :placeholder="t('admin.teaching.classRecords.filter.reporterRolePlaceholder')" allow-clear style="width: 130px" data-field-name="申报人角色"><!-- i18n-skip-line: playwright selector -->
+          <a-select v-model:value="filterReporterRole" :placeholder="t('admin.teaching.classRecords.filter.reporterRolePlaceholder')" allow-clear style="width: 130px" data-field-name="申报人角色">
             <a-select-option value="mentor">{{ t('admin.teaching.classRecords.filter.sources.mentor') }}</a-select-option>
             <a-select-option value="headteacher">{{ t('admin.teaching.classRecords.filter.sources.headteacher') }}</a-select-option>
             <a-select-option value="assistant">{{ t('admin.teaching.classRecords.filter.sources.assistant') }}</a-select-option>
@@ -65,9 +65,9 @@
         </a-form-item>
         <a-form-item :label="t('admin.teaching.classRecords.filter.dateLabel')">
           <a-space>
-            <a-date-picker v-model:value="filterDateStart" :placeholder="t('admin.teaching.classRecords.filter.dateStart')" value-format="YYYY-MM-DD" style="width: 140px" data-field-name="上课日期开始"/><!-- i18n-skip-line: playwright selector -->
+            <a-date-picker v-model:value="filterDateStart" :placeholder="t('admin.teaching.classRecords.filter.dateStart')" value-format="YYYY-MM-DD" style="width: 140px" data-field-name="上课日期开始"/>
             <span>~</span>
-            <a-date-picker v-model:value="filterDateEnd" :placeholder="t('admin.teaching.classRecords.filter.dateEnd')" value-format="YYYY-MM-DD" style="width: 140px" data-field-name="上课日期结束"/><!-- i18n-skip-line: playwright selector -->
+            <a-date-picker v-model:value="filterDateEnd" :placeholder="t('admin.teaching.classRecords.filter.dateEnd')" value-format="YYYY-MM-DD" style="width: 140px" data-field-name="上课日期结束"/>
           </a-space>
         </a-form-item>
         <a-form-item>

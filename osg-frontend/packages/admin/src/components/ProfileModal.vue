@@ -22,14 +22,14 @@
       :required-mark="false"
       class="profile-modal__form"
     >
-      <a-form-item name="name" data-field-name="姓名"><!-- i18n-skip-line: playwright selector -->
+      <a-form-item name="name" data-field-name="姓名">
         <template #label>
           <span class="profile-modal__label">{{ t('admin.profile.modal.fields.name.label') }}<span class="profile-modal__required">*</span></span>
         </template>
         <a-input v-model:value="formState.name" :placeholder="t('admin.profile.modal.fields.name.placeholder')" allow-clear />
       </a-form-item>
 
-      <a-form-item name="account" data-field-name="账号"><!-- i18n-skip-line: playwright selector -->
+      <a-form-item name="account" data-field-name="账号">
         <template #label>
           <span class="profile-modal__label">{{ t('admin.profile.modal.fields.account.label') }}</span>
         </template>
@@ -41,7 +41,7 @@
         />
       </a-form-item>
 
-      <a-form-item name="email" data-field-name="邮箱"><!-- i18n-skip-line: playwright selector -->
+      <a-form-item name="email" data-field-name="邮箱">
         <template #label>
           <span class="profile-modal__label">{{ t('admin.profile.modal.fields.email.label') }}</span>
         </template>
@@ -59,7 +59,7 @@
           <span>{{ t('admin.profile.modal.passwordSection.hint') }}</span>
         </div>
 
-        <a-form-item name="oldPassword" data-field-name="旧密码"><!-- i18n-skip-line: playwright selector -->
+        <a-form-item name="oldPassword" data-field-name="旧密码">
           <template #label>
             <span class="profile-modal__label">{{ t('admin.profile.modal.fields.oldPassword.label') }}</span>
           </template>
@@ -70,7 +70,7 @@
           />
         </a-form-item>
 
-        <a-form-item name="newPassword" data-field-name="新密码"><!-- i18n-skip-line: playwright selector -->
+        <a-form-item name="newPassword" data-field-name="新密码">
           <template #label>
             <span class="profile-modal__label">{{ t('admin.profile.modal.fields.newPassword.label') }}</span>
           </template>
@@ -81,7 +81,7 @@
           />
         </a-form-item>
 
-        <a-form-item name="confirmPassword" data-field-name="确认密码"><!-- i18n-skip-line: playwright selector -->
+        <a-form-item name="confirmPassword" data-field-name="确认密码">
           <template #label>
             <span class="profile-modal__label">{{ t('admin.profile.modal.fields.confirmPassword.label') }}</span>
           </template>

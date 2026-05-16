@@ -91,7 +91,7 @@
         </div>
       </a-form-item>
 
-      <a-form-item v-if="!isEdit" class="user-modal__field user-modal__field--span-2" data-field-name="初始密码"><!-- i18n-skip-line: playwright selector -->
+      <a-form-item v-if="!isEdit" class="user-modal__field user-modal__field--span-2" data-field-name="初始密码">
         <template #label>
           <span class="user-modal__label">{{ t('admin.permission.users.modal.defaultPwdLabel') }}</span>
         </template>

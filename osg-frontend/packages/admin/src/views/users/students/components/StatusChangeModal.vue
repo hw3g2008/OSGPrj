@@ -34,7 +34,7 @@
         layout="vertical"
         :required-mark="false"
       >
-        <a-form-item v-if="requiresReason" name="reason" data-field-name="修改原因"> <!-- i18n-skip-line: playwright selector -->
+        <a-form-item v-if="requiresReason" name="reason" data-field-name="修改原因">
           <template #label>
             <span class="student-status-modal__label">
               {{ t('admin.students.statusModal.reasonLabel') }}
@@ -48,7 +48,7 @@
           />
         </a-form-item>
 
-        <a-form-item name="remark" data-field-name="备注说明"> <!-- i18n-skip-line: playwright selector -->
+        <a-form-item name="remark" data-field-name="备注说明">
           <template #label>
             <span class="student-status-modal__label">{{ t('admin.students.statusModal.remarkLabel') }}</span>
           </template>

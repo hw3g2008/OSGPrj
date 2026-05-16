@@ -24,9 +24,9 @@
     </a-alert>
 
     <a-card :bordered="false">
-      <a-form layout="inline" style="gap: var(--osg-space-3); flex-wrap: wrap" data-field-name="导师管理页"> <!-- i18n-skip-line: playwright selector -->
+      <a-form layout="inline" style="gap: var(--osg-space-3); flex-wrap: wrap" data-field-name="导师管理页">
         <a-form-item>
-          <a-input v-model:value="filters.staffName" :placeholder="t('admin.users.staff.filter.searchPlaceholder')" allow-clear style="width: 180px" data-field-name="搜索框" @pressEnter="handleSearch" /> <!-- i18n-skip-line: playwright selector -->
+          <a-input v-model:value="filters.staffName" :placeholder="t('admin.users.staff.filter.searchPlaceholder')" allow-clear style="width: 180px" data-field-name="搜索框" @pressEnter="handleSearch" />
         </a-form-item>
         <a-form-item>
           <a-select v-model:value="filters.staffType" :placeholder="t('admin.users.staff.filter.allTypes')" allow-clear style="width: 120px">
@@ -41,7 +41,7 @@
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.accountStatus" :placeholder="t('admin.users.staff.filter.allStatus')" allow-clear style="width: 110px" data-field-name="状态"> <!-- i18n-skip-line: playwright selector -->
+          <a-select v-model:value="filters.accountStatus" :placeholder="t('admin.users.staff.filter.allStatus')" allow-clear style="width: 110px" data-field-name="状态">
             <a-select-option value="0">{{ t('admin.users.staff.filter.statusNormal') }}</a-select-option>
             <a-select-option value="1">{{ t('admin.users.staff.filter.statusFrozen') }}</a-select-option>
           </a-select>

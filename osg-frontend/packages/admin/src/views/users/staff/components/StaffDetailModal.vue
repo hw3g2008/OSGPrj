@@ -36,9 +36,9 @@
           :key="tab.key"
           type="button"
           :class="['staff-detail-modal__tab', { 'staff-detail-modal__tab--active': detailTab === tab.key }]"
-          :aria-label="`导师详情弹窗${tab.zhLabel}`" <!-- i18n-skip-line: playwright selector -->
+          :aria-label="`导师详情弹窗${tab.zhLabel}`"
           :data-tab="tab.key"
-          :data-tab-text="tab.zhLabel" <!-- i18n-skip-line: playwright selector -->
+          :data-tab-text="tab.zhLabel"
           @click="detailTab = tab.key"
         >
           {{ tab.label }}
@@ -201,7 +201,7 @@
               <span class="staff-detail-modal__review-pill">{{ t('admin.users.staff.detail.changesPending') }}</span>
             </div>
 
-            <div class="staff-detail-modal__review-field" data-field-name="驳回说明"> <!-- i18n-skip-line: playwright selector -->
+            <div class="staff-detail-modal__review-field" data-field-name="驳回说明">
               <span>{{ t('admin.users.staff.detail.rejectReasonLabel') }}</span>
               <a-textarea
                 v-model:value="reviewReasons[request.requestId]"

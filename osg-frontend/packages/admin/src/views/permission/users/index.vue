@@ -18,7 +18,7 @@
     </PageHeader>
 
     <a-card :bordered="false" style="box-shadow: var(--card-shadow)">
-      <a-form layout="inline" data-field-name="后台用户管理页"><!-- i18n-skip-line: playwright selector -->
+      <a-form layout="inline" data-field-name="后台用户管理页">
         <a-form-item :label="t('admin.permission.users.filterKeywordLabel')">
           <a-input
             v-model:value="searchParams.userName"
@@ -26,7 +26,7 @@
             allow-clear
             style="width: 200px"
             @pressEnter="handleSearch"
-            data-field-name="搜索框" /><!-- i18n-skip-line: playwright selector -->
+            data-field-name="搜索框" />
         </a-form-item>
         <a-form-item :label="t('admin.permission.users.filterRoleLabel')">
           <a-select
@@ -34,7 +34,7 @@
             :placeholder="t('admin.permission.users.filterRolePlaceholder')"
             allow-clear
             style="width: 160px"
-            data-field-name="角色"><!-- i18n-skip-line: playwright selector -->
+            data-field-name="角色">
             <a-select-option v-for="role in roleOptions" :key="role.roleId" :value="role.roleId">
               {{ role.roleName }}
             </a-select-option>
@@ -46,7 +46,7 @@
             :placeholder="t('admin.permission.users.filterStatusPlaceholder')"
             allow-clear
             style="width: 120px"
-            data-field-name="状态"><!-- i18n-skip-line: playwright selector -->
+            data-field-name="状态">
             <a-select-option value="0">{{ t('admin.permission.users.filterStatusEnabled') }}</a-select-option>
             <a-select-option value="1">{{ t('admin.permission.users.filterStatusDisabled') }}</a-select-option>
           </a-select>

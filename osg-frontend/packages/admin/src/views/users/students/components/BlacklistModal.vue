@@ -35,7 +35,7 @@
         layout="vertical"
         :required-mark="false"
       >
-        <a-form-item name="reason" data-field-name="黑名单原因"> <!-- i18n-skip-line: playwright selector -->
+        <a-form-item name="reason" data-field-name="黑名单原因">
           <template #label>
             <span class="student-blacklist-modal__label">
               {{ t('admin.students.blacklistModal.reasonLabel') }}
@@ -50,7 +50,7 @@
           />
         </a-form-item>
 
-        <a-form-item v-if="showOtherInput" name="otherReason" data-field-name="其他原因说明"> <!-- i18n-skip-line: playwright selector -->
+        <a-form-item v-if="showOtherInput" name="otherReason" data-field-name="其他原因说明">
           <template #label>
             <span class="student-blacklist-modal__label">
               {{ t('admin.students.blacklistModal.otherReasonLabel') }}
@@ -63,7 +63,7 @@
           />
         </a-form-item>
 
-        <a-form-item name="remark" data-field-name="备注说明"> <!-- i18n-skip-line: playwright selector -->
+        <a-form-item name="remark" data-field-name="备注说明">
           <template #label>
             <span class="student-blacklist-modal__label">{{ t('admin.students.blacklistModal.remarkLabel') }}</span>
           </template>

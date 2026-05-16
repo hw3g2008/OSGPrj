@@ -26,14 +26,14 @@
       layout="vertical"
       :required-mark="false"
     >
-      <a-form-item name="roleName" data-field-name="角色名称"> <!-- i18n-skip-line: playwright selector -->
+      <a-form-item name="roleName" data-field-name="角色名称">
         <template #label>
           <span class="role-modal__label">{{ t('admin.permission.roles.modal.nameLabel') }}<span class="role-modal__required">*</span></span>
         </template>
         <a-input v-model:value="formState.roleName" :placeholder="t('admin.permission.roles.modal.namePlaceholder')" />
       </a-form-item>
 
-      <a-form-item name="remark" data-field-name="角色描述"> <!-- i18n-skip-line: playwright selector -->
+      <a-form-item name="remark" data-field-name="角色描述">
         <template #label>
           <span class="role-modal__label">{{ t('admin.permission.roles.modal.descLabel') }}</span>
         </template>
@@ -45,7 +45,7 @@
         />
       </a-form-item>
 
-      <a-form-item name="menuIds" data-field-name="权限模块"> <!-- i18n-skip-line: playwright selector -->
+      <a-form-item name="menuIds" data-field-name="权限模块">
         <template #label>
           <span class="role-modal__label">{{ t('admin.permission.roles.modal.permsLabel') }}<span class="role-modal__required">*</span></span>
         </template>

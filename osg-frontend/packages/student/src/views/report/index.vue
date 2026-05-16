@@ -123,7 +123,7 @@ type ReportRow = {
   date: string
   source: string
   rate: string
-  status: t('student.report.k5') | t('student.report.k6')
+  status: string
   actionLabel: string
 }
 

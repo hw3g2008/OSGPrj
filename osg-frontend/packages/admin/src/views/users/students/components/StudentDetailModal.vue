@@ -114,7 +114,7 @@
             <i class="mdi mdi-account-group" aria-hidden="true"></i> {{ t('admin.students.detailModal.sections.mentorConfig') }}
           </div>
           <div class="sdm-grid sdm-grid--2">
-            <div class="sdm-field sdm-field" data-field-name="班主任"> <!-- i18n-skip-line: playwright selector -->
+            <div class="sdm-field sdm-field" data-field-name="班主任">
               <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.leadMentor') }}</span>
               <div class="sdm-field__pills">
                 <template v-if="leadMentorPillNames.length">
@@ -127,7 +127,7 @@
                 <span v-else class="sdm-field__value">-</span>
               </div>
             </div>
-            <div class="sdm-field sdm-field" data-field-name="助教"> <!-- i18n-skip-line: playwright selector -->
+            <div class="sdm-field sdm-field" data-field-name="助教">
               <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.assistant') }}</span>
               <div class="sdm-field__pills">
                 <template v-if="assistantPillNames.length">
@@ -149,7 +149,7 @@
             <i class="mdi mdi-school" aria-hidden="true"></i> {{ t('admin.students.detailModal.sections.academicInfo') }}
           </div>
           <div class="sdm-grid sdm-grid--4">
-            <div class="sdm-field sdm-field" data-field-name="学校"> <!-- i18n-skip-line: playwright selector -->
+            <div class="sdm-field sdm-field" data-field-name="学校">
               <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.school') }}</span>
               <div class="sdm-field__pills">
                 <template v-if="schoolPills.length">
@@ -162,11 +162,11 @@
                 <span v-else class="sdm-field__value">-</span>
               </div>
             </div>
-            <div class="sdm-field sdm-field" data-field-name="专业"> <!-- i18n-skip-line: playwright selector -->
+            <div class="sdm-field sdm-field" data-field-name="专业">
               <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.major') }}</span>
               <div class="sdm-field__value">{{ detail?.major || '-' }}</div>
             </div>
-            <div class="sdm-field sdm-field" data-field-name="毕业年月"> <!-- i18n-skip-line: playwright selector -->
+            <div class="sdm-field sdm-field" data-field-name="毕业年月">
               <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.graduationMonth') }}</span>
               <div class="sdm-field__value">{{ detail?.graduationMonth || (detail?.graduationYear ? `${detail.graduationYear}-06` : '-') }}</div>
             </div>
@@ -191,7 +191,7 @@
             <i class="mdi mdi-target" aria-hidden="true"></i> {{ t('admin.students.detailModal.sections.careerDirection') }}
           </div>
           <!-- Target Region -->
-          <div class="sdm-field sdm-field" style="margin-bottom:12px" data-field-name="求职地区"> <!-- i18n-skip-line: playwright selector -->
+          <div class="sdm-field sdm-field" style="margin-bottom:12px" data-field-name="求职地区">
             <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.targetRegion') }}</span>
             <div class="sdm-field__pills">
               <template v-if="targetRegionPills.length">
@@ -201,7 +201,7 @@
             </div>
           </div>
           <!-- Recruitment Cycle -->
-          <div class="sdm-field sdm-field" style="margin-bottom:12px" data-field-name="招聘周期"> <!-- i18n-skip-line: playwright selector -->
+          <div class="sdm-field sdm-field" style="margin-bottom:12px" data-field-name="招聘周期">
             <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.recruitmentCycle') }}</span>
             <div class="sdm-field__pills">
               <template v-if="recruitmentCyclePills.length">
@@ -212,7 +212,7 @@
           </div>
           <!-- Major + Sub Directions -->
           <div class="sdm-grid sdm-grid--direction">
-            <div class="sdm-field sdm-field sdm-field--bordered" data-field-name="主攻方向"> <!-- i18n-skip-line: playwright selector -->
+            <div class="sdm-field sdm-field sdm-field--bordered" data-field-name="主攻方向">
               <span class="sdm-field__label" style="color:var(--primary)">{{ t('admin.students.detailModal.fields.majorDirections') }}</span>
               <div class="sdm-field__pills">
                 <template v-if="majorDirectionPills.length">
@@ -221,7 +221,7 @@
                 <span v-else class="sdm-field__value">-</span>
               </div>
             </div>
-            <div class="sdm-field sdm-field sdm-field--bordered" data-field-name="子方向"> <!-- i18n-skip-line: playwright selector -->
+            <div class="sdm-field sdm-field sdm-field--bordered" data-field-name="子方向">
               <span class="sdm-field__label" style="color:var(--primary)">{{ t('admin.students.detailModal.fields.subDirections') }}</span>
               <div class="sdm-field__pills">
                 <template v-if="subDirectionPills.length">
@@ -239,15 +239,15 @@
             <i class="mdi mdi-phone" aria-hidden="true"></i> {{ t('admin.students.detailModal.sections.contact') }}
           </div>
           <div class="sdm-grid sdm-grid--3">
-            <div class="sdm-field sdm-field" data-field-name="电话"> <!-- i18n-skip-line: playwright selector -->
+            <div class="sdm-field sdm-field" data-field-name="电话">
               <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.phone') }}</span>
               <div class="sdm-field__value">{{ detail?.contact?.phone || '-' }}</div>
             </div>
-            <div class="sdm-field sdm-field" data-field-name="微信"> <!-- i18n-skip-line: playwright selector -->
+            <div class="sdm-field sdm-field" data-field-name="微信">
               <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.wechat') }}</span>
               <div class="sdm-field__value">{{ detail?.contact?.wechat || '-' }}</div>
             </div>
-            <div class="sdm-field sdm-field" data-field-name="账号状态"> <!-- i18n-skip-line: playwright selector -->
+            <div class="sdm-field sdm-field" data-field-name="账号状态">
               <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.accountStatus') }}</span>
               <div style="display: flex; flex-wrap: wrap; gap: 4px">
                 <span :class="['sdm-status-tag', `sdm-status-tag--${statusColor}`]">
@@ -256,13 +256,13 @@
                 <span
                   v-if="isFrozenDetail && detail?.accountStatus !== '3'"
                   class="sdm-status-tag sdm-status-tag--blue"
-                  data-field-name="冻结标记" <!-- i18n-skip-line: playwright selector -->
+                  data-field-name="冻结标记"
                 >{{ t('admin.students.detailModal.frozen') }}</span>
               </div>
             </div>
           </div>
 
-          <div class="sdm-field sdm-field" data-field-name="备注" style="margin-top: 12px"> <!-- i18n-skip-line: playwright selector -->
+          <div class="sdm-field sdm-field" data-field-name="备注" style="margin-top: 12px">
             <span class="sdm-field__label">{{ t('admin.students.detailModal.fields.remark') }}</span>
             <div class="sdm-field__value" style="white-space: pre-wrap">{{ detail?.remark || '-' }}</div>
           </div>

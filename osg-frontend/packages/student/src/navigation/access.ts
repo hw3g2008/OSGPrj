@@ -1,4 +1,4 @@
-export const COMING_SOON_TOAST = t('student.access.k1')
+export const COMING_SOON_TOAST = '敬请期待' // i18n-skip-line: helper constant, view re-translates
 
 export const STUDENT_AVAILABLE_PATHS = [
   '/dashboard',

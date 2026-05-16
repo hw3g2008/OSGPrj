@@ -26,7 +26,6 @@ import { computed, onBeforeUnmount, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import {
-  FORGOT_PASSWORD_I18N,
   getForgotPasswordResendMeta,
   getForgotPasswordStepDescription,
   getPasswordStrengthMeta,

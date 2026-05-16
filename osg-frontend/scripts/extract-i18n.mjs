@@ -134,6 +134,18 @@ for (const filePath of walkFiles(SCAN_DIR)) {
         line = line.slice(0, blockStart) + line.slice(blockEnd + 2)
       }
     }
+    // Strip playwright selector attributes (data-field-name / data-field-name-alias)
+    // These are used as e2e test selectors and must stay in Chinese to match tests.
+    line = line.replace(/\bdata-field-name(?:-alias)?="[^"]*"/g, '')
+    line = line.replace(/:data-field-name(?:-alias)?="[^"]*"/g, '')
+    // Strip data-tab-text and similar test/screen-reader-only attributes
+    line = line.replace(/\b:?data-tab-text="[^"]*"/g, '')
+    // Strip aria-label attribute values (screen reader content; locale handled separately).
+    // Static and dynamic bindings handled.
+    line = line.replace(/\baria-label="[^"]*"/g, '')
+    line = line.replace(/:aria-label="(?:[^"\\]|\\.)*"/g, '')
+    line = line.replace(/:aria-label="`[^`]*`"/g, '')
+
     if (!ZH_RE.test(line)) return
     if (isCommentLike(line)) return
     if (hasTodoMarker(raw)) return

@@ -61,8 +61,8 @@
             allow-clear
             style="width:100%"
             :options="scopeOptions"
-            data-field-name="排期状态筛选" <!-- i18n-skip-line: playwright selector -->
-            data-field-name-alias="分配导师弹窗排期状态筛选" <!-- i18n-skip-line: playwright selector -->
+            data-field-name="排期状态筛选"
+            data-field-name-alias="分配导师弹窗排期状态筛选"
           />
         </a-col>
         <a-col :xs="24" :sm="12" :md="8">
@@ -72,8 +72,8 @@
             allow-clear
             style="width:100%"
             :options="majorDirectionOptions"
-            data-field-name="主攻方向筛选" <!-- i18n-skip-line: playwright selector -->
-            data-field-name-alias="分配导师弹窗主攻方向筛选" <!-- i18n-skip-line: playwright selector -->
+            data-field-name="主攻方向筛选"
+            data-field-name-alias="分配导师弹窗主攻方向筛选"
           />
         </a-col>
         <a-col :xs="24" :sm="24" :md="8">
@@ -81,8 +81,8 @@
             v-model:value="keyword"
             :placeholder="t('admin.career.jobOverview.assignMentor.searchMentor')"
             allow-clear
-            data-field-name="导师搜索" <!-- i18n-skip-line: playwright selector -->
-            data-field-name-alias="分配导师弹窗导师搜索" <!-- i18n-skip-line: playwright selector -->
+            data-field-name="导师搜索"
+            data-field-name-alias="分配导师弹窗导师搜索"
           >
             <template #prefix><SearchOutlined /></template>
           </a-input>
@@ -123,7 +123,7 @@
               <a-checkbox
                 :checked="selectedMentorIds.includes(item.mentorId)"
                 :data-field-name="item.mentorName"
-                :data-field-name-alias="`分配导师弹窗${item.mentorName}`" <!-- i18n-skip-line: playwright selector -->
+                :data-field-name-alias="`分配导师弹窗${item.mentorName}`"
                 @click.stop
                 @change="toggleMentor(item.mentorId)"
               />
@@ -151,8 +151,8 @@
 
     <div
       class="form-group form-group--last job-overview-assign-modal__note-field"
-      data-field-name="备注" <!-- i18n-skip-line: playwright selector -->
-      data-field-name-alias="分配导师弹窗备注" <!-- i18n-skip-line: playwright selector -->
+      data-field-name="备注"
+      data-field-name-alias="分配导师弹窗备注"
     >
       <div class="form-label">
         {{ t('admin.career.jobOverview.assignMentor.note') }}
@@ -160,8 +160,8 @@
       </div>
       <a-textarea
         v-model:value="assignNote"
-        data-field-name="备注" <!-- i18n-skip-line: playwright selector -->
-        data-field-name-alias="分配导师弹窗备注" <!-- i18n-skip-line: playwright selector -->
+        data-field-name="备注"
+        data-field-name-alias="分配导师弹窗备注"
         :rows="3"
         :maxlength="160"
         :placeholder="t('admin.career.jobOverview.assignMentor.notePlaceholder')"

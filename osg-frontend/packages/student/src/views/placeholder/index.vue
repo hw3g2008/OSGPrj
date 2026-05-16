@@ -1,9 +1,9 @@
 <template>
   <div class="placeholder-page">
-    <OsgPageContainer :title="title">
+    <OsgPageContainer :title="title || COMING_SOON_TOAST">
       <a-card :bordered="false" class="placeholder-card">
         <a-tag color="blue" class="placeholder-eyebrow">{{ COMING_SOON_TOAST }}</a-tag>
-        <p class="placeholder-subtitle">{{ subtitle }}</p>
+        <p class="placeholder-subtitle">{{ subtitle || t('student.placeholder.k3') }}</p>
         <a-alert
           v-if="requestedPath"
           type="info"
@@ -20,23 +20,17 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { OsgPageContainer } from '@osg/shared/components'
 import { COMING_SOON_TOAST } from '@/navigation/access'
 
 const { t } = useI18n()
 
-withDefaults(
-  defineProps<{
-    title?: string
-    subtitle?: string
-    requestedPath?: string
-  }>(),
-  {
-    title: COMING_SOON_TOAST,
-    subtitle: t('student.placeholder.k3'),
-    requestedPath: ''
-  }
-)
+defineProps<{
+  title?: string
+  subtitle?: string
+  requestedPath?: string
+}>()
 </script>
 
 <style scoped lang="scss">

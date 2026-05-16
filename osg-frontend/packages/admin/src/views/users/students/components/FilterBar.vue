@@ -1,10 +1,10 @@
 <template>
-  <div class="students-filter-bar" data-field-name="学员管理页"> <!-- i18n-skip-line: playwright selector -->
+  <div class="students-filter-bar" data-field-name="学员管理页">
     <div class="students-filter-bar__filters">
       <a-input
         v-model:value="draft.studentName"
         class="students-filter-bar__control students-filter-bar__control--name"
-        data-field-name="搜索框" <!-- i18n-skip-line: playwright selector -->
+        data-field-name="搜索框"
         :placeholder="t('admin.students.filterBar.placeholders.name')"
         allow-clear
         @pressEnter="emitSearch"
@@ -13,7 +13,7 @@
       <a-select
         v-model:value="draft.leadMentorId"
         class="students-filter-bar__control students-filter-bar__control--select"
-        data-field-name="班主任" <!-- i18n-skip-line: playwright selector -->
+        data-field-name="班主任"
         :placeholder="t('admin.students.filterBar.placeholders.leadMentor')"
         allow-clear
         :options="mentorOptions"
@@ -23,7 +23,7 @@
       <a-select
         v-model:value="draft.school"
         class="students-filter-bar__control students-filter-bar__control--school"
-        data-field-name="学校" <!-- i18n-skip-line: playwright selector -->
+        data-field-name="学校"
         :placeholder="t('admin.students.filterBar.placeholders.school')"
         allow-clear
         :options="schoolOptions"
@@ -33,7 +33,7 @@
       <a-select
         v-model:value="draft.graduationYear"
         class="students-filter-bar__control students-filter-bar__control--select"
-        data-field-name="毕业年份" <!-- i18n-skip-line: playwright selector -->
+        data-field-name="毕业年份"
         :placeholder="t('admin.students.filterBar.placeholders.graduationYear')"
         allow-clear
         :options="graduationYearOptions"
@@ -43,7 +43,7 @@
       <a-select
         v-model:value="draft.recruitmentCycle"
         class="students-filter-bar__control students-filter-bar__control--select"
-        data-field-name="项目时间" <!-- i18n-skip-line: playwright selector -->
+        data-field-name="项目时间"
         :placeholder="t('admin.students.filterBar.placeholders.recruitmentCycle')"
         allow-clear
         :options="recruitmentCycleOptions"
@@ -53,7 +53,7 @@
       <a-select
         v-model:value="draft.majorDirection"
         class="students-filter-bar__control students-filter-bar__control--select"
-        data-field-name="主攻方向" <!-- i18n-skip-line: playwright selector -->
+        data-field-name="主攻方向"
         :placeholder="t('admin.students.filterBar.placeholders.majorDirection')"
         allow-clear
         :options="majorDirectionOptions"
@@ -63,7 +63,7 @@
       <a-select
         v-model:value="draft.accountStatus"
         class="students-filter-bar__control students-filter-bar__control--select"
-        data-field-name="账号状态" <!-- i18n-skip-line: playwright selector -->
+        data-field-name="账号状态"
         :placeholder="t('admin.students.filterBar.placeholders.accountStatus')"
         allow-clear
         :options="statusOptions"

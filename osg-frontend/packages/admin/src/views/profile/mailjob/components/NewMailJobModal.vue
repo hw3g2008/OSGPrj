@@ -17,9 +17,9 @@
       </a-form-item>
       <a-form-item :label="t('admin.profile.mailjob.modal.recipients')" required>
         <a-select v-model:value="form.recipientGroup" :placeholder="t('admin.profile.mailjob.modal.recipientsPlaceholder')">
-          <a-select-option value="全部学员">{{ t('admin.profile.mailjob.modal.recipientGroup.allStudents') }}</a-select-option><!-- i18n-skip-line: backend contract value -->
-          <a-select-option value="全部导师">{{ t('admin.profile.mailjob.modal.recipientGroup.allMentors') }}</a-select-option><!-- i18n-skip-line: backend contract value -->
-          <a-select-option value="指定班级">{{ t('admin.profile.mailjob.modal.recipientGroup.specificClass') }}</a-select-option><!-- i18n-skip-line: backend contract value -->
+          <a-select-option value="全部学员">{{ t('admin.profile.mailjob.modal.recipientGroup.allStudents') }}</a-select-option><!-- i18n-skip-line: backend enum value -->
+          <a-select-option value="全部导师">{{ t('admin.profile.mailjob.modal.recipientGroup.allMentors') }}</a-select-option><!-- i18n-skip-line: backend enum value -->
+          <a-select-option value="指定班级">{{ t('admin.profile.mailjob.modal.recipientGroup.specificClass') }}</a-select-option><!-- i18n-skip-line: backend enum value -->
         </a-select>
       </a-form-item>
       <a-form-item :label="t('admin.profile.mailjob.modal.emailSubject')" required>
