@@ -1,55 +1,55 @@
 <template>
   <div id="page-profile">
     <PageHeader
-      title-zh="基本信息"
+      :title-zh="t('mentor.profile.k44')"
       title-en="Profile"
     >
       <template #actions>
         <a-button type="primary" @click="showEditModal = true">
-          <i class="mdi mdi-pencil" style="margin-right:4px" />编辑信息
+          <i class="mdi mdi-pencil" style="margin-right:4px" />{{ t('mentor.profile.k1') }}
         </a-button>
       </template>
     </PageHeader>
 
     <!-- 核心信息 -->
     <div class="section section-core">
-      <div class="section-badge badge-primary">核心信息</div>
+      <div class="section-badge badge-primary">{{ t('mentor.profile.k2') }}</div>
       <div class="info-grid grid-4">
-        <div class="info-item"><span class="info-label">英文名</span><div class="info-value bold">{{ profile.nickName || '-' }}</div></div>
-        <div class="info-item"><span class="info-label">性别</span><div class="info-value">{{ profile.sex === '0' ? 'Male' : 'Female' }}</div></div>
-        <div class="info-item"><span class="info-label">类型</span><div><a-tag color="blue">导师</a-tag></div></div>
-        <div class="info-item"><span class="info-label">邮箱</span><div class="info-value">{{ profile.email || '-' }}</div></div>
+        <div class="info-item"><span class="info-label">{{ t('mentor.profile.k3') }}</span><div class="info-value bold">{{ profile.nickName || '-' }}</div></div>
+        <div class="info-item"><span class="info-label">{{ t('mentor.profile.k4') }}</span><div class="info-value">{{ profile.sex === '0' ? 'Male' : 'Female' }}</div></div>
+        <div class="info-item"><span class="info-label">{{ t('mentor.profile.k5') }}</span><div><a-tag color="blue">{{ t('mentor.profile.k6') }}</a-tag></div></div>
+        <div class="info-item"><span class="info-label">{{ t('mentor.profile.k7') }}</span><div class="info-value">{{ profile.email || '-' }}</div></div>
       </div>
     </div>
 
     <!-- 联系方式 -->
     <div class="section">
-      <div class="section-badge badge-green"><i class="mdi mdi-phone" /> 联系方式</div>
+      <div class="section-badge badge-green"><i class="mdi mdi-phone" /> {{ t('mentor.profile.k8') }}</div>
       <div class="info-grid grid-3">
-        <div class="info-item bg-white"><span class="info-label">手机号</span><div class="info-value">{{ profile.phonenumber || '-' }}</div></div>
-        <div class="info-item bg-white"><span class="info-label">微信号</span><div class="info-value">{{ profile.remark || '-' }}</div></div>
-        <div class="info-item bg-white"><span class="info-label">所属地区</span><div class="info-value">{{ profile.loginIp || '-' }}</div></div>
+        <div class="info-item bg-white"><span class="info-label">{{ t('mentor.profile.k9') }}</span><div class="info-value">{{ profile.phonenumber || '-' }}</div></div>
+        <div class="info-item bg-white"><span class="info-label">{{ t('mentor.profile.k10') }}</span><div class="info-value">{{ profile.remark || '-' }}</div></div>
+        <div class="info-item bg-white"><span class="info-label">{{ t('mentor.profile.k11') }}</span><div class="info-value">{{ profile.loginIp || '-' }}</div></div>
       </div>
     </div>
 
     <!-- 专业方向 -->
     <div class="section">
       <div style="display:flex;align-items:center">
-        <div class="section-badge badge-orange"><i class="mdi mdi-target" /> 专业方向</div>
-        <span class="lock-hint"><i class="mdi mdi-lock" /> 如需修改请联系后台文员</span>
+        <div class="section-badge badge-orange"><i class="mdi mdi-target" /> {{ t('mentor.profile.k12') }}</div>
+        <span class="lock-hint"><i class="mdi mdi-lock" /> {{ t('mentor.profile.k13') }}</span>
       </div>
       <div class="info-grid grid-2">
-        <div class="info-item bg-white border-primary"><span class="info-label" style="color:#7399C6">主攻方向</span><div><a-tag color="purple">咨询 Consulting</a-tag></div></div>
-        <div class="info-item bg-white border-primary"><span class="info-label" style="color:#7399C6">二级方向</span><div class="info-value">Strategy Consulting</div></div>
+        <div class="info-item bg-white border-primary"><span class="info-label" style="color:#7399C6">{{ t('mentor.profile.k14') }}</span><div><a-tag color="purple">{{ t('mentor.profile.k15') }}</a-tag></div></div>
+        <div class="info-item bg-white border-primary"><span class="info-label" style="color:#7399C6">{{ t('mentor.profile.k16') }}</span><div class="info-value">Strategy Consulting</div></div>
       </div>
     </div>
 
     <!-- 课程信息 -->
     <div class="section">
-      <div class="section-badge badge-blue"><i class="mdi mdi-book-open-variant" /> 课程信息</div>
+      <div class="section-badge badge-blue"><i class="mdi mdi-book-open-variant" /> {{ t('mentor.profile.k17') }}</div>
       <div class="info-grid grid-2">
-        <div class="info-item bg-white"><span class="info-label">可授课程类型</span><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><a-tag color="blue">模拟面试</a-tag><a-tag color="blue">简历修改</a-tag><a-tag color="blue">案例分析</a-tag></div></div>
-        <div class="info-item bg-white"><span class="info-label">课单价 <span class="text-muted text-sm">(不可修改)</span></span><div class="fee-value">¥600/h</div></div>
+        <div class="info-item bg-white"><span class="info-label">{{ t('mentor.profile.k18') }}</span><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><a-tag color="blue">{{ t('mentor.profile.k19') }}</a-tag><a-tag color="blue">{{ t('mentor.profile.k20') }}</a-tag><a-tag color="blue">{{ t('mentor.profile.k21') }}</a-tag></div></div>
+        <div class="info-item bg-white"><span class="info-label">{{ t('mentor.profile.k22') }} <span class="text-muted text-sm">{{ t('mentor.profile.k23') }}</span></span><div class="fee-value">¥600/h</div></div>
       </div>
     </div>
 
@@ -67,24 +67,24 @@
       @cancel="showEditModal = false"
     >
       <div id="modal-mentor-edit-profile">
-        <div class="modal-header"><span class="modal-title"><i class="mdi mdi-account-edit" /> 编辑个人信息</span><button class="modal-close" type="button" @click="showEditModal = false">×</button></div>
+        <div class="modal-header"><span class="modal-title"><i class="mdi mdi-account-edit" /> {{ t('mentor.profile.k24') }}</span><button class="modal-close" type="button" @click="showEditModal = false">×</button></div>
         <div class="modal-body">
-          <div class="edit-notice"><i class="mdi mdi-information" /> 修改信息后，后台文员将收到提醒通知。<br/><span style="color:#EF4444">注意：主攻方向、二级方向和课单价不可自行修改。</span></div>
+          <div class="edit-notice"><i class="mdi mdi-information" /> {{ t('mentor.profile.k25') }}<br/><span style="color:#EF4444">{{ t('mentor.profile.k26') }}</span></div>
           <div class="edit-section">
-            <div class="section-badge badge-green"><i class="mdi mdi-pencil" /> 可修改信息</div>
+            <div class="section-badge badge-green"><i class="mdi mdi-pencil" /> {{ t('mentor.profile.k27') }}</div>
             <div class="form-grid">
-              <div class="form-group"><label class="form-label">英文名 <span class="req">*</span></label><a-input v-model:value="editForm.nickName" /></div>
-              <div class="form-group"><label class="form-label">性别 <span class="req">*</span></label><select v-model="editForm.sex" class="form-select full"><option value="0">Male</option><option value="1">Female</option></select></div>
-              <div class="form-group"><label class="form-label">手机号 <span class="req">*</span></label><a-input v-model:value="editForm.phonenumber" /></div>
-              <div class="form-group"><label class="form-label">微信号</label><a-input v-model:value="editForm.remark" /></div>
-              <div class="form-group"><label class="form-label">邮箱 <span class="req">*</span></label><a-input v-model:value="editForm.email" type="email" /></div>
-              <div class="form-group"><label class="form-label">所属地区 <span class="req">*</span></label>
+              <div class="form-group"><label class="form-label">{{ t('mentor.profile.k3') }} <span class="req">*</span></label><a-input v-model:value="editForm.nickName" /></div>
+              <div class="form-group"><label class="form-label">{{ t('mentor.profile.k4') }} <span class="req">*</span></label><select v-model="editForm.sex" class="form-select full"><option value="0">Male</option><option value="1">Female</option></select></div>
+              <div class="form-group"><label class="form-label">{{ t('mentor.profile.k9') }} <span class="req">*</span></label><a-input v-model:value="editForm.phonenumber" /></div>
+              <div class="form-group"><label class="form-label">{{ t('mentor.profile.k10') }}</label><a-input v-model:value="editForm.remark" /></div>
+              <div class="form-group"><label class="form-label">{{ t('mentor.profile.k7') }} <span class="req">*</span></label><a-input v-model:value="editForm.email" type="email" /></div>
+              <div class="form-group"><label class="form-label">{{ t('mentor.profile.k11') }} <span class="req">*</span></label>
                 <div style="display:flex;gap:8px">
                   <select id="mentor-region-area" v-model="editForm.region" class="form-select" style="width:50%" @change="editForm.city = ''">
-                    <option value="">选择大区</option><option value="north-america">🌎 北美</option><option value="europe">🌍 欧洲</option><option value="asia-pacific">🌏 亚太</option><option value="china">🇨🇳 中国大陆</option>
+                    <option value="">{{ t('mentor.profile.k28') }}</option><option value="north-america">{{ t('mentor.profile.k29') }}</option><option value="europe">{{ t('mentor.profile.k30') }}</option><option value="asia-pacific">{{ t('mentor.profile.k31') }}</option><option value="china">{{ t('mentor.profile.k32') }}</option>
                   </select>
                   <select id="mentor-region-city" v-model="editForm.city" class="form-select" style="width:50%">
-                    <option value="">选择城市</option><option v-for="c in cityOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
+                    <option value="">{{ t('mentor.profile.k33') }}</option><option v-for="c in cityOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
                   </select>
                 </div>
               </div>
@@ -92,9 +92,9 @@
           </div>
         </div>
         <div class="modal-footer">
-          <a-button @click="showEditModal = false">取消</a-button>
+          <a-button @click="showEditModal = false">{{ t('mentor.profile.k34') }}</a-button>
           <a-button type="primary" class="btn-primary" style="margin-left:8px" @click="saveProfile">
-            <i class="mdi mdi-check" style="margin-right:4px" />保存修改
+            <i class="mdi mdi-check" style="margin-right:4px" />{{ t('mentor.profile.k35') }}
           </a-button>
         </div>
       </div>
@@ -114,27 +114,27 @@
     >
       <div id="modal-mentor-profile-save-confirm" class="modal-content--confirm">
         <div class="modal-header">
-          <span class="modal-title"><i class="mdi mdi-check-decagram" /> 确认提交变更</span>
+          <span class="modal-title"><i class="mdi mdi-check-decagram" /> {{ t('mentor.profile.k36') }}</span>
           <button class="modal-close" type="button" @click="closeSaveConfirmModal">×</button>
         </div>
         <div class="modal-body">
           <div class="save-summary">
-            <div class="save-summary-title">本次提交将进入后台文员审核链路</div>
+            <div class="save-summary-title">{{ t('mentor.profile.k37') }}</div>
             <ul class="save-summary-list">
-              <li>英文名：{{ editForm.nickName || '-' }}</li>
-              <li>性别：{{ editForm.sex === '0' ? 'Male' : 'Female' }}</li>
-              <li>手机号：{{ editForm.phonenumber || '-' }}</li>
-              <li>邮箱：{{ editForm.email || '-' }}</li>
-              <li>所属地区：{{ editForm.region || '-' }} / {{ editForm.city || '-' }}</li>
+              <li>{{ t('mentor.profile.k56', { value: editForm.nickName || '-' }) }}</li>
+              <li>{{ t('mentor.profile.k57', { value: editForm.sex === '0' ? 'Male' : 'Female' }) }}</li>
+              <li>{{ t('mentor.profile.k58', { value: editForm.phonenumber || '-' }) }}</li>
+              <li>{{ t('mentor.profile.k59', { value: editForm.email || '-' }) }}</li>
+              <li>{{ t('mentor.profile.k60', { area: editForm.region || '-', city: editForm.city || '-' }) }}</li>
             </ul>
           </div>
           <div v-if="saveErrorMessage" class="save-error">{{ saveErrorMessage }}</div>
-          <div class="save-hint">确认后，系统会真实创建一条变更请求，等待后台文员处理。</div>
+          <div class="save-hint">{{ t('mentor.profile.k38') }}</div>
         </div>
         <div class="modal-footer">
-          <a-button @click="closeSaveConfirmModal">返回修改</a-button>
+          <a-button @click="closeSaveConfirmModal">{{ t('mentor.profile.k39') }}</a-button>
           <a-button type="primary" class="btn-primary" style="margin-left:8px" @click="submitSaveProfile">
-            <i class="mdi mdi-cloud-upload" style="margin-right:4px" />确认保存
+            <i class="mdi mdi-cloud-upload" style="margin-right:4px" />{{ t('mentor.profile.k40') }}
           </a-button>
         </div>
       </div>
@@ -154,17 +154,17 @@
     >
       <div id="modal-mentor-profile-save-success" class="modal-content--success">
         <div class="modal-header modal-header--success">
-          <span class="modal-title"><i class="mdi mdi-check-circle" /> 保存成功</span>
+          <span class="modal-title"><i class="mdi mdi-check-circle" /> {{ t('mentor.profile.k41') }}</span>
           <button class="modal-close" type="button" @click="closeSaveSuccessModal">×</button>
         </div>
         <div class="modal-body">
           <div class="success-card">
             <div class="success-icon"><i class="mdi mdi-bell-ring" /></div>
-            <div class="success-text">保存成功！后台文员已收到您的信息变更通知。</div>
+            <div class="success-text">{{ t('mentor.profile.k42') }}</div>
           </div>
         </div>
         <div class="modal-footer">
-          <a-button type="primary" class="btn-primary" @click="closeSaveSuccessModal">知道了</a-button>
+          <a-button type="primary" class="btn-primary" @click="closeSaveSuccessModal">{{ t('mentor.profile.k43') }}</a-button>
         </div>
       </div>
     </a-modal>
@@ -173,8 +173,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { http } from '@osg/shared/utils/request'
+
+const { t } = useI18n()
 
 const profile = ref<any>({})
 const showEditModal = ref(false)
@@ -185,22 +188,22 @@ const editForm = ref<any>({})
 
 const regionCities: Record<string, Array<{ value: string; label: string }>> = {
   'north-america': [
-    { value: 'new-york', label: 'New York 纽约' },
-    { value: 'san-francisco', label: 'San Francisco 旧金山' },
-    { value: 'chicago', label: 'Chicago 芝加哥' },
+    { value: 'new-york', label: t('mentor.profile.k45') },
+    { value: 'san-francisco', label: t('mentor.profile.k46') },
+    { value: 'chicago', label: t('mentor.profile.k47') },
   ],
   'europe': [
-    { value: 'london', label: 'London 伦敦' },
-    { value: 'frankfurt', label: 'Frankfurt 法兰克福' },
+    { value: 'london', label: t('mentor.profile.k48') },
+    { value: 'frankfurt', label: t('mentor.profile.k49') },
   ],
   'asia-pacific': [
-    { value: 'hong-kong', label: 'Hong Kong 香港' },
-    { value: 'singapore', label: 'Singapore 新加坡' },
-    { value: 'tokyo', label: 'Tokyo 东京' },
+    { value: 'hong-kong', label: t('mentor.profile.k50') },
+    { value: 'singapore', label: t('mentor.profile.k51') },
+    { value: 'tokyo', label: t('mentor.profile.k52') },
   ],
   'china': [
-    { value: 'shanghai', label: 'Shanghai 上海' },
-    { value: 'beijing', label: 'Beijing 北京' },
+    { value: 'shanghai', label: t('mentor.profile.k53') },
+    { value: 'beijing', label: t('mentor.profile.k54') },
   ],
 }
 const cityOptions = computed(() => regionCities[editForm.value.region] || [])
@@ -232,7 +235,7 @@ async function submitSaveProfile() {
     showSaveSuccessModal.value = true
     fetchProfile()
   } catch {
-    saveErrorMessage.value = '保存失败，请稍后重试'
+    saveErrorMessage.value = t('mentor.profile.k55')
   }
 }
 

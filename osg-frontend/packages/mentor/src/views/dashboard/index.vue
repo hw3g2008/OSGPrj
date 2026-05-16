@@ -3,11 +3,8 @@
     <section class="hero-card">
       <div class="hero-copy">
         <div class="hero-eyebrow">Mentor Workspace</div>
-        <h1>欢迎回来，{{ profile.nickName || profile.userName || 'Mentor' }}</h1>
-        <p>
-          当前账号邮箱 {{ profile.email || '-' }}，本周可用课时 {{ scheduleHours }}h，
-          待处理工作 {{ pendingWorkCount }} 项。
-        </p>
+        <h1>{{ t('mentor.dashboard.k37', { name: profile.nickName || profile.userName || 'Mentor' }) }}</h1>
+        <p>{{ t('mentor.dashboard.k38', { email: profile.email || '-', hours: scheduleHours, count: pendingWorkCount }) }}</p>
       </div>
       <div class="hero-identity">
         <div class="hero-avatar">{{ avatarInitials }}</div>
@@ -35,15 +32,15 @@
     <section class="quick-actions-card">
       <div class="section-head">
         <div>
-          <h2>快捷操作</h2>
-          <p>直接进入当前最常用的工作页面</p>
+          <h2>{{ t('mentor.dashboard.k1') }}</h2>
+          <p>{{ t('mentor.dashboard.k2') }}</p>
         </div>
       </div>
       <div class="quick-actions">
-        <button type="button" class="action-btn action-btn--primary" @click="$router.push('/courses')">上报课程</button>
-        <button type="button" class="action-btn" @click="$router.push('/job-overview')">查看学员</button>
-        <button type="button" class="action-btn" @click="$router.push('/schedule')">我的排期</button>
-        <button type="button" class="action-btn" @click="$router.push('/profile')">个人设置</button>
+        <button type="button" class="action-btn action-btn--primary" @click="$router.push('/courses')">{{ t('mentor.dashboard.k3') }}</button>
+        <button type="button" class="action-btn" @click="$router.push('/job-overview')">{{ t('mentor.dashboard.k4') }}</button>
+        <button type="button" class="action-btn" @click="$router.push('/schedule')">{{ t('mentor.dashboard.k5') }}</button>
+        <button type="button" class="action-btn" @click="$router.push('/profile')">{{ t('mentor.dashboard.k6') }}</button>
       </div>
     </section>
 
@@ -51,25 +48,25 @@
       <article class="panel-card">
         <div class="section-head">
           <div>
-            <h2>本周工作概览</h2>
-            <p>来自真实业务接口的摘要统计</p>
+            <h2>{{ t('mentor.dashboard.k7') }}</h2>
+            <p>{{ t('mentor.dashboard.k8') }}</p>
           </div>
         </div>
         <div class="overview-list">
           <div class="overview-item">
-            <span>求职辅导待确认</span>
+            <span>{{ t('mentor.dashboard.k9') }}</span>
             <strong>{{ jobRows.length }}</strong>
           </div>
           <div class="overview-item">
-            <span>模拟应聘待处理</span>
+            <span>{{ t('mentor.dashboard.k10') }}</span>
             <strong>{{ mockRows.length }}</strong>
           </div>
           <div class="overview-item">
-            <span>课程记录待跟进</span>
+            <span>{{ t('mentor.dashboard.k11') }}</span>
             <strong>{{ classRows.length }}</strong>
           </div>
           <div class="overview-item">
-            <span>本周排期小时</span>
+            <span>{{ t('mentor.dashboard.k12') }}</span>
             <strong>{{ scheduleHours }}h</strong>
           </div>
         </div>
@@ -78,8 +75,8 @@
       <article class="panel-card">
         <div class="section-head">
           <div>
-            <h2>今日 / 本周安排</h2>
-            <p>排期与业务状态汇总</p>
+            <h2>{{ t('mentor.dashboard.k13') }}</h2>
+            <p>{{ t('mentor.dashboard.k14') }}</p>
           </div>
         </div>
         <div class="schedule-summary">
@@ -95,26 +92,26 @@
       <article class="panel-card">
         <div class="section-head">
           <div>
-            <h2>最近求职辅导</h2>
-            <p>来自 `/mentor/job-overview/list`</p>
+            <h2>{{ t('mentor.dashboard.k15') }}</h2>
+            <p>{{ t('mentor.dashboard.k16') }}</p>
           </div>
         </div>
         <table class="data-table">
           <thead>
             <tr>
-              <th>学员</th>
-              <th>公司 / 岗位</th>
-              <th>阶段</th>
+              <th>{{ t('mentor.dashboard.k17') }}</th>
+              <th>{{ t('mentor.dashboard.k18') }}</th>
+              <th>{{ t('mentor.dashboard.k19') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="row in recentJobRows" :key="row.id">
-              <td>{{ row.studentName || `学员${row.studentId}` }}</td>
+              <td>{{ row.studentName || t('mentor.dashboard.k39', { id: row.studentId }) }}</td>
               <td>{{ row.company }} / {{ row.position }}</td>
               <td>{{ row.interviewStage || '-' }}</td>
             </tr>
             <tr v-if="recentJobRows.length === 0">
-              <td colspan="3" class="empty-cell">当前暂无求职辅导记录</td>
+              <td colspan="3" class="empty-cell">{{ t('mentor.dashboard.k20') }}</td>
             </tr>
           </tbody>
         </table>
@@ -123,26 +120,26 @@
       <article class="panel-card">
         <div class="section-head">
           <div>
-            <h2>最近上报记录</h2>
-            <p>来自 `/mentor/class-records/list`</p>
+            <h2>{{ t('mentor.dashboard.k21') }}</h2>
+            <p>{{ t('mentor.dashboard.k22') }}</p>
           </div>
         </div>
         <table class="data-table">
           <thead>
             <tr>
-              <th>记录ID</th>
-              <th>学员</th>
-              <th>类型</th>
+              <th>{{ t('mentor.dashboard.k23') }}</th>
+              <th>{{ t('mentor.dashboard.k17') }}</th>
+              <th>{{ t('mentor.dashboard.k24') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="row in recentClassRows" :key="row.id">
               <td>{{ row.recordNo || row.id }}</td>
-              <td>{{ row.studentName || `学员${row.studentId}` }}</td>
+              <td>{{ row.studentName || t('mentor.dashboard.k39', { id: row.studentId }) }}</td>
               <td>{{ row.contentType || row.coachingType || '-' }}</td>
             </tr>
             <tr v-if="recentClassRows.length === 0">
-              <td colspan="3" class="empty-cell">当前暂无课程上报记录</td>
+              <td colspan="3" class="empty-cell">{{ t('mentor.dashboard.k25') }}</td>
             </tr>
           </tbody>
         </table>
@@ -153,11 +150,14 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { listClassRecords, type ClassRecord } from '@/api/classRecord'
 import { listJobOverview, type JobCoaching } from '@/api/jobOverview'
 import { listMockPractice, type MockPractice } from '@/api/mockPractice'
 import { getMentorProfile } from '@/api/profile'
 import { getCurrentSchedule, getLastWeekSchedule, type MentorSchedule } from '@/api/schedule'
+
+const { t } = useI18n()
 
 const profile = reactive<Record<string, any>>({
   userName: '',
@@ -192,30 +192,30 @@ const pendingWorkCount = computed(() => jobRows.value.length + mockRows.value.le
 
 const statCards = computed(() => [
   {
-    label: '待上报',
+    label: t('mentor.dashboard.k26'),
     value: String(classRows.value.length),
-    hint: '课程记录待跟进',
+    hint: t('mentor.dashboard.k11'),
     icon: 'mdi-file-document-edit-outline',
     tone: 'tone-blue',
   },
   {
-    label: '待处理',
+    label: t('mentor.dashboard.k27'),
     value: String(jobRows.value.length + mockRows.value.length),
-    hint: '求职与模拟应聘工作',
+    hint: t('mentor.dashboard.k28'),
     icon: 'mdi-briefcase-clock-outline',
     tone: 'tone-green',
   },
   {
-    label: '本周课时',
+    label: t('mentor.dashboard.k29'),
     value: `${scheduleHours.value}h`,
-    hint: `${activeScheduleDays.value} 天可用`,
+    hint: t('mentor.dashboard.k40', { days: activeScheduleDays.value }),
     icon: 'mdi-calendar-clock-outline',
     tone: 'tone-amber',
   },
   {
-    label: '工作总览',
+    label: t('mentor.dashboard.k30'),
     value: String(pendingWorkCount.value),
-    hint: '真实接口聚合',
+    hint: t('mentor.dashboard.k31'),
     icon: 'mdi-chart-box-outline',
     tone: 'tone-purple',
   },
@@ -226,16 +226,16 @@ const scheduleRows = computed(() => {
   const last = lastWeekSchedule.value
   return [
     {
-      label: '当前周总课时',
-      value: current?.totalHours ? `${current.totalHours}h` : '未填写',
+      label: t('mentor.dashboard.k32'),
+      value: current?.totalHours ? `${current.totalHours}h` : t('mentor.dashboard.k33'),
     },
     {
-      label: '上周排期',
-      value: last?.totalHours ? `${last.totalHours}h` : '无历史数据',
+      label: t('mentor.dashboard.k34'),
+      value: last?.totalHours ? `${last.totalHours}h` : t('mentor.dashboard.k35'),
     },
     {
-      label: '本周可用天数',
-      value: `${activeScheduleDays.value} 天`,
+      label: t('mentor.dashboard.k36'),
+      value: `${activeScheduleDays.value} 天`, // TODO(i18n-complex)
     },
   ]
 })

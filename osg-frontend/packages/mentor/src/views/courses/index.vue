@@ -1,12 +1,12 @@
 <template>
   <div id="page-myclass">
     <PageHeader
-      title-zh="课程记录"
+      :title-zh="t('mentor.courses.k27')"
       title-en="Class Records"
     >
       <template #actions>
         <a-button type="primary" @click="showReportModal = true">
-          <i class="mdi mdi-plus" style="margin-right:4px" />上报课程记录
+          <i class="mdi mdi-plus" style="margin-right:4px" />{{ t('mentor.courses.k1') }}
         </a-button>
       </template>
     </PageHeader>
@@ -25,35 +25,35 @@
         <a-form-item>
           <a-input
             v-model:value="filters.keyword"
-            placeholder="搜索学员姓名/ID..."
+            :placeholder="t('mentor.courses.k28')"
             allow-clear
             style="width:200px"
           />
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.coachingType" placeholder="辅导类型" style="width:140px" allow-clear>
-            <a-select-option value="">辅导类型</a-select-option>
-            <a-select-option value="job_coaching">岗位辅导</a-select-option>
-            <a-select-option value="mock_interview">模拟应聘</a-select-option>
+          <a-select v-model:value="filters.coachingType" :placeholder="t('mentor.courses.k2')" style="width:140px" allow-clear>
+            <a-select-option value="">{{ t('mentor.courses.k2') }}</a-select-option>
+            <a-select-option value="job_coaching">{{ t('mentor.courses.k3') }}</a-select-option>
+            <a-select-option value="mock_interview">{{ t('mentor.courses.k4') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.contentType" placeholder="课程内容" style="width:160px" allow-clear>
-            <a-select-option value="">课程内容</a-select-option>
+          <a-select v-model:value="filters.contentType" :placeholder="t('mentor.courses.k5')" style="width:160px" allow-clear>
+            <a-select-option value="">{{ t('mentor.courses.k5') }}</a-select-option>
             <a-select-option v-for="ct in contentTypes" :key="ct" :value="ct">{{ ct }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-select v-model:value="filters.timeRange" placeholder="时间范围" style="width:140px" allow-clear>
-            <a-select-option value="">时间范围</a-select-option>
-            <a-select-option value="this_week">本周</a-select-option>
-            <a-select-option value="last_week">上周</a-select-option>
-            <a-select-option value="this_month">本月</a-select-option>
+          <a-select v-model:value="filters.timeRange" :placeholder="t('mentor.courses.k6')" style="width:140px" allow-clear>
+            <a-select-option value="">{{ t('mentor.courses.k6') }}</a-select-option>
+            <a-select-option value="this_week">{{ t('mentor.courses.k7') }}</a-select-option>
+            <a-select-option value="last_week">{{ t('mentor.courses.k8') }}</a-select-option>
+            <a-select-option value="this_month">{{ t('mentor.courses.k9') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
           <a-button @click="resetFilters">
-            <i class="mdi mdi-filter-variant" style="margin-right:4px" />重置
+            <i class="mdi mdi-filter-variant" style="margin-right:4px" />{{ t('mentor.courses.k10') }}
           </a-button>
         </a-form-item>
       </a-form>
@@ -63,14 +63,14 @@
         :data-source="filteredRecords"
         :pagination="false"
         :row-key="(r: any) => r.id"
-        :locale="{ emptyText: '暂无数据' }"
+        :locale="t('mentor.courses.k29')"
         size="middle"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'recordNo'">{{ record.recordNo }}</template>
           <template v-else-if="column.key === 'student'">
             <div>
-              <strong>{{ record.studentName || '学员' }}</strong>
+              <strong>{{ record.studentName || t('mentor.courses.k55') }}</strong>
               <br />
               <span class="text-muted text-sm">ID: {{ record.studentId }}</span>
             </div>
@@ -94,8 +94,8 @@
             <span v-else class="text-muted">-</span>
           </template>
           <template v-else-if="column.key === 'actions'">
-            <a-button v-if="record.reviewStatus === 'rejected'" type="link" size="small" @click="showReject(record)">查看原因</a-button>
-            <a-button v-else type="link" size="small" @click="showDetail(record)">查看详情</a-button>
+            <a-button v-if="record.reviewStatus === 'rejected'" type="link" size="small" @click="showReject(record)">{{ t('mentor.courses.k11') }}</a-button>
+            <a-button v-else type="link" size="small" @click="showDetail(record)">{{ t('mentor.courses.k12') }}</a-button>
           </template>
         </template>
       </a-table>
@@ -125,35 +125,35 @@
     >
       <div id="modal-class-detail">
         <div class="modal-header">
-          <span class="modal-title"><i class="mdi mdi-file-document-outline" /> 课程记录详情</span>
+          <span class="modal-title"><i class="mdi mdi-file-document-outline" /> {{ t('mentor.courses.k13') }}</span>
           <button class="modal-close" type="button" @click="closeDetailModal">×</button>
         </div>
         <div class="modal-body">
           <div class="detail-grid">
             <div class="detail-item">
-              <span class="detail-label">记录编号</span>
+              <span class="detail-label">{{ t('mentor.courses.k14') }}</span>
               <div class="detail-value">{{ detailModal.record?.recordNo || '-' }}</div>
             </div>
             <div class="detail-item">
-              <span class="detail-label">学员</span>
+              <span class="detail-label">{{ t('mentor.courses.k15') }}</span>
               <div class="detail-value">{{ detailModal.record?.studentName || '-' }} ({{ detailModal.record?.studentId || '-' }})</div>
             </div>
             <div class="detail-item">
-              <span class="detail-label">辅导内容</span>
+              <span class="detail-label">{{ t('mentor.courses.k16') }}</span>
               <div class="detail-value">{{ coachingLabel(detailModal.record?.coachingType || '') }}</div>
             </div>
             <div class="detail-item">
-              <span class="detail-label">课程内容</span>
+              <span class="detail-label">{{ t('mentor.courses.k5') }}</span>
               <div class="detail-value">{{ detailModal.record?.contentType || '-' }}</div>
             </div>
             <div class="detail-item">
-              <span class="detail-label">上课日期</span>
+              <span class="detail-label">{{ t('mentor.courses.k17') }}</span>
               <div class="detail-value">{{ formatDate(detailModal.record?.classDate || '') }}</div>
             </div>
           </div>
           <div class="detail-section">
-            <div class="detail-label">课程反馈</div>
-            <div class="detail-panel">{{ summarizeFeedback(detailModal.record?.feedbackContent) || detailModal.record?.contentDetail || '暂无课程反馈' }}</div>
+            <div class="detail-label">{{ t('mentor.courses.k18') }}</div>
+            <div class="detail-panel">{{ summarizeFeedback(detailModal.record?.feedbackContent) || detailModal.record?.contentDetail || t('mentor.courses.k56') }}</div>
           </div>
         </div>
       </div>
@@ -173,42 +173,42 @@
     >
       <div id="modal-class-reject">
         <div class="modal-header modal-header--reject">
-          <span class="modal-title"><i class="mdi mdi-alert-circle" /> 课程审核驳回</span>
+          <span class="modal-title"><i class="mdi mdi-alert-circle" /> {{ t('mentor.courses.k19') }}</span>
           <button class="modal-close" type="button" @click="closeRejectModal">×</button>
         </div>
         <div class="modal-body">
           <div class="reject-summary">
             <div class="reject-summary-grid">
               <div>
-                <span class="reject-summary-label">学员</span>
-                <div class="reject-summary-value">{{ rejectModal.record?.studentName || '学员' }} ({{ rejectModal.record?.studentId || '-' }})</div>
+                <span class="reject-summary-label">{{ t('mentor.courses.k15') }}</span>
+                <div class="reject-summary-value">{{ rejectModal.record?.studentName || t('mentor.courses.k55') }} ({{ rejectModal.record?.studentId || '-' }})</div>
               </div>
               <div>
-                <span class="reject-summary-label">课程类型</span>
+                <span class="reject-summary-label">{{ t('mentor.courses.k20') }}</span>
                 <div class="reject-summary-value">{{ rejectModal.record?.contentType || rejectModal.record?.coachingType || '-' }}</div>
               </div>
               <div>
-                <span class="reject-summary-label">上课时间</span>
+                <span class="reject-summary-label">{{ t('mentor.courses.k21') }}</span>
                 <div class="reject-summary-value">{{ formatDate(rejectModal.record?.classDate || '') }}</div>
               </div>
               <div>
-                <span class="reject-summary-label">提交时长</span>
+                <span class="reject-summary-label">{{ t('mentor.courses.k22') }}</span>
                 <div class="reject-summary-value">{{ rejectModal.record?.durationHours ? `${rejectModal.record.durationHours}h` : '-' }}</div>
               </div>
             </div>
           </div>
           <div class="reject-reason">
-            <div class="reject-reason-title"><i class="mdi mdi-close-circle" /> 驳回原因</div>
-            <div class="detail-panel detail-panel--danger">{{ rejectModal.reason || '暂无驳回原因' }}</div>
+            <div class="reject-reason-title"><i class="mdi mdi-close-circle" /> {{ t('mentor.courses.k23') }}</div>
+            <div class="detail-panel detail-panel--danger">{{ rejectModal.reason || t('mentor.courses.k57') }}</div>
           </div>
           <div class="reject-meta">
-            <div>审核人:课时审核员 Admin</div>
-            <div>驳回时间:{{ rejectModal.record?.reviewedAt ? formatDate(rejectModal.record.reviewedAt) : '12/11/2025 10:30' }}</div>
+            <div>{{ t('mentor.courses.k24') }}</div>
+            <div>{{ t('mentor.courses.k58', { time: rejectModal.record?.reviewedAt ? formatDate(rejectModal.record.reviewedAt) : '12/11/2025 10:30' }) }}</div>
           </div>
         </div>
         <div class="modal-footer">
-          <a-button @click="closeRejectModal">关闭</a-button>
-          <a-button type="primary" style="margin-left:8px" @click="openReportModalFromReject">重新提交</a-button>
+          <a-button @click="closeRejectModal">{{ t('mentor.courses.k25') }}</a-button>
+          <a-button type="primary" style="margin-left:8px" @click="openReportModalFromReject">{{ t('mentor.courses.k26') }}</a-button>
         </div>
       </div>
     </a-modal>
@@ -218,11 +218,14 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { ClassRecordStatusTag } from '@osg/shared/components'
 import { http } from '@osg/shared/utils/request'
 import type { ReferenceType } from '@osg/shared/types/classReport'
 import ReportModal from './components/ReportModal.vue'
+
+const { t } = useI18n()
 
 const activeTab = ref('all')
 const showReportModal = ref(false)
@@ -233,15 +236,15 @@ const rejectModal = ref<{ visible: boolean; reason: string; record: any | null }
 const reportPrefill = ref<{ studentId?: number; referenceType?: ReferenceType; referenceId?: number }>({})
 const filters = ref({ keyword: '', coachingType: '', contentType: '', timeRange: '' })
 const fullListParams = { pageNum: 1, pageSize: 1000 }
-const contentTypes = ['新简历', '简历更新', 'Case准备', '模拟面试', '人际关系期中考试', '模拟期中考试', 'Behavioral', 'Technical', '其他']
+const contentTypes = [t('mentor.courses.k30'), t('mentor.courses.k31'), t('mentor.courses.k32'), t('mentor.courses.k33'), t('mentor.courses.k34'), t('mentor.courses.k35'), 'Behavioral', 'Technical', t('mentor.courses.k36')]
 
 const tabs = computed(() => {
   const pending = summaryRecords.value.filter(r => r.reviewStatus === 'pending').length
   return [
-    { key: 'all', label: '全部', badge: 0 },
-    { key: 'pending', label: '待审核', badge: pending || 0 },
-    { key: 'approved', label: '已通过', badge: 0 },
-    { key: 'rejected', label: '已驳回', badge: 0 },
+    { key: 'all', label: t('mentor.courses.k37'), badge: 0 },
+    { key: 'pending', label: t('mentor.courses.k38'), badge: pending || 0 },
+    { key: 'approved', label: t('mentor.courses.k39'), badge: 0 },
+    { key: 'rejected', label: t('mentor.courses.k40'), badge: 0 },
   ]
 })
 
@@ -265,15 +268,15 @@ const filteredRecords = computed(() => {
 
 // 课时费列删除 — 用户需求「上报课程记录的页面，不显示最下方的课时费」（导师/班主任/助教三端统一）
 const columns = [
-  { title: '记录ID', key: 'recordNo', dataIndex: 'recordNo' },
-  { title: '学员', key: 'student' },
-  { title: '辅导内容', key: 'coachingType' },
-  { title: '课程内容', key: 'contentType' },
-  { title: '上课日期', key: 'classDate', dataIndex: 'classDate' },
-  { title: '时长', key: 'durationHours', dataIndex: 'durationHours' },
-  { title: '审核状态', key: 'reviewStatus' },
-  { title: '学员评价', key: 'studentEvaluation' },
-  { title: '操作', key: 'actions' },
+  { title: t('mentor.courses.k41'), key: 'recordNo', dataIndex: 'recordNo' },
+  { title: t('mentor.courses.k15'), key: 'student' },
+  { title: t('mentor.courses.k16'), key: 'coachingType' },
+  { title: t('mentor.courses.k5'), key: 'contentType' },
+  { title: t('mentor.courses.k17'), key: 'classDate', dataIndex: 'classDate' },
+  { title: t('mentor.courses.k42'), key: 'durationHours', dataIndex: 'durationHours' },
+  { title: t('mentor.courses.k43'), key: 'reviewStatus' },
+  { title: t('mentor.courses.k44'), key: 'studentEvaluation' },
+  { title: t('mentor.courses.k45'), key: 'actions' },
 ]
 
 function coachingTagColor(t: string) {
@@ -281,13 +284,13 @@ function coachingTagColor(t: string) {
 }
 function contentTagColor(t: string) {
   return {
-    '模拟面试': 'green',
-    '模拟期中考试': 'orange',
-    '人际关系期中考试': 'purple',
-    '简历更新': 'blue',
-    'Case准备': 'blue',
-    '笔试辅导': 'orange',
-    '基础课程': 'blue',
+    '模拟面试': 'green', // i18n-skip-line: backend enum value
+    '模拟期中考试': 'orange', // i18n-skip-line: backend enum value
+    '人际关系期中考试': 'purple', // i18n-skip-line: backend enum value
+    '简历更新': 'blue', // i18n-skip-line: backend enum value
+    'Case准备': 'blue', // i18n-skip-line: backend enum value
+    '笔试辅导': 'orange', // i18n-skip-line: backend enum value
+    '基础课程': 'blue', // i18n-skip-line: backend enum value
   }[t] || 'blue'
 }
 function evaluationTagColor(record: Record<string, any>) {
@@ -309,36 +312,36 @@ function formatDate(d: string) {
   if (Number.isNaN(date.getTime())) return s
   return date.toISOString().slice(0, 10)
 }
-function coachingLabel(t: string) { return { job_coaching: '岗位辅导', mock_interview: '模拟应聘', networking: '人际关系', mock_midterm: '模拟期中', basic: '基础课程', basic_course: '基础课程' }[t] || t }
+function coachingLabel(t: string) { return { job_coaching: t('mentor.courses.k3'), mock_interview: t('mentor.courses.k4'), networking: t('mentor.courses.k46'), mock_midterm: t('mentor.courses.k47'), basic: t('mentor.courses.k48'), basic_course: t('mentor.courses.k48') }[t] || t }
 function contentLabel(t: string) {
   const normalized = String(t ?? '').trim().replace(/-/g, '_').toLowerCase()
   return {
     // RULE-E: 课程内容字典中文 label（覆盖 courseType / classStatus / courseSource 三个口径）
-    job_coaching: '岗位辅导',
-    relation_test: '人际关系',
-    communication_test: '人际关系',
-    networking: '人际关系',
-    midterm: '期中考试',
-    midterm_test: '期中考试',
-    base_course: '基础课程',
-    resume_revision: '新简历',
-    new_resume: '新简历',
-    resume_update: '简历更新',
-    case_prep: 'Case准备',
-    mock_interview: '模拟面试',
-    mock_interview_content: '模拟面试',
-    networking_midterm: '人际关系期中考试',
-    networking_content: '人际关系期中考试',
-    mock_midterm: '模拟期中考试',
-    mock_midterm_content: '模拟期中考试',
-    written_test: '笔试辅导',
+    job_coaching: t('mentor.courses.k3'),
+    relation_test: t('mentor.courses.k46'),
+    communication_test: t('mentor.courses.k46'),
+    networking: t('mentor.courses.k46'),
+    midterm: t('mentor.courses.k49'),
+    midterm_test: t('mentor.courses.k49'),
+    base_course: t('mentor.courses.k48'),
+    resume_revision: t('mentor.courses.k30'),
+    new_resume: t('mentor.courses.k30'),
+    resume_update: t('mentor.courses.k31'),
+    case_prep: t('mentor.courses.k32'),
+    mock_interview: t('mentor.courses.k33'),
+    mock_interview_content: t('mentor.courses.k33'),
+    networking_midterm: t('mentor.courses.k34'),
+    networking_content: t('mentor.courses.k34'),
+    mock_midterm: t('mentor.courses.k35'),
+    mock_midterm_content: t('mentor.courses.k35'),
+    written_test: t('mentor.courses.k50'),
     technical: 'Technical',
     behavioral: 'Behavioral',
-    basic: '基础课程',
-    basic_course: '基础课程',
-    mentor_report: '课程上报',
-    student_request: '学员申请',
-    other: '其他',
+    basic: t('mentor.courses.k48'),
+    basic_course: t('mentor.courses.k48'),
+    mentor_report: t('mentor.courses.k51'),
+    student_request: t('mentor.courses.k52'),
+    other: t('mentor.courses.k36'),
   }[normalized] || t
 }
 function evaluationTag(record: Record<string, any>) {
@@ -346,7 +349,7 @@ function evaluationTag(record: Record<string, any>) {
     return { text: `⭐ ${record.studentEvaluation}`, className: 'success' }
   }
   if (record.reviewStatus === 'approved') {
-    return { text: '待评价', className: 'warning' }
+    return { text: t('mentor.courses.k53'), className: 'warning' }
   }
   return null
 }
@@ -492,7 +495,7 @@ function showReject(record: any) {
   const normalizedRecord = normalizeCourseRecord(record)
   rejectModal.value = {
     visible: true,
-    reason: record.reviewRemark || record.remark || '暂无驳回原因',
+    reason: record.reviewRemark || record.remark || t('mentor.courses.k54'),
     record: normalizedRecord
   }
 }

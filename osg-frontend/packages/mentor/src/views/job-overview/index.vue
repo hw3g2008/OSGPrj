@@ -2,13 +2,13 @@
   <a-config-provider :auto-insert-space-in-button="false">
     <div id="page-job-overview" class="osg-page">
       <PageHeader
-        title-zh="学员求职总览"
+        :title-zh="t('mentor.jobOverview.k8')"
         title-en="Job Overview"
       >
         <template #actions>
           <a-button @click="handleExport">
             <template #icon><ExportOutlined /></template>
-            导出
+            {{ t('mentor.jobOverview.k1') }}
           </a-button>
         </template>
       </PageHeader>
@@ -16,7 +16,7 @@
       <div class="filter-row">
         <a-select
           v-model:value="filters.companyName"
-          placeholder="全部公司"
+          :placeholder="t('mentor.jobOverview.k9')"
           allow-clear
           show-search
           style="width: 180px"
@@ -24,7 +24,7 @@
         />
         <a-select
           v-model:value="filters.currentStage"
-          placeholder="全部面试阶段"
+          :placeholder="t('mentor.jobOverview.k10')"
           allow-clear
           style="width: 180px"
           :options="stageOptions"
@@ -32,23 +32,23 @@
         <a-range-picker
           v-model:value="filters.interviewRange"
           value-format="YYYY-MM-DD"
-          :placeholder="['面试开始', '面试结束']"
+          :placeholder="t('mentor.jobOverview.k11')"
           style="width: 280px"
         />
         <a-select
           v-model:value="filters.lessonReported"
-          placeholder="是否上报课消"
+          :placeholder="t('mentor.jobOverview.k12')"
           allow-clear
           style="width: 160px"
         >
-          <a-select-option :value="true">已上报</a-select-option>
-          <a-select-option :value="false">未上报</a-select-option>
+          <a-select-option :value="true">{{ t('mentor.jobOverview.k2') }}</a-select-option>
+          <a-select-option :value="false">{{ t('mentor.jobOverview.k3') }}</a-select-option>
         </a-select>
         <a-button type="primary" @click="handleSearch">
           <template #icon><SearchOutlined /></template>
-          搜索
+          {{ t('mentor.jobOverview.k4') }}
         </a-button>
-        <a-button @click="handleReset">重置</a-button>
+        <a-button @click="handleReset">{{ t('mentor.jobOverview.k5') }}</a-button>
       </div>
 
       <a-card :bordered="false" class="table-card">
@@ -58,7 +58,7 @@
           :row-key="(record: JobOverviewRow) => record.coachingId ?? record.id"
           :pagination="false"
           :row-class-name="(record: JobOverviewRow) => rowClass(record)"
-          :locale="{ emptyText: '暂无匹配记录' }"
+          :locale="t('mentor.jobOverview.k13')"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'student'">
@@ -81,7 +81,7 @@
               <StageTag :stage="record.interviewStage" fallback="-" />
             </template>
             <template v-else-if="column.key === 'interviewTime'">
-              <span v-if="!record.interviewTime" class="text-muted">待定</span>
+              <span v-if="!record.interviewTime" class="text-muted">{{ t('mentor.jobOverview.k6') }}</span>
               <InterviewTimeCell
                 v-else
                 :time="formatInterviewTime(record.interviewTime)"
@@ -98,7 +98,7 @@
                 :disabled="record.coachingId == null"
                 @click="openReportModalFor(record)"
               >
-                上报课消
+                {{ t('mentor.jobOverview.k7') }}
               </a-button>
             </template>
           </template>
@@ -119,6 +119,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, inject, type Ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { Dayjs } from 'dayjs'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons-vue'
@@ -126,6 +127,8 @@ import { http } from '@osg/shared/utils/request'
 import { StageTag, StudentAvatarCell, InterviewTimeCell } from '@osg/shared/components'
 import type { ReferenceType } from '@osg/shared/types/classReport'
 import ReportModal from '../courses/components/ReportModal.vue'
+
+const { t } = useI18n()
 
 const MENTOR_NAV_BADGE_KEY = Symbol.for('mentor-nav-badges')
 
@@ -228,7 +231,7 @@ function formatInterviewTime(value: string) {
 function normalizeJobOverview(record: Record<string, any>): JobOverviewRow {
   return {
     ...record,
-    studentName: record.studentName || (record.studentId != null ? `学员${record.studentId}` : '待分配学员'),
+    studentName: record.studentName || (record.studentId != null ? t('mentor.jobOverview.k24', { id: record.studentId }) : t('mentor.jobOverview.k25')),
     // Step3-F2: 保留 coaching 锚点 + 课消统计 + 城市原值
     coachingId: record.coachingId ?? null,
     applicationId: record.applicationId ?? record.id,
@@ -253,15 +256,15 @@ function avatarColor(row: JobOverviewRow) {
 
 const jobColumns = [
   // RULE-A 导师端：学生ID / 学生姓名 / 岗位 / 公司 / 城市 / 面试阶段 / 面试时间 / 已上报课消数 + 操作
-  { title: '学生ID', key: 'studentId', dataIndex: 'studentId', width: 100, fixed: 'left' as const },
-  { title: '学生姓名', key: 'student', dataIndex: 'studentName', width: 140 },
-  { title: '岗位', key: 'position', dataIndex: 'position', width: 160 },
-  { title: '公司', key: 'company', dataIndex: 'company', width: 140 },
-  { title: '城市', key: 'location', dataIndex: 'location', width: 110 },
-  { title: '面试阶段', key: 'stage', dataIndex: 'interviewStage', width: 130 },
-  { title: '面试时间', key: 'interviewTime', dataIndex: 'interviewTime', width: 160 },
-  { title: '已上报课消数', key: 'lessonCount', dataIndex: 'lessonCount', width: 130, align: 'center' as const },
-  { title: '操作', key: 'action', width: 120, fixed: 'right' as const },
+  { title: t('mentor.jobOverview.k14'), key: 'studentId', dataIndex: 'studentId', width: 100, fixed: 'left' as const },
+  { title: t('mentor.jobOverview.k15'), key: 'student', dataIndex: 'studentName', width: 140 },
+  { title: t('mentor.jobOverview.k16'), key: 'position', dataIndex: 'position', width: 160 },
+  { title: t('mentor.jobOverview.k17'), key: 'company', dataIndex: 'company', width: 140 },
+  { title: t('mentor.jobOverview.k18'), key: 'location', dataIndex: 'location', width: 110 },
+  { title: t('mentor.jobOverview.k19'), key: 'stage', dataIndex: 'interviewStage', width: 130 },
+  { title: t('mentor.jobOverview.k20'), key: 'interviewTime', dataIndex: 'interviewTime', width: 160 },
+  { title: t('mentor.jobOverview.k21'), key: 'lessonCount', dataIndex: 'lessonCount', width: 130, align: 'center' as const },
+  { title: t('mentor.jobOverview.k22'), key: 'action', width: 120, fixed: 'right' as const },
 ]
 
 // Step3-F2: 打开上报课消弹窗，按 §5.2「上报课消预填当前 coaching_id」预填 job_coaching reference
@@ -317,7 +320,7 @@ async function handleExport() {
       },
       responseType: 'blob',
     })
-    downloadBlob(`学员求职总览.xlsx`, blob as Blob)
+    downloadBlob(t('mentor.jobOverview.k23'), blob as Blob)
   } catch {}
 }
 

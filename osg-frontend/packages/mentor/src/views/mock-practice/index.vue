@@ -1,31 +1,31 @@
 <template>
   <div id="page-mock-practice">
     <PageHeader
-      title-zh="模拟应聘管理"
+      :title-zh="t('mentor.mockPractice.k10')"
       title-en="Mock Practice"
     />
 
     <!-- 列表 -->
     <a-card :bordered="false">
       <a-form layout="inline" class="filter-bar" style="margin-bottom: 16px">
-        <a-form-item label="公司">
+        <a-form-item :label="t('mentor.mockPractice.k11')">
           <a-input
             v-model:value="filters.company"
-            placeholder="请输入公司名称"
+            :placeholder="t('mentor.mockPractice.k12')"
             style="width:200px"
             allow-clear
             @change="applyFilters"
           />
         </a-form-item>
-        <a-form-item label="面试阶段">
+        <a-form-item :label="t('mentor.mockPractice.k13')">
           <a-select v-model:value="filters.practiceType" style="width:160px" @change="applyFilters">
-            <a-select-option value="">全部</a-select-option>
-            <a-select-option value="mock_interview">模拟面试</a-select-option>
-            <a-select-option value="relation_test">人际关系测试</a-select-option>
-            <a-select-option value="midterm_exam">期中考试</a-select-option>
+            <a-select-option value="">{{ t('mentor.mockPractice.k1') }}</a-select-option>
+            <a-select-option value="mock_interview">{{ t('mentor.mockPractice.k2') }}</a-select-option>
+            <a-select-option value="relation_test">{{ t('mentor.mockPractice.k3') }}</a-select-option>
+            <a-select-option value="midterm_exam">{{ t('mentor.mockPractice.k4') }}</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="面试时间">
+        <a-form-item :label="t('mentor.mockPractice.k14')">
           <a-range-picker
             v-model:value="filters.scheduledRange"
             style="width:260px"
@@ -33,21 +33,21 @@
             @change="applyFilters"
           />
         </a-form-item>
-        <a-form-item label="是否上报课消">
+        <a-form-item :label="t('mentor.mockPractice.k15')">
           <a-select v-model:value="filters.reported" style="width:140px" @change="applyFilters">
-            <a-select-option value="">全部</a-select-option>
-            <a-select-option value="true">已上报</a-select-option>
-            <a-select-option value="false">未上报</a-select-option>
+            <a-select-option value="">{{ t('mentor.mockPractice.k1') }}</a-select-option>
+            <a-select-option value="true">{{ t('mentor.mockPractice.k5') }}</a-select-option>
+            <a-select-option value="false">{{ t('mentor.mockPractice.k6') }}</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="applyFilters">
-            <i class="mdi mdi-magnify" style="margin-right:4px" />筛选
+            <i class="mdi mdi-magnify" style="margin-right:4px" />{{ t('mentor.mockPractice.k7') }}
           </a-button>
         </a-form-item>
         <a-form-item>
           <a-button type="link" @click="resetFilters">
-            <i class="mdi mdi-refresh" style="margin-right:4px" />重置
+            <i class="mdi mdi-refresh" style="margin-right:4px" />{{ t('mentor.mockPractice.k8') }}
           </a-button>
         </a-form-item>
       </a-form>
@@ -58,7 +58,7 @@
         :pagination="false"
         :row-key="(r: any) => r.practiceId ?? r.id"
         :custom-row="customRow"
-        :locale="{ emptyText: '暂无匹配的模拟应聘记录' }"
+        :locale="t('mentor.mockPractice.k16')"
         size="middle"
       >
         <template #bodyCell="{ column, record }">
@@ -72,7 +72,7 @@
             <span style="font-weight:600;color:#1E40AF">{{ record.lessonReported ?? 0 }}</span>
           </template>
           <template v-else-if="column.key === 'action'">
-            <a-button type="link" size="small" @click="openReportModalFor(record)">上报课消</a-button>
+            <a-button type="link" size="small" @click="openReportModalFor(record)">{{ t('mentor.mockPractice.k9') }}</a-button>
           </template>
         </template>
       </a-table>
@@ -91,11 +91,14 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, inject, type Ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { PracticeTypeTag } from '@osg/shared/components'
 import { http } from '@osg/shared/utils/request'
 import ReportModal from '../courses/components/ReportModal.vue'
 import type { ReferenceType } from '@osg/shared/types/classReport'
+
+const { t } = useI18n()
 
 const MENTOR_NAV_BADGE_KEY = Symbol.for('mentor-nav-badges')
 
@@ -120,12 +123,12 @@ const reportPrefill = ref<{ studentId?: number; referenceType?: ReferenceType; r
 const filteredList = computed(() => list.value)
 
 const columns = [
-  { title: '学生 ID', key: 'studentId', dataIndex: 'studentId' },
-  { title: '学生姓名', key: 'studentName', dataIndex: 'studentName' },
-  { title: '类型', key: 'practiceType', dataIndex: 'practiceType' },
-  { title: '分配时间', key: 'assignedTime', dataIndex: 'assignedTime' },
-  { title: '已上报课消数', key: 'lessonReported', dataIndex: 'lessonReported' },
-  { title: '操作', key: 'action' },
+  { title: t('mentor.mockPractice.k17'), key: 'studentId', dataIndex: 'studentId' },
+  { title: t('mentor.mockPractice.k18'), key: 'studentName', dataIndex: 'studentName' },
+  { title: t('mentor.mockPractice.k19'), key: 'practiceType', dataIndex: 'practiceType' },
+  { title: t('mentor.mockPractice.k20'), key: 'assignedTime', dataIndex: 'assignedTime' },
+  { title: t('mentor.mockPractice.k21'), key: 'lessonReported', dataIndex: 'lessonReported' },
+  { title: t('mentor.mockPractice.k22'), key: 'action' },
 ]
 
 function customRow(record: any) {
@@ -194,9 +197,9 @@ function syncRowAnchors(records: any[]) {
 
 function resolveReportReferenceType(practiceType: string | undefined): ReferenceType | undefined {
   // 1:1 映射 DB osg_mock_practice.practice_type，禁止跨值改写
-  if (practiceType === 'mock_interview' || practiceType === '模拟面试') return 'mock_interview'
-  if (practiceType === 'communication_test' || practiceType === '人际关系测试') return 'communication_test'
-  if (practiceType === 'midterm_exam' || practiceType === '期中考试') return 'midterm_exam'
+  if (practiceType === 'mock_interview' || practiceType === t('mentor.mockPractice.k2')) return 'mock_interview'
+  if (practiceType === 'communication_test' || practiceType === t('mentor.mockPractice.k3')) return 'communication_test'
+  if (practiceType === 'midterm_exam' || practiceType === t('mentor.mockPractice.k4')) return 'midterm_exam'
   return undefined
 }
 

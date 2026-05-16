@@ -1,18 +1,18 @@
 <template>
   <div id="page-schedule">
     <PageHeader
-      title-zh="我的排期"
+      :title-zh="t('mentor.schedule.k22')"
       title-en="My Schedule"
     />
 
     <div v-if="showReminder" class="warning-banner">
       <i class="mdi mdi-alert-circle warning-icon" />
       <div class="warning-copy">
-        <div class="warning-title"><i class="mdi mdi-alert" /> 您本周未填写排期，无法被安排课程！</div>
-        <div class="warning-desc">请立即填写本周排期，否则将影响您的课时收入</div>
+        <div class="warning-title"><i class="mdi mdi-alert" /> {{ t('mentor.schedule.k1') }}</div>
+        <div class="warning-desc">{{ t('mentor.schedule.k2') }}</div>
       </div>
       <a-button type="primary" danger @click="focusCurrentWeek">
-        <i class="mdi mdi-calendar-edit" style="margin-right:4px" />立即填写
+        <i class="mdi mdi-calendar-edit" style="margin-right:4px" />{{ t('mentor.schedule.k3') }}
       </a-button>
     </div>
 
@@ -21,21 +21,21 @@
         <div class="user-avatar">{{ userInitials }}</div>
         <div>
           <div class="status-name">{{ userName }}</div>
-          <div class="text-muted text-sm">ID: {{ userId || '-' }} · 导师</div>
+          <div class="text-muted text-sm">{{ t('mentor.schedule.k42', { id: userId || '-' }) }}</div>
         </div>
       </div>
       <div class="status-stats">
         <div>
           <div class="stat-big" :style="{ color: hasFilledCurrentWeek ? '#22C55E' : '#DC2626' }">{{ currentWeekHours }}h</div>
-          <div class="text-muted text-sm">本周可用</div>
+          <div class="text-muted text-sm">{{ t('mentor.schedule.k4') }}</div>
         </div>
         <div>
           <div class="stat-big" :style="{ color: hasFilledCurrentWeek ? '#22C55E' : '#DC2626' }">{{ currentWeekAvailableDays }}</div>
-          <div class="text-muted text-sm">可用天数</div>
+          <div class="text-muted text-sm">{{ t('mentor.schedule.k5') }}</div>
         </div>
         <div>
           <div class="stat-big" :style="{ color: hasFilledCurrentWeek ? '#22C55E' : '#DC2626' }">{{ hasFilledCurrentWeek ? '✓' : '✗' }}</div>
-          <div class="text-muted text-sm">{{ hasFilledCurrentWeek ? '已填写' : '未填写' }}</div>
+          <div class="text-muted text-sm">{{ hasFilledCurrentWeek ? t('mentor.schedule.k43') : t('mentor.schedule.k44') }}</div>
         </div>
       </div>
     </div>
@@ -43,20 +43,20 @@
     <div ref="currentWeekCardRef" class="card" id="this-week-unfilled">
       <div class="card-header current-header">
         <div>
-          <span class="card-title"><i class="mdi mdi-calendar-week card-title-icon current" />本周排期</span>
-          <span class="tag danger" :class="{ success: hasFilledCurrentWeek }">{{ hasFilledCurrentWeek ? '已填写' : '未填写' }}</span>
+          <span class="card-title"><i class="mdi mdi-calendar-week card-title-icon current" />{{ t('mentor.schedule.k6') }}</span>
+          <span class="tag danger" :class="{ success: hasFilledCurrentWeek }">{{ hasFilledCurrentWeek ? t('mentor.schedule.k43') : t('mentor.schedule.k44') }}</span>
         </div>
-        <span class="week-range">{{ currentWeekRangeLabel }} (本周)</span>
+        <span class="week-range">{{ t('mentor.schedule.k45', { range: currentWeekRangeLabel }) }}</span>
       </div>
       <div class="card-body">
         <div v-if="!hasFilledCurrentWeek" class="empty-state">
           <i class="mdi mdi-calendar-remove empty-icon" />
-          <h3>您本周还未填写排期</h3>
-          <p>未填写排期将无法被安排课程，请立即填写</p>
+          <h3>{{ t('mentor.schedule.k7') }}</h3>
+          <p>{{ t('mentor.schedule.k8') }}</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label">本周可上课时长 <span class="req">*</span></label>
+          <label class="form-label">{{ t('mentor.schedule.k9') }} <span class="req">*</span></label>
           <div class="hours-row">
             <input
               id="mentor-this-weekly-hours"
@@ -69,7 +69,7 @@
               :value="currentWeek.totalHours"
               @input="syncCurrentHours"
             >
-            <span class="text-muted">小时</span>
+            <span class="text-muted">{{ t('mentor.schedule.k10') }}</span>
             <div class="hour-shortcuts">
               <a-button size="small" @click="setCurrentHours(5)">5h</a-button>
               <a-button size="small" @click="setCurrentHours(10)">10h</a-button>
@@ -79,7 +79,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">本周每天可上课时间 <span class="req">*</span></label>
+          <label class="form-label">{{ t('mentor.schedule.k11') }} <span class="req">*</span></label>
           <div class="schedule-grid">
             <div v-for="day in currentDays" :key="day.key" class="day-card" :class="{ weekend: day.weekend }">
               <div class="day-name">{{ day.label }}</div>
@@ -94,7 +94,7 @@
 
         <div class="form-actions">
           <a-button type="primary" class="current-submit" @click="submitCurrentWeek">
-            <i class="mdi mdi-check-circle" style="margin-right:4px" />提交本周排期
+            <i class="mdi mdi-check-circle" style="margin-right:4px" />{{ t('mentor.schedule.k12') }}
           </a-button>
         </div>
       </div>
@@ -103,14 +103,14 @@
     <div class="card" id="mentor-next-week-panel">
       <div class="card-header next-header">
         <div>
-          <span class="card-title"><i class="mdi mdi-calendar-arrow-right card-title-icon next" />下周排期</span>
-          <span class="tag warning">待填写</span>
+          <span class="card-title"><i class="mdi mdi-calendar-arrow-right card-title-icon next" />{{ t('mentor.schedule.k13') }}</span>
+          <span class="tag warning">{{ t('mentor.schedule.k14') }}</span>
         </div>
-        <span class="week-range">{{ nextWeekRangeLabel }} (下周)</span>
+        <span class="week-range">{{ t('mentor.schedule.k46', { range: nextWeekRangeLabel }) }}</span>
       </div>
       <div class="card-body">
         <div class="form-group">
-          <label class="form-label">下周可上课时长 <span class="req">*</span></label>
+          <label class="form-label">{{ t('mentor.schedule.k15') }} <span class="req">*</span></label>
           <div class="hours-row">
             <input
               id="mentor-next-weekly-hours"
@@ -122,7 +122,7 @@
               :value="nextWeek.totalHours"
               @input="syncNextHours"
             >
-            <span class="text-muted">小时</span>
+            <span class="text-muted">{{ t('mentor.schedule.k10') }}</span>
             <div class="hour-shortcuts">
               <a-button size="small" @click="setNextHours(5)">5h</a-button>
               <a-button size="small" @click="setNextHours(10)">10h</a-button>
@@ -133,7 +133,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">每天可上课时间 <span class="req">*</span> <span class="helper">（可多选）</span></label>
+          <label class="form-label">{{ t('mentor.schedule.k16') }} <span class="req">*</span> <span class="helper">{{ t('mentor.schedule.k17') }}</span></label>
           <div class="schedule-grid next-grid">
             <div v-for="day in nextDays" :key="day.key" class="day-card" :class="{ weekend: day.weekend }">
               <div class="day-name">{{ day.label }}</div>
@@ -147,19 +147,19 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">备注（可选）</label>
+          <label class="form-label">{{ t('mentor.schedule.k18') }}</label>
           <a-textarea
             v-model:value="nextWeek.note"
             :rows="2"
-            placeholder="如有特殊情况请在此说明，例如：元旦假期安排"
+            :placeholder="t('mentor.schedule.k23')"
           />
         </div>
 
         <div class="form-actions split">
           <a-button type="primary" class="next-submit" @click="saveNextWeek">
-            <i class="mdi mdi-check" style="margin-right:4px" />保存下周排期
+            <i class="mdi mdi-check" style="margin-right:4px" />{{ t('mentor.schedule.k19') }}
           </a-button>
-          <a-button @click="resetNextWeek">重置</a-button>
+          <a-button @click="resetNextWeek">{{ t('mentor.schedule.k20') }}</a-button>
         </div>
       </div>
     </div>
@@ -193,7 +193,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <a-button type="primary" class="btn-primary" @click="closeFeedbackModal">知道了</a-button>
+          <a-button type="primary" class="btn-primary" @click="closeFeedbackModal">{{ t('mentor.schedule.k21') }}</a-button>
         </div>
       </div>
     </a-modal>
@@ -202,9 +202,12 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { http } from '@osg/shared/utils/request'
 import { getUser } from '@osg/shared/utils'
+
+const { t } = useI18n()
 
 type DayKey = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
 type SlotKey = 'morning' | 'afternoon' | 'evening'
@@ -223,19 +226,19 @@ interface WeekState {
 }
 
 const dayDefinitions: Array<{ key: DayKey; label: string; offset: number; weekend: boolean }> = [
-  { key: 'monday', label: '周一', offset: 0, weekend: false },
-  { key: 'tuesday', label: '周二', offset: 1, weekend: false },
-  { key: 'wednesday', label: '周三', offset: 2, weekend: false },
-  { key: 'thursday', label: '周四', offset: 3, weekend: false },
-  { key: 'friday', label: '周五', offset: 4, weekend: false },
-  { key: 'saturday', label: '周六', offset: 5, weekend: true },
-  { key: 'sunday', label: '周日', offset: 6, weekend: true },
+  { key: 'monday', label: t('mentor.schedule.k24'), offset: 0, weekend: false },
+  { key: 'tuesday', label: t('mentor.schedule.k25'), offset: 1, weekend: false },
+  { key: 'wednesday', label: t('mentor.schedule.k26'), offset: 2, weekend: false },
+  { key: 'thursday', label: t('mentor.schedule.k27'), offset: 3, weekend: false },
+  { key: 'friday', label: t('mentor.schedule.k28'), offset: 4, weekend: false },
+  { key: 'saturday', label: t('mentor.schedule.k29'), offset: 5, weekend: true },
+  { key: 'sunday', label: t('mentor.schedule.k30'), offset: 6, weekend: true },
 ]
 
 const timeSlots: Array<{ key: SlotKey; label: string }> = [
-  { key: 'morning', label: '上午' },
-  { key: 'afternoon', label: '下午' },
-  { key: 'evening', label: '晚上' },
+  { key: 'morning', label: t('mentor.schedule.k31') },
+  { key: 'afternoon', label: t('mentor.schedule.k32') },
+  { key: 'evening', label: t('mentor.schedule.k33') },
 ]
 
 const currentWeekCardRef = ref<HTMLElement | null>(null)
@@ -443,26 +446,26 @@ function closeFeedbackModal() {
 async function persistSchedule(state: WeekState, successMessage: string) {
   try {
     await http.put(getScheduleApiUrl(), buildPayload(state))
-    openFeedbackModal('保存成功', successMessage, 'success')
+    openFeedbackModal(t('mentor.schedule.k34'), successMessage, 'success')
   } catch {
-    openFeedbackModal('提交失败', '提交失败，请稍后重试', 'error')
+    openFeedbackModal(t('mentor.schedule.k35'), t('mentor.schedule.k36'), 'error')
   }
 }
 
 async function submitCurrentWeek() {
   if (!hasFilledCurrentWeek.value) {
-    openFeedbackModal('提示', '请至少填写本周排期', 'error')
+    openFeedbackModal(t('mentor.schedule.k37'), t('mentor.schedule.k38'), 'error')
     return
   }
-  await persistSchedule(currentWeek, '本周排期已提交！')
+  await persistSchedule(currentWeek, t('mentor.schedule.k39'))
 }
 
 async function saveNextWeek() {
   if (nextWeekHours.value <= 0) {
-    openFeedbackModal('提示', '请至少填写下周可上课时长', 'error')
+    openFeedbackModal(t('mentor.schedule.k37'), t('mentor.schedule.k40'), 'error')
     return
   }
-  await persistSchedule(nextWeek, '下周排期已保存！')
+  await persistSchedule(nextWeek, t('mentor.schedule.k41'))
 }
 
 function resetNextWeek() {
