@@ -129,7 +129,7 @@ import RoleModal from './components/RoleModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { normalizeMenuTree } from './menuTree'
-import { createMenuLabelTranslate } from './menuLabelTranslate'
+import { createMenuLabelTranslate } from '@/utils/menuLabelTranslate'
 import dayjs from 'dayjs'
 
 const i18n = useI18n()

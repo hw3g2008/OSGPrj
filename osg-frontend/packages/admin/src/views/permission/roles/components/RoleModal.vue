@@ -98,7 +98,7 @@ import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { addRole, getRoleMenuIds, updateRole } from '@/api/role'
 import { OverlaySurfaceModal } from '@osg/shared/components'
-import { createMenuLabelTranslate } from '../menuLabelTranslate'
+import { createMenuLabelTranslate } from '@/utils/menuLabelTranslate'
 
 const i18n = useI18n()
 const { t } = i18n

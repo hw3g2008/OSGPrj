@@ -51,7 +51,7 @@
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'menuName'">
             <span class="menu-name-cell">
-              <strong>{{ record.i18nKey ? t(`admin.menu.${record.i18nKey}`) : record.menuName }}</strong>
+              <strong>{{ record.i18nKey ? t(`admin.menu.${record.i18nKey}`) : menuLabelTranslate(record.menuName) }}</strong>
             </span>
           </template>
           <template v-else-if="column.dataIndex === 'menuType'">
@@ -110,8 +110,11 @@ import {
 } from '@osg/shared/api/admin/menu'
 import MenuFormModal from './components/MenuFormModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
+import { createMenuLabelTranslate } from '@/utils/menuLabelTranslate'
 
-const { t } = useI18n()
+const i18n = useI18n()
+const { t } = i18n
+const menuLabelTranslate = createMenuLabelTranslate(i18n)
 
 const menuFormVisible = ref(false)
 const dataList = ref<MenuListItem[]>([])

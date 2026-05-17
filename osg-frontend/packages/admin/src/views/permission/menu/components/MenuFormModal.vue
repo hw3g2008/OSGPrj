@@ -26,12 +26,12 @@
       </a-form-item>
       <a-form-item v-if="formState.menuType === 'C'" :label="t('admin.permission.menu.modal.parentDirLabel')">
         <a-select v-model:value="formState.parentId" :placeholder="t('admin.permission.menu.modal.parentDirPlaceholder')">
-          <a-select-option v-for="item in parentDirOptions" :key="item.menuId" :value="item.menuId">{{ item.menuName }}</a-select-option>
+          <a-select-option v-for="item in parentDirOptions" :key="item.menuId" :value="item.menuId">{{ menuLabelTranslate(item.menuName) }}</a-select-option>
         </a-select>
       </a-form-item>
       <a-form-item v-if="formState.menuType === 'F'" :label="t('admin.permission.menu.modal.parentMenuLabel')">
         <a-select v-model:value="formState.parentId" :placeholder="t('admin.permission.menu.modal.parentMenuPlaceholder')">
-          <a-select-option v-for="item in parentMenuOptions" :key="item.menuId" :value="item.menuId">{{ item.menuName }}</a-select-option>
+          <a-select-option v-for="item in parentMenuOptions" :key="item.menuId" :value="item.menuId">{{ menuLabelTranslate(item.menuName) }}</a-select-option>
         </a-select>
       </a-form-item>
       <a-form-item :label="t('admin.permission.menu.modal.nameLabel')" required>
@@ -75,8 +75,11 @@ import { reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 import { getAdminMenuList, type MenuListItem, type MenuMutationPayload } from '@osg/shared/api/admin/menu'
+import { createMenuLabelTranslate } from '@/utils/menuLabelTranslate'
 
-const { t } = useI18n()
+const i18n = useI18n()
+const { t } = i18n
+const menuLabelTranslate = createMenuLabelTranslate(i18n)
 
 const props = defineProps<{
   visible: boolean
