@@ -1092,7 +1092,7 @@
       "country": {
         "usCan": "US/Canada"
       },
-      "accountTip": "<strong>Note:</strong> After creating the student, a student account will be automatically generated. The default password is <strong>Osg@2026</strong>. Students are advised to change their password after first login.",
+      "accountTip": "<strong>Note:</strong> After creating the student, a student account will be automatically generated. The default password is <strong>Osg{'@'}2026</strong>. Students are advised to change their password after first login.",
       "upload": {
         "clickOrDrag": "Click or drag file to upload",
         "hint": "Only PDF / PNG / JPG / JPEG, max 150MB per file",

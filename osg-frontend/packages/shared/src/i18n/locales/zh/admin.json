@@ -1092,7 +1092,7 @@
       "country": {
         "usCan": "美国/加拿大"
       },
-      "accountTip": "<strong>提示：</strong>学员创建成功后，系统将自动生成学生端账号。默认密码为 <strong>Osg@2026</strong>，学员首次登录后建议修改密码。",
+      "accountTip": "<strong>提示：</strong>学员创建成功后，系统将自动生成学生端账号。默认密码为 <strong>Osg{'@'}2026</strong>，学员首次登录后建议修改密码。",
       "upload": {
         "clickOrDrag": "点击或拖拽文件上传",
         "hint": "仅支持 PDF / PNG / JPG / JPEG，单文件不超过 150MB",
