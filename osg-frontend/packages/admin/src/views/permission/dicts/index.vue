@@ -43,7 +43,7 @@
           :placeholder="t('admin.permission.dicts.searchPlaceholder', { label: currentTabLabel })"
           allow-clear
           @pressEnter="handleSearch"
-          :data-field-name="`${currentTabLabel}搜索`"/>
+          :data-field-name="t('admin.permission.dicts.searchPlaceholder', { label: currentTabLabel })"/>
         <a-button @click="handleSearch">
           <template #icon><SearchOutlined /></template>
           {{ t('admin.permission.dicts.search') }}
@@ -53,7 +53,7 @@
         type="primary"
         :data-surface-trigger="currentAddSurfaceId"
         @click="handleAdd"
-        :aria-label="`新增${currentAddLabel}`">
+        :aria-label="t('admin.permission.dicts.addButton', { label: currentAddLabel })">
         <template #icon><PlusOutlined /></template>
         {{ t('admin.permission.dicts.addButton', { label: currentAddLabel }) }}
       </a-button>

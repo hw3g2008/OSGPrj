@@ -3068,7 +3068,15 @@
         "osg_expense_type": "报销类型",
         "osg_specialty": "擅长",
         "osg_rating": "评级",
-        "osg_country_code": "国家/地区"
+        "osg_country_code": "国家/地区",
+        "osg_coaching_status": "辅导申请状态",
+        "osg_interview_stage": "面试阶段",
+        "osg_mock_practice_status": "模拟应聘状态",
+        "osg_practice_type": "模拟应聘类型",
+        "osg_project_year": "项目时间",
+        "osg_renewal_reason": "续签原因",
+        "osg_schedule_status": "排期状态",
+        "osg_student_position_progress_stage": "求职状态"
       },
       "tabNameHeader": {
         "osg_job_category": "分类名称",
@@ -3086,7 +3094,15 @@
         "osg_expense_type": "报销类型",
         "osg_specialty": "擅长名称",
         "osg_rating": "评级名称",
-        "osg_country_code": "国家/地区"
+        "osg_country_code": "国家/地区",
+        "osg_coaching_status": "辅导申请状态",
+        "osg_interview_stage": "面试阶段",
+        "osg_mock_practice_status": "模拟应聘状态",
+        "osg_practice_type": "模拟应聘类型",
+        "osg_project_year": "项目时间",
+        "osg_renewal_reason": "续签原因",
+        "osg_schedule_status": "排期状态",
+        "osg_student_position_progress_stage": "求职状态"
       },
       "messages": {
         "loadCategoryError": "加载字典分类失败",

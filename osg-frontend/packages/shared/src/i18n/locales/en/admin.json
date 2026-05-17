@@ -3067,7 +3067,15 @@
         "osg_expense_type": "Expense Type",
         "osg_specialty": "Specialty",
         "osg_rating": "Rating",
-        "osg_country_code": "Country/Region"
+        "osg_country_code": "Country/Region",
+        "osg_coaching_status": "Coaching Status",
+        "osg_interview_stage": "Interview Stage",
+        "osg_mock_practice_status": "Mock Practice Status",
+        "osg_practice_type": "Mock Practice Type",
+        "osg_project_year": "Project Year",
+        "osg_renewal_reason": "Renewal Reason",
+        "osg_schedule_status": "Schedule Status",
+        "osg_student_position_progress_stage": "Job Search Stage"
       },
       "tabNameHeader": {
         "osg_job_category": "Category Name",
@@ -3085,7 +3093,15 @@
         "osg_expense_type": "Expense Type",
         "osg_specialty": "Specialty Name",
         "osg_rating": "Rating Name",
-        "osg_country_code": "Country/Region"
+        "osg_country_code": "Country/Region",
+        "osg_coaching_status": "Coaching Status",
+        "osg_interview_stage": "Interview Stage",
+        "osg_mock_practice_status": "Mock Practice Status",
+        "osg_practice_type": "Mock Practice Type",
+        "osg_project_year": "Project Year",
+        "osg_renewal_reason": "Renewal Reason",
+        "osg_schedule_status": "Schedule Status",
+        "osg_student_position_progress_stage": "Job Search Stage"
       },
       "messages": {
         "loadCategoryError": "Failed to load dictionary categories",
