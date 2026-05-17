@@ -106,7 +106,7 @@ const routes: RouteRecordRaw[] = [
         path: 'teaching/class-records',
         name: 'ClassRecords',
         component: () => import('@/views/teaching/class-records/index.vue'),
-        meta: { title: 'Class Records', permission: 'admin:class-records:list' }
+        meta: { title: 'Session Records', permission: 'admin:class-records:list' }
       },
       {
         path: 'profile/logs',

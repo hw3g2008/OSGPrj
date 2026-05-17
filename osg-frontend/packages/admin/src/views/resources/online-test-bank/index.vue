@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader :title-zh="t('admin.resources.onlineTestBank.pageTitle')" title-en="Online Test Bank">
+    <PageHeader :title-zh="t('admin.resources.onlineTestBank.pageTitle')" title-en="Online Assessments">
       <template #actions>
         <a-button v-if="activeTab === 'banks'" type="primary" @click="openCreateModal">
           <template #icon><PlusOutlined /></template>

@@ -456,12 +456,12 @@
   },
   "menu": {
     "permission_management": "Permission Management",
-    "user_center": "User Center",
-    "job_search_center": "Job Search Center",
-    "teaching_center": "Teaching Center",
-    "financial_center": "Financial Center",
-    "resource_center": "Resource Center",
-    "personal_center": "Personal Center",
+    "user_center": "Users",
+    "job_search_center": "Career",
+    "teaching_center": "Coaching",
+    "financial_center": "Finance",
+    "resource_center": "Resources",
+    "personal_center": "Profile",
     "home_page": "Home",
     "permission_configuration": "Permission Config",
     "backend_user_management": "Admin Users",
@@ -1583,12 +1583,12 @@
     "superAdmin": "Super Admin",
     "sections": {
       "permission": "Permission",
-      "userCenter": "User Center",
-      "career": "Job Search Center",
-      "teaching": "Teaching Center",
-      "finance": "Financial Center",
-      "resource": "Resource Center",
-      "profile": "Personal Center"
+      "userCenter": "Users",
+      "career": "Career",
+      "teaching": "Coaching",
+      "finance": "Finance",
+      "resource": "Resources",
+      "profile": "Profile"
     },
     "menus": {
       "menuManagement": "Menu Management",

@@ -4,7 +4,7 @@
       <template #header>
         <div class="page-header">
           <div>
-            <h1 class="page-title">{{ t('student.onlineTestBank.k1') }} <span>Online Test Bank</span></h1>
+            <h1 class="page-title">{{ t('student.onlineTestBank.k1') }} <span>Online Assessments</span></h1>
           </div>
         </div>
       </template>

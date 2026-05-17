@@ -89,10 +89,10 @@
       "filesTitleEn": "Files",
       "filesDesc": "文件资料相关的内容将在这里开放。",
       "onlineTestTitle": "在线测试题库",
-      "onlineTestTitleEn": "Online Test Bank",
+      "onlineTestTitleEn": "Online Assessments",
       "onlineTestDesc": "在线测试题库相关的内容将在这里开放。",
       "interviewBankTitle": "真人面试题库",
-      "interviewBankTitleEn": "Interview Bank",
+      "interviewBankTitleEn": "Mock Interview Bank",
       "interviewBankDesc": "真人面试题库相关的内容将在这里开放。",
       "noticeTitle": "消息",
       "noticeTitleEn": "Notice",
@@ -870,7 +870,7 @@
   },
   "classRecords": {
     "title": "课程记录",
-    "titleEn": "Class Records",
+    "titleEn": "Session Records",
     "actions": {
       "create": "上报课程记录",
       "search": "搜索",

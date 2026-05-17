@@ -2,7 +2,7 @@
   <div id="page-myclass" class="page-class-records">
     <PageHeader
       :title-zh="t('leadMentor.classRecords.pageTitle')"
-      title-en="Class Records"
+      title-en="Session Records"
     >
       <template #actions>
         <button

@@ -2,7 +2,7 @@
   <div class="osg-page">
     <PageHeader
       :title-zh="t('assistant.classRecords.title')"
-      title-en="Class Records"
+      title-en="Session Records"
     >
       <template #actions>
         <a-button type="primary" @click="openReportModal">

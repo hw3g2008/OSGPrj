@@ -428,7 +428,7 @@ const applicationsMeta = reactive<StudentApplicationsMeta>({
 const classRecordsMeta = reactive<StudentClassRecordsMeta>({
   pageSummary: {
     titleZh: t('student.dashboard.k47'),
-    titleEn: 'Class Records',
+    titleEn: 'Session Records',
     subtitle: t('student.dashboard.k48'),
   },
   reminderBanner: {

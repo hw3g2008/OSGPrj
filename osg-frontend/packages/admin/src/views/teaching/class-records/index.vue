@@ -1,6 +1,6 @@
 <template>
   <div class="osg-page">
-    <PageHeader :title-zh="t('admin.teaching.classRecords.pageTitle')" title-en="Class Records">
+    <PageHeader :title-zh="t('admin.teaching.classRecords.pageTitle')" title-en="Session Records">
       <template #actions>
         <a-button :loading="exporting" @click="handleExport">
           <template #icon><ExportOutlined /></template>
