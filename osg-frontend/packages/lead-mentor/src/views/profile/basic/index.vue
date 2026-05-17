@@ -155,10 +155,47 @@ import {
   type LeadMentorProfileRecord,
   type LeadMentorProfileView,
 } from '@osg/shared/api'
+import { useDictFacade, useI18nDict } from '@osg/shared'
 import LeadEditProfileModal, { type LeadEditProfileDraft } from '@/components/LeadEditProfileModal.vue'
 
 
 const { t } = useI18n()
+const { tByI18nKey } = useI18nDict('admin.dict')
+
+// 字典反查：后端 profile 字段存的是 zh dictLabel（如 "北美"/"金融"），需要按 locale 翻译。
+const { items: regionDictOptions, load: loadRegionDict } = useDictFacade('osg_region')
+const { items: majorDirectionDictOptions, load: loadMajorDirectionDict } = useDictFacade('osg_major_direction')
+
+// 反查：dictLabel → i18nKey
+const regionLabelToI18nKey = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {}
+  for (const opt of regionDictOptions.value) {
+    if (opt.label && opt.i18nKey) map[opt.label] = opt.i18nKey
+  }
+  return map
+})
+
+// 主攻方向 dictLabel 形如 "金融 / Finance"，后端只存 zh 部分 "金融"
+const majorDirectionLabelToI18nKey = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {}
+  for (const opt of majorDirectionDictOptions.value) {
+    if (!opt.i18nKey) continue
+    const zh = (opt.label ?? '').split(' / ')[0].trim()
+    if (zh) map[zh] = opt.i18nKey
+    if (opt.label) map[opt.label] = opt.i18nKey
+  }
+  return map
+})
+
+function translateRegionLabel(value: string): string {
+  const key = regionLabelToI18nKey.value[value]
+  return key ? tByI18nKey(key, value) : value
+}
+
+function translateMajorDirectionLabel(value: string): string {
+  const key = majorDirectionLabelToI18nKey.value[value]
+  return key ? tByI18nKey(key, value) : value
+}
 const isEditProfileModalOpen = ref(false)
 const profileView = ref<LeadMentorProfileView | null>(null)
 const isLoading = ref(true)
@@ -181,12 +218,22 @@ const displayText = (value: string | number | null | undefined) => {
 
 const displayName = computed(() => displayText(profile.value?.englishName))
 const genderLabel = computed(() => displayText(profile.value?.genderLabel))
-const typeLabel = computed(() => displayText(profile.value?.typeLabel || t('leadMentor.basic.k4')))
+const typeLabel = computed(() => t('leadMentor.basic.k4'))
 const emailValue = computed(() => displayText(profile.value?.email))
 const phoneValue = computed(() => displayText(profile.value?.phone))
 const wechatValue = computed(() => displayText(profile.value?.wechatId))
-const regionValue = computed(() => displayText(profile.value?.regionLabel))
-const majorDirectionValue = computed(() => displayText(profile.value?.majorDirection))
+const regionValue = computed(() => {
+  const area = profile.value?.regionArea ?? ''
+  const city = profile.value?.regionCity ?? ''
+  const translatedArea = area && area !== '-' ? translateRegionLabel(area) : ''
+  const cityPart = city && city !== '-' ? city : ''
+  const combined = [translatedArea, cityPart].filter(Boolean).join(' · ')
+  return displayText(combined)
+})
+const majorDirectionValue = computed(() => {
+  const v = profile.value?.majorDirection
+  return displayText(v && v !== '-' ? translateMajorDirectionLabel(v) : v)
+})
 const subDirectionValue = computed(() => displayText(profile.value?.subDirection))
 const hourlyRateValue = computed(() => {
   if (profile.value?.hourlyRate === null || profile.value?.hourlyRate === undefined) {
@@ -255,6 +302,8 @@ const handleProfileSave = async (draft: LeadEditProfileDraft) => {
 
 onMounted(() => {
   void loadProfile()
+  void loadRegionDict().catch(() => undefined)
+  void loadMajorDirectionDict().catch(() => undefined)
 })
 </script>
 
