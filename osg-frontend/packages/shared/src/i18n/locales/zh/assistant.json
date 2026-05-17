@@ -849,7 +849,7 @@
     "k5": "申请内容",
     "k6": "全部类型",
     "k7": "当前筛选下没有可展示的模拟应聘记录",
-    "k8": "detailModal.record ? `模拟应聘详情 · ${detailModal.record.studentName || '-'}` : '模拟应聘详情'",
+    "k8": "模拟应聘详情 · {studentName}",
     "k9": "学生",
     "k10": "学生姓名",
     "k11": "类型",

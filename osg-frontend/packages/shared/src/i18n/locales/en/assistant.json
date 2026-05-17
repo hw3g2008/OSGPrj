@@ -849,7 +849,7 @@
     "k5": "Request Content",
     "k6": "AllType",
     "k7": "No mock practice records under the current filter",
-    "k8": "detailModal.record ? `Mock PracticeDetails · ${detailModal.record.studentName || '-'}` : 'Mock PracticeDetails'",
+    "k8": "Mock Practice Detail · {studentName}",
     "k9": "ID",
     "k10": "Student Name",
     "k11": "Type",

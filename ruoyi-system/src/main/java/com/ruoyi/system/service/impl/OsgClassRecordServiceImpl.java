@@ -828,13 +828,7 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         summary.put("pendingSettlementAmount", pendingSettlementAmount.toPlainString());
         summary.put("mineCount", mineCount);
         summary.put("managedCount", managedCount);
-        summary.put("flowSteps", List.of(
-            "学员申请岗位/模拟应聘",
-            "班主任分配导师",
-            "导师上课并申报记录",
-            "后台审核",
-            "结算中心转账"
-        ));
+        // flowSteps display strings live in frontend i18n — assistant 端不再下发 zh
         return summary;
     }
 

@@ -43,14 +43,9 @@ describe('assistant class records page', () => {
     expect(src).toContain('<StatCard')
     expect(src).toContain('<a-space')
 
-    // ── CR-37~38: Flow banner（a-alert type=info + 动态 flowSteps） ──
+    // ── CR-37~38: Flow banner（a-alert type=info + 本地 i18n flowSteps；后端不再下发 flowSteps） ──
     expect(src).toContain('class="flow-alert"')
     expect(src).toContain('flowSteps')
-    expect(src).toContain('defaultFlowSteps')
-    expect(src).toContain("'课程执行'")
-    expect(src).toContain("'记录提交'")
-    expect(src).toContain("'审核处理'")
-    expect(src).toContain("'反馈回看'")
 
     // ── CR-4~5: 4 张统计卡 + statColorMap（A-02 commit 58ab40f2 后改名 valueStyleMap → statColorMap，driving shared <StatCard>） ──
     expect(src).toContain('summaryCards')

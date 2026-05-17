@@ -31,7 +31,7 @@ export interface ClassRecordStats {
   approvedCount: number
   rejectedCount: number
   pendingSettlementAmount: string
-  flowSteps: string[]
+  flowSteps?: string[]
   mineCount?: number
   managedCount?: number
 }

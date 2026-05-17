@@ -74,7 +74,7 @@
     <OverlaySurfaceModal
       :open="detailModal.visible"
       surface-id="assistant-mock-practice-detail"
-      :title="t('assistant.mockPractice.k8')"
+      :title="t('assistant.mockPractice.k8', { studentName: detailModal.record?.studentName || '-' })"
       width="720px"
       :show-footer="false"
       :body-class="['assistant-mock-practice-detail__body', 'osg-modal-form']"

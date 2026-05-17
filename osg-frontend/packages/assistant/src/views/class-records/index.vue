@@ -385,13 +385,13 @@ const reporterRoleSelectOptions = [
   { value: 'assistant', label: t('assistant.classRecords.k43') },
 ]
 
-// ── Flow steps fallback ──
-const defaultFlowSteps = [t('assistant.classRecords.k44'), t('assistant.classRecords.k45'), t('assistant.classRecords.k46'), t('assistant.classRecords.k47')]
-
-const flowSteps = computed(() => {
-  const steps = stats.value?.flowSteps?.filter(Boolean) || []
-  return steps.length ? steps : defaultFlowSteps
-})
+// ── Flow steps from local i18n（后端 stats 不再下发 flowSteps，避免 zh 文案泄漏）──
+const flowSteps = computed(() => [
+  t('assistant.classRecords.k44'),
+  t('assistant.classRecords.k45'),
+  t('assistant.classRecords.k46'),
+  t('assistant.classRecords.k47'),
+])
 
 // ── Table columns ──
 const columns: TableColumnsType<AssistantClassRecordRow> = [
