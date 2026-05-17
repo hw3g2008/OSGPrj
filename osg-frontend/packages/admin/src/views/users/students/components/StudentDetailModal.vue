@@ -321,6 +321,7 @@ import ContractTab from './ContractTab.vue'
 import RenewContractModal from '../../contracts/components/RenewContractModal.vue'
 import type { ContractListItem } from '@osg/shared/api/admin/contract'
 import { getAdminDictOptions } from '@/api/adminDict'
+import { resolveDictDisplayName } from '@osg/shared/utils'
 
 const { t } = useI18n()
 
@@ -475,8 +476,9 @@ const initials = computed(() => {
   return name.substring(0, 2).toUpperCase()
 })
 
-// dict: key → label maps (display official name instead of key)
-type DictMap = Record<string, string>
+// dict: key → {label, i18nKey} maps (display official name instead of key; localize via t(i18nKey) when present)
+interface DictEntry { label: string; i18nKey?: string }
+type DictMap = Record<string, DictEntry>
 const dictMaps = ref<{
   school: DictMap
   region: DictMap
@@ -500,7 +502,12 @@ const loadDictMaps = async () => {
       const items = await getAdminDictOptions(type)
       const map: DictMap = {}
       for (const it of items || []) {
-        if (it?.dictValue != null) map[String(it.dictValue)] = it.dictLabel || String(it.dictValue)
+        if (it?.dictValue != null) {
+          map[String(it.dictValue)] = {
+            label: it.dictLabel || String(it.dictValue),
+            i18nKey: it.i18nKey,
+          }
+        }
       }
       dictMaps.value[key] = map
     } catch { /* ignore */ }
@@ -509,7 +516,9 @@ const loadDictMaps = async () => {
 
 const labelize = (map: DictMap, value?: string | null) => {
   if (!value) return ''
-  return map[value] || value
+  const entry = map[value]
+  if (!entry) return value
+  return resolveDictDisplayName(entry, t) || value
 }
 
 const splitCsv = (csv?: string) => csv ? csv.split(',').map(v => v.trim()).filter(Boolean) : []

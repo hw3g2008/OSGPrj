@@ -28,6 +28,8 @@ export interface AdminDictListRow {
   remark?: string
   parentValue?: string
   extra?: Record<string, string>
+  /** 字典标签 i18n key（前端按 locale 翻译；空时回退到 dictLabel） */
+  i18nKey?: string
 }
 
 export function getAdminDictRegistry() {
@@ -56,6 +58,7 @@ function mapRow(row: any): AdminDictListRow {
     remark: row?.remark,
     parentValue: remarkPayload.parentValue,
     extra: remarkPayload.extra ?? {},
+    i18nKey: row?.i18nKey || undefined,
   }
 }
 

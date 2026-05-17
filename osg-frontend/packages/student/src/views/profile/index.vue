@@ -17,7 +17,7 @@
             <h3>{{ profile.fullName }}</h3>
             <a-space :size="8" wrap>
               <span>Student ID: {{ profile.studentCode }}</span>
-              <a-tag color="success">{{ profile.statusLabel }}</a-tag>
+              <a-tag color="success">{{ displayStatus(profile.statusLabel) }}</a-tag>
             </a-space>
           </div>
         </div>
@@ -25,7 +25,7 @@
         <a-card :title="t('student.profile.k5')" :bordered="false" size="small" class="info-block">
           <a-descriptions :column="{ xs: 1, sm: 2, md: 3 }" :colon="false">
             <a-descriptions-item :label="t('student.profile.k6')">{{ profile.englishName }}</a-descriptions-item>
-            <a-descriptions-item :label="t('student.profile.k7')">{{ profile.sexLabel }}</a-descriptions-item>
+            <a-descriptions-item :label="t('student.profile.k7')">{{ displaySex(profile.sexLabel) }}</a-descriptions-item>
             <a-descriptions-item :label="t('student.profile.k8')">{{ profile.email }}</a-descriptions-item>
           </a-descriptions>
         </a-card>
@@ -62,7 +62,7 @@
               <span class="field-value">{{ profile.highSchool }}</span>
             </a-descriptions-item>
             <a-descriptions-item :label="t('student.profile.k17')">
-              <span class="field-value">{{ profile.postgraduatePlan }}</span>
+              <span class="field-value">{{ displayPostgrad(profile.postgraduatePlan) }}</span>
             </a-descriptions-item>
             <a-descriptions-item :label="t('student.profile.k18')">
               <span class="field-value">{{ profile.visaStatus }}</span>
@@ -73,16 +73,16 @@
         <a-card :title="t('student.profile.k19')" :bordered="false" size="small" class="info-block">
           <a-descriptions :column="{ xs: 1, sm: 2 }" :colon="false">
             <a-descriptions-item :label="t('student.profile.k20')">
-              <span class="field-value">{{ profile.targetRegion }}</span>
+              <span class="field-value">{{ displayDictCsv(profile.targetRegion, regionOptions) }}</span>
             </a-descriptions-item>
             <a-descriptions-item :label="t('student.profile.k21')">
-              <span class="field-value">{{ profile.recruitmentCycle }}</span>
+              <span class="field-value">{{ displayDictCsv(profile.recruitmentCycle, recruitCycleOptions) }}</span>
             </a-descriptions-item>
             <a-descriptions-item :label="t('student.profile.k22')">
-              <span class="field-value">{{ profile.primaryDirection }}</span>
+              <span class="field-value">{{ displayDictCsv(profile.primaryDirection, majorDirectionOptions) }}</span>
             </a-descriptions-item>
             <a-descriptions-item :label="t('student.profile.k23')">
-              <span class="field-value">{{ profile.secondaryDirection }}</span>
+              <span class="field-value">{{ displayDictCsv(profile.secondaryDirection, subDirectionOptions) }}</span>
             </a-descriptions-item>
           </a-descriptions>
         </a-card>
@@ -96,85 +96,101 @@
       </a-card>
     </OsgPageContainer>
 
-    <a-modal
-      v-model:open="editOpen"
-      wrap-class-name="osg-modal-form"
+    <OverlaySurfaceModal
+      :open="editOpen"
+      surface-id="profile-edit"
       :title="t('student.profile.k27')"
-      :width="620"
-      :footer="null"
+      :width="720"
+      :body-class="'profile-edit-modal__body osg-modal-form'"
       @cancel="editOpen = false"
     >
-      <section class="profile-modal-section">
-        <div class="form-grid">
-          <a-form-item :label="t('student.profile.k13')" class="form-item">
-            <a-select
-              v-model:value="editForm.school"
-              show-search
-              mode="combobox"
-              :options="schoolOptions"
-              :placeholder="t('student.profile.k28')"
-            />
-          </a-form-item>
-          <a-form-item :label="t('student.profile.k14')" class="form-item"><a-input v-model:value="editForm.major" /></a-form-item>
-          <a-form-item :label="t('student.profile.k15')" class="form-item"><a-input v-model:value="editForm.graduationYear" /></a-form-item>
-          <a-form-item :label="t('student.profile.k16')" class="form-item"><a-input v-model:value="editForm.highSchool" :placeholder="t('student.profile.k29')" /></a-form-item>
-          <a-form-item :label="t('student.profile.k17')" class="form-item"><a-select v-model:value="editForm.postgraduatePlan" :options="yesNoOptions" /></a-form-item>
-          <a-form-item :label="t('student.profile.k18')" class="form-item"><a-input v-model:value="editForm.visaStatus" /></a-form-item>
-          <a-form-item :label="t('student.profile.k21')" class="form-item">
-            <MultiSelect
-              v-model:value="recruitmentCycles"
-              :options="recruitCycleOptions"
-              :placeholder="t('student.profile.k30')"
-            />
-          </a-form-item>
-          <a-form-item :label="t('student.profile.k20')" class="form-item">
-            <MultiSelect
-              v-model:value="targetRegions"
-              :options="regionOptions"
-              :placeholder="t('student.profile.k31')"
-            />
-          </a-form-item>
-          <a-form-item :label="t('student.profile.k22')" class="form-item">
-            <MultiSelect
-              v-model:value="primaryDirections"
-              :options="majorDirectionOptions"
-              :placeholder="t('student.profile.k32')"
-            />
-          </a-form-item>
-          <a-form-item :label="t('student.profile.k23')" class="form-item">
-            <a-select
-              v-model:value="editForm.secondaryDirection"
-              show-search
-              mode="combobox"
-              :options="subDirectionOptions"
-              :placeholder="t('student.profile.k33')"
-            />
-          </a-form-item>
-        </div>
-      </section>
+      <a-form layout="vertical" :colon="false" class="profile-edit-form">
+        <section class="profile-edit-section">
+          <header class="profile-edit-section__header">
+            <span class="profile-edit-section__title">{{ t('student.profile.k12') }}</span>
+          </header>
+          <div class="form-grid">
+            <a-form-item :label="t('student.profile.k13')" class="form-item">
+              <a-select
+                v-model:value="editForm.school"
+                show-search
+                mode="combobox"
+                :options="translatedSchoolOptions"
+                :placeholder="t('student.profile.k28')"
+              />
+            </a-form-item>
+            <a-form-item :label="t('student.profile.k14')" class="form-item"><a-input v-model:value="editForm.major" /></a-form-item>
+            <a-form-item :label="t('student.profile.k15')" class="form-item"><a-input v-model:value="editForm.graduationYear" /></a-form-item>
+            <a-form-item :label="t('student.profile.k16')" class="form-item"><a-input v-model:value="editForm.highSchool" :placeholder="t('student.profile.k29')" /></a-form-item>
+            <a-form-item :label="t('student.profile.k17')" class="form-item"><a-select v-model:value="editForm.postgraduatePlan" :options="yesNoOptions" /></a-form-item>
+            <a-form-item :label="t('student.profile.k18')" class="form-item"><a-input v-model:value="editForm.visaStatus" /></a-form-item>
+          </div>
+        </section>
 
-      <section class="profile-modal-section">
-        <div class="form-grid form-grid--compact">
-          <a-form-item :label="t('student.profile.k25')" class="form-item"><a-input v-model:value="editForm.phone" /></a-form-item>
-          <a-form-item :label="t('student.profile.k26')" class="form-item"><a-input v-model:value="editForm.wechatId" /></a-form-item>
-        </div>
-      </section>
+        <section class="profile-edit-section">
+          <header class="profile-edit-section__header">
+            <span class="profile-edit-section__title">{{ t('student.profile.k19') }}</span>
+          </header>
+          <div class="form-grid">
+            <a-form-item :label="t('student.profile.k21')" class="form-item">
+              <MultiSelect
+                v-model:value="recruitmentCycles"
+                :options="translatedRecruitCycleOptions"
+                :placeholder="t('student.profile.k30')"
+              />
+            </a-form-item>
+            <a-form-item :label="t('student.profile.k20')" class="form-item">
+              <MultiSelect
+                v-model:value="targetRegions"
+                :options="translatedRegionOptions"
+                :placeholder="t('student.profile.k31')"
+              />
+            </a-form-item>
+            <a-form-item :label="t('student.profile.k22')" class="form-item">
+              <MultiSelect
+                v-model:value="primaryDirections"
+                :options="translatedMajorDirectionOptions"
+                :placeholder="t('student.profile.k32')"
+              />
+            </a-form-item>
+            <a-form-item :label="t('student.profile.k23')" class="form-item">
+              <a-select
+                v-model:value="editForm.secondaryDirection"
+                show-search
+                mode="combobox"
+                :options="translatedSubDirectionOptions"
+                :placeholder="t('student.profile.k33')"
+              />
+            </a-form-item>
+          </div>
+        </section>
 
-      <div class="profile-modal__footer" style="margin-top: 16px">
+        <section class="profile-edit-section">
+          <header class="profile-edit-section__header">
+            <span class="profile-edit-section__title">{{ t('student.profile.k24') }}</span>
+          </header>
+          <div class="form-grid">
+            <a-form-item :label="t('student.profile.k25')" class="form-item"><a-input v-model:value="editForm.phone" /></a-form-item>
+            <a-form-item :label="t('student.profile.k26')" class="form-item"><a-input v-model:value="editForm.wechatId" /></a-form-item>
+          </div>
+        </section>
+      </a-form>
+
+      <template #footer>
         <a-button @click="editOpen = false">{{ t('student.profile.k3') }}</a-button>
         <a-button type="primary" @click="saveProfile">{{ t('student.profile.k4') }}</a-button>
-      </div>
-    </a-modal>
+      </template>
+    </OverlaySurfaceModal>
 
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
-import { OsgPageContainer, MultiSelect } from '@osg/shared/components'
-import { useDictFacade } from '@osg/shared'
+import { OsgPageContainer, MultiSelect, OverlaySurfaceModal } from '@osg/shared/components'
+import { useDictFacade, useI18nDict } from '@osg/shared'
 import {
   getStudentProfile,
   updateStudentProfile,
@@ -183,7 +199,7 @@ import {
   type StudentPendingProfileChange
 } from '@osg/shared/api'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 // 字典单源：本表单中与 Admin osg_* 字典语义对齐的字段统一走 useDictFacade，免重复维护
 const { items: schoolOptions, load: loadSchools } = useDictFacade('osg_school')
@@ -192,10 +208,67 @@ const { items: regionOptions, load: loadRegions } = useDictFacade('osg_region')
 const { items: majorDirectionOptions, load: loadMajorDirections } = useDictFacade('osg_major_direction')
 const { items: subDirectionOptions, load: loadSubDirections } = useDictFacade('osg_sub_direction')
 
-const yesNoOptions = [
+const { tByI18nKey } = useI18nDict('admin.dict')
+
+function translateDictOptions(options: Ref<{ value: string; label: string; i18nKey?: string }[]>) {
+  return computed(() => options.value.map(o => ({
+    ...o,
+    label: o.i18nKey ? tByI18nKey(o.i18nKey, o.label) : o.label
+  })))
+}
+
+const translatedSchoolOptions = translateDictOptions(schoolOptions)
+const translatedRecruitCycleOptions = translateDictOptions(recruitCycleOptions)
+const translatedRegionOptions = translateDictOptions(regionOptions)
+const translatedMajorDirectionOptions = translateDictOptions(majorDirectionOptions)
+const translatedSubDirectionOptions = translateDictOptions(subDirectionOptions)
+
+const yesNoOptions = computed(() => ([
   { value: t('student.profile.k34'), label: t('student.profile.k34') },
   { value: t('student.profile.k35'), label: t('student.profile.k35') }
-]
+]))
+
+// 性别/状态/读研计划等历史中文值 → 显示态映射
+const SEX_MAP: Record<string, string> = { '男': 'Male', '女': 'Female', '未知': 'Unknown' }
+const POSTGRAD_MAP: Record<string, string> = { '是': 'k34', '否': 'k35', 'Yes': 'k34', 'No': 'k35' }
+
+function displaySex(raw: string | undefined | null): string {
+  if (!raw || raw === '-') return raw || '-'
+  return SEX_MAP[raw] ?? raw
+}
+
+function displayPostgrad(raw: string | undefined | null): string {
+  if (!raw || raw === '-') return raw || '-'
+  const key = POSTGRAD_MAP[raw]
+  return key ? t(`student.profile.${key}`) : raw
+}
+
+function displayStatus(raw: string | undefined | null): string {
+  if (!raw || raw === '-') return t('student.profile.k36')
+  // 后端硬编码 "正常"，无论 raw 都展示本地化 Normal/正常
+  if (raw === '正常' || raw === t('student.profile.k36')) return t('student.profile.k36')
+  return raw
+}
+
+// 单值字典 code → 翻译显示（先匹配 dict.value，找不到回退）
+function translateDictValue(value: string, dict: { value: string; label: string; i18nKey?: string }[]): string {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  const opt = dict.find(o => o.value === trimmed || o.label === trimmed)
+  if (!opt) return trimmed
+  if (opt.i18nKey) {
+    const key = `admin.dict.${opt.i18nKey}`
+    if (te(key)) return t(key) as string
+  }
+  return opt.label || trimmed
+}
+
+// CSV 字典字段 → 多 value 翻译后 join
+function displayDictCsv(csv: string | undefined | null, dict: { value: string; label: string; i18nKey?: string }[]): string {
+  if (!csv || csv === '-') return '-'
+  const parts = csv.split(',').map(p => translateDictValue(p, dict)).filter(Boolean)
+  return parts.length ? parts.join(', ') : '-'
+}
 
 const editOpen = ref(false)
 const profile = reactive<StudentProfileRecord>({
@@ -264,7 +337,8 @@ function syncEditForm() {
   editForm.major = profile.major
   editForm.graduationYear = profile.graduationYear
   editForm.highSchool = profile.highSchool
-  editForm.postgraduatePlan = profile.postgraduatePlan
+  // 把历史中文/英文值标准化到当前 locale 显示态，避免 select 找不到匹配项
+  editForm.postgraduatePlan = displayPostgrad(profile.postgraduatePlan)
   editForm.visaStatus = profile.visaStatus
   editForm.recruitmentCycle = profile.recruitmentCycle
   editForm.targetRegion = profile.targetRegion
@@ -327,6 +401,13 @@ async function saveProfile() {
 
 onMounted(() => {
   void loadProfile().catch(() => undefined)
+  // 显示需要 region/cycle/majorDirection/subDirection 字典，预加载用于 displayDictCsv
+  void Promise.all([
+    loadRecruitCycles().catch(() => undefined),
+    loadRegions().catch(() => undefined),
+    loadMajorDirections().catch(() => undefined),
+    loadSubDirections().catch(() => undefined)
+  ])
 })
 </script>
 
@@ -423,38 +504,61 @@ onMounted(() => {
   gap: 12px;
 }
 
-.profile-modal-section {
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  padding: 18px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+.profile-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.profile-edit-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.profile-edit-section__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.profile-edit-section__header::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--primary, #4096ff);
+}
+
+.profile-edit-section__title {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px 16px;
-}
-
-.form-grid--compact {
-  margin-top: 12px;
+  gap: 14px 20px;
 }
 
 .form-item {
   margin-bottom: 0;
 }
 
-.edit-section-title {
-  margin: 0 0 12px;
-  color: #5a7ba3;
-  font-size: 13px;
-  font-weight: 600;
+.profile-edit-form :deep(.ant-form-item-label) {
+  padding-bottom: 4px;
 }
 
-.edit-section-title--success {
-  margin-top: 20px;
-  color: #7399c6;
+.profile-edit-form :deep(.ant-form-item-label > label) {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+  height: auto;
 }
 
 .pending-list {

@@ -168,7 +168,6 @@ async function loadList() {
     const data = await listMentorChangeRequests({ status: filters.status })
     rows.value = Array.isArray(data) ? data : []
   } catch (err) {
-    message.error(t('admin.users.mentorChangeReview.messages.loadError'))
   } finally {
     loading.value = false
   }
@@ -196,7 +195,6 @@ function handleApprove(record: MentorChangeRequestItem) {
         message.success(t('admin.users.mentorChangeReview.messages.approveSuccess'))
         await loadList()
       } catch (err) {
-        message.error(t('admin.users.mentorChangeReview.messages.approveFail'))
       }
     },
   })
@@ -224,7 +222,6 @@ async function handleRejectConfirm() {
     rejectOpen.value = false
     await loadList()
   } catch (err) {
-    message.error(t('admin.users.mentorChangeReview.messages.rejectFail'))
   } finally {
     rejectLoading.value = false
   }

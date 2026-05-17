@@ -194,7 +194,6 @@ const handleDecision = async (action: 'approve' | 'reject', item: ChangeItem) =>
     emit(action, item)
     message.success(action === 'approve' ? t('admin.students.changeReviewTab.messages.approveSuccess') : t('admin.students.changeReviewTab.messages.rejectSuccess'))
   } catch (_error) {
-    message.error(action === 'approve' ? t('admin.students.changeReviewTab.messages.approveFailed') : t('admin.students.changeReviewTab.messages.rejectFailed'))
   } finally {
     activeRequestId.value = null
   }

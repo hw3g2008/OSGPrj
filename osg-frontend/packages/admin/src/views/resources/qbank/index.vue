@@ -98,7 +98,6 @@ const loadRows = async () => {
     const response = await getQbankList(keyword.value || undefined)
     rows.value = response.rows ?? []
   } catch (_error) {
-    message.error(t('admin.resources.qbank.messages.loadError'))
   }
 }
 

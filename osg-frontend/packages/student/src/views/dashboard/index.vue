@@ -338,9 +338,18 @@ import {
   type StudentProfileRecord,
 } from '@osg/shared/api'
 // §D.3 dashboard 卡片接入 SSOT composable，停止依赖后端 coachingStatusLabel 固化字段
-import { deriveApplicationStatus } from '@osg/shared/composables'
+import { deriveApplicationStatus, useI18nDict } from '@osg/shared/composables'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
+const { tDict } = useI18nDict('admin.dict')
+
+function translatePracticeType(item: any): string {
+  const code = item?.typeValue || item?.type
+  if (!code) return '-'
+  const key = `student.mockPractice.typeOption.${code}`
+  if (te(key)) return t(key) as string
+  return item?.type || code
+}
 
 const mockScoreColumns = [
   { title: t('student.dashboard.k30'), dataIndex: 'date', key: 'date' },
@@ -582,7 +591,7 @@ const applicationsPreview = computed(() =>
     role: item.position || '-',
     // §D.3 用 composable 派生（取代后端 coachingStatusLabel）
     program: deriveApplicationStatus({ coachingStatus: item.coachingStatus }).label || '-',
-    round: item.stageLabel || '-',
+    round: tDict(item, 'stage') || tDict(item, 'interviewStage') || item.stageLabel || '-',
   })),
 )
 
@@ -590,8 +599,8 @@ const mockScores = computed(() =>
   practiceRecords.value.slice(0, 3).map((item) => ({
     date: item.submittedAtValue || item.appliedAt || '-',
     mentor: item.mentor || '-',
-    type: item.type || '-',
-    score: item.statusValue || item.status || '-',
+    type: translatePracticeType(item),
+    score: item.statusValue ? (te(`student.mockPractice.statusOption.${item.statusValue}`) ? t(`student.mockPractice.statusOption.${item.statusValue}`) : item.status) : (item.status || '-'),
     scoreTone: item.status === 'scheduled' ? 'score-primary' : 'score-warning',
     tag: item.feedback && item.feedback !== '-' ? item.feedback : 'In Progress',
     tagTone: item.feedback && item.feedback !== '-' ? 'success' : 'warning',

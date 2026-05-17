@@ -216,6 +216,7 @@ public class PositionServiceImpl implements IPositionService
             {
                 position.put("categoryText", defaultString(categoryMeta.getDictLabel(), category));
                 position.put("categoryColor", defaultString(categoryMeta.getCssClass(), "blue"));
+                position.put("categoryI18nKey", categoryMeta.getI18nKey());
             }
 
             SysDictData industryMeta = industryDict.get(industry);
@@ -223,6 +224,7 @@ public class PositionServiceImpl implements IPositionService
             {
                 position.put("industryLabel", defaultString(industryMeta.getDictLabel(), industry));
                 position.put("industryIconKey", defaultString(industryMeta.getCssClass(), "bank"));
+                position.put("industryI18nKey", industryMeta.getI18nKey());
             }
             else
             {
@@ -331,6 +333,7 @@ public class PositionServiceImpl implements IPositionService
             {
                 application.put("stageLabel", defaultString(stageMeta.getDictLabel(), stage));
                 application.put("stageColor", defaultString(stageMeta.getCssClass(), stringValue(application.get("stageColor"))));
+                application.put("stageI18nKey", stageMeta.getI18nKey());
             }
 
             // §D.3 已移除 coachingStatusLabel / coachingColor 固化字段输出；
@@ -341,6 +344,7 @@ public class PositionServiceImpl implements IPositionService
             {
                 application.put("companyTypeLabel", defaultString(companyTypeMeta.getDictLabel(), companyType));
                 application.put("companyTypeIconKey", defaultString(companyTypeMeta.getCssClass(), ""));
+                application.put("companyTypeI18nKey", companyTypeMeta.getI18nKey());
             }
 
             // RULE-A：附 industryLabel / categoryLabel / regionLabel / applicationStatusLabel
@@ -349,18 +353,21 @@ public class PositionServiceImpl implements IPositionService
             application.put("industryLabel", industryMeta != null
                     ? defaultString(industryMeta.getDictLabel(), "")
                     : "");
+            application.put("industryI18nKey", industryMeta != null ? industryMeta.getI18nKey() : null);
 
             String positionCategory = stringValue(application.get("positionCategory"));
             SysDictData categoryMeta = categoryDict.get(positionCategory);
             application.put("categoryLabel", categoryMeta != null
                     ? defaultString(categoryMeta.getDictLabel(), "")
                     : "");
+            application.put("categoryI18nKey", categoryMeta != null ? categoryMeta.getI18nKey() : null);
 
             String region = stringValue(application.get("region"));
             SysDictData regionMeta = regionDict.get(region);
             application.put("regionLabel", regionMeta != null
                     ? defaultString(regionMeta.getDictLabel(), "")
                     : "");
+            application.put("regionI18nKey", regionMeta != null ? regionMeta.getI18nKey() : null);
 
             String applicationStatus = stringValue(application.get("applicationStatus"));
             // 求职状态 label 走 osg_student_position_progress_stage 字典（统一 6 态，cancelled 已被 SQL 过滤）
@@ -371,6 +378,7 @@ public class PositionServiceImpl implements IPositionService
             application.put("applicationStatusColor", applicationStatusMeta != null
                     ? defaultString(applicationStatusMeta.getCssClass(), "default")
                     : "default");
+            application.put("applicationStatusI18nKey", applicationStatusMeta != null ? applicationStatusMeta.getI18nKey() : null);
 
             application.put("bucket", resolveApplicationBucket(stage));
             application.put("coachings", buildApplicationCoachings(application, studentId, coachingStageDict));
@@ -416,6 +424,7 @@ public class PositionServiceImpl implements IPositionService
         row.put("applicationId", coaching.getApplicationId());
         row.put("interviewStage", stage);
         row.put("interviewStageLabel", stageMeta == null ? stage : defaultString(stageMeta.getDictLabel(), stage));
+        row.put("interviewStageI18nKey", stageMeta == null ? null : stageMeta.getI18nKey());
         row.put("interviewTime", formatApplicationDateTime(coaching.getInterviewTime()));
         row.put("city", city);
         row.put("cityLabel", city);

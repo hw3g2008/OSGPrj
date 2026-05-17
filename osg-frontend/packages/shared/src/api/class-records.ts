@@ -39,16 +39,15 @@ export interface StudentClassRecord {
   isNew: boolean
   duration: string
   ratingScoreValue: string
+  /** Pure data ("⭐ 4.5") when rated, empty string when pending — pending label is rendered by frontend via <DictText type="course_rating" value="pending"/>. */
   ratingLabel: string
   ratingColor: string
-  actionLabel: string
   actionKind: 'rate' | 'detail'
   detailTitle: string
   detailKind?: StudentClassRecordDetailKind
   tab: 'pending' | 'evaluated'
   ratingTags: string
   ratingFeedback: string
-  newBadgeLabel: string
 
   mentorFeedback?: string
 

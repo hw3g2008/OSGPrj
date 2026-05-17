@@ -229,7 +229,7 @@ const filteredMenuGroups = computed(() => {
   const perms = userStore.permissions
   const isAdmin = perms.includes('*:*:*')
 
-  return menuGroups
+  return menuGroups.value
     .map((group) => ({
       ...group,
       children: group.children.filter((item) => {

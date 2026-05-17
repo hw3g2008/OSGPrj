@@ -150,7 +150,7 @@
           :data-source="studentModal.rows"
           :row-key="(r: AssistantPositionStudent) => `${r.studentId}-${r.positionName}`"
           :pagination="false"
-          :locale="t('assistant.positions.k11')"
+          :locale="{ emptyText: t('assistant.positions.k11') }"
           size="small"
         >
           <template #bodyCell="{ column, record }">

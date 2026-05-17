@@ -163,7 +163,6 @@ const loadMailJobs = async () => {
     rows.value = response.rows ?? []
     smtpServers.value = response.smtpServers ?? []
   } catch (_error) {
-    message.error(t('admin.profile.mailjob.messages.loadFailed'))
   }
 }
 

@@ -1,5 +1,8 @@
 <template>
   <div id="login-page" class="login-page">
+    <div class="lang-switch">
+      <a-button size="small" type="text" @click="toggleLang">{{ locale === 'zh' ? 'EN' : '中文' }}</a-button>
+    </div>
     <div class="login-decor login-decor--1" />
     <div class="login-decor login-decor--2" />
     <div class="login-decor login-decor--3" />
@@ -127,11 +130,15 @@ import {
   verifyResetCode,
 } from '@osg/shared/api'
 import { removeToken, removeUser, setToken, setUser } from '@osg/shared/utils'
+import { setLocale } from '@osg/shared'
 import { ForgotPasswordModal } from '@osg/shared/components'
 import { useI18n } from 'vue-i18n'
 import { useMustChangePassword } from '@osg/shared/composables'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const toggleLang = () => {
+  setLocale(locale.value === 'zh' ? 'en' : 'zh')
+}
 const { setMustChangePassword } = useMustChangePassword()
 
 type FieldKey = 'username' | 'password'
@@ -587,5 +594,12 @@ async function handleLogin() {
   .login-box {
     padding: 24px 20px 32px;
   }
+}
+
+.lang-switch {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  z-index: 10;
 }
 </style>

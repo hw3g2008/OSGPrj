@@ -24,6 +24,19 @@ public class SysMenu extends BaseEntity
     /** 菜单名称 */
     private String menuName;
 
+    /** 菜单名称国际化 key（前端按当前 locale 翻译） */
+    private String i18nKey;
+
+    public String getI18nKey()
+    {
+        return i18nKey;
+    }
+
+    public void setI18nKey(String i18nKey)
+    {
+        this.i18nKey = i18nKey;
+    }
+
     /** 父菜单名称 */
     private String parentName;
 

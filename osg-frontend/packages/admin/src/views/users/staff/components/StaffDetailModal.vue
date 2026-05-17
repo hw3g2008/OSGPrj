@@ -250,6 +250,7 @@ import {
   type StaffDetailItem,
 } from '@osg/shared/api/admin/staff'
 import { useDictFacade, useIndustryMeta, type DictFacadeOption } from '@osg/shared/composables'
+import { resolveDictDisplayName } from '@osg/shared/utils'
 import { useUserStore } from '@/stores/user'
 
 const { t } = useI18n()
@@ -265,8 +266,12 @@ const { items: ratingItems, load: loadRating } = useDictFacade('osg_rating')
 const { items: companyItems, load: loadCompany } = useDictFacade('osg_company_name')
 const { meta: industryItems, load: loadIndustry } = useIndustryMeta()
 
-const dictLabel = (items: DictFacadeOption[], val?: string) =>
-  val ? (items.find((i) => i.value === val)?.label ?? val) : '-'
+const dictLabel = (items: DictFacadeOption[], val?: string) => {
+  if (!val) return '-'
+  const opt = items.find((i) => i.value === val)
+  if (!opt) return val
+  return resolveDictDisplayName({ label: opt.label, i18nKey: opt.i18nKey }, t) || val
+}
 
 const splitField = (val?: string): string[] =>
   val ? val.split(',').map((s) => s.trim()).filter(Boolean) : []
@@ -285,8 +290,13 @@ const groupedCompanies = computed(() => {
   for (const v of companyValues) {
     const company = companyItems.value.find((c) => c.value === v)
     const industryValue = company?.parentValue
+    const industryOpt = industryValue
+      ? industryItems.value.find((i) => i.value === industryValue)
+      : undefined
     const industryLabel = industryValue
-      ? (industryItems.value.find((i) => i.value === industryValue)?.label ?? industryValue)
+      ? (industryOpt
+          ? (resolveDictDisplayName({ label: industryOpt.label, i18nKey: (industryOpt as any).i18nKey }, t) || industryValue)
+          : industryValue)
       : t('admin.users.staff.detail.industryOther')
     if (!groups[industryLabel]) groups[industryLabel] = []
     const companyLabel = dictLabel(companyItems.value, v)
@@ -388,7 +398,6 @@ const handleApprove = async (requestId: number) => {
     message.success(t('admin.users.staff.detail.messages.approveSuccess'))
     emit('review-updated')
   } catch (error) {
-    message.error(error instanceof Error ? error.message : t('admin.users.staff.detail.messages.approveFail'))
   } finally {
     reviewingRequestId.value = null
   }
@@ -402,7 +411,6 @@ const handleReject = async (requestId: number) => {
     message.success(t('admin.users.staff.detail.messages.rejectSuccess'))
     emit('review-updated')
   } catch (error) {
-    message.error(error instanceof Error ? error.message : t('admin.users.staff.detail.messages.rejectFail'))
   } finally {
     reviewingRequestId.value = null
   }

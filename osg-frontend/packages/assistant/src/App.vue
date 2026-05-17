@@ -1,5 +1,5 @@
 <template>
-  <a-config-provider :locale="zhCN">
+  <a-config-provider :locale="antdLocale">
     <router-view />
   </a-config-provider>
   <AppWatermark />
@@ -11,8 +11,11 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
+import enUS from 'ant-design-vue/es/locale/en_US'
 import { AppWatermark, ForceChangePasswordModal } from '@osg/shared'
 import { useMustChangePassword } from '@osg/shared/composables'
 import { clearAuth } from '@osg/shared/utils'
@@ -28,6 +31,9 @@ function onForceLogout() {
   clearAuth()
   router.replace('/login')
 }
+
+const { locale } = useI18n()
+const antdLocale = computed(() => (locale.value === 'en' ? enUS : zhCN))
 </script>
 
 <style>

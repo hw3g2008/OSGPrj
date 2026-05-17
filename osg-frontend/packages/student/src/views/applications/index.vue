@@ -2,7 +2,7 @@
   <div id="page-job-tracking" class="applications-page" :data-action-trigger-count="applicationsActionTriggers.length">
     <div class="page-header">
       <div>
-        <h1 class="page-title">{{ applicationsMeta.pageSummary.titleZh }} <span>{{ applicationsMeta.pageSummary.titleEn }}</span></h1>
+        <h1 class="page-title">{{ t('student.applications.pageTitleZh') }} <span>My Applications</span></h1>
       </div>
     </div>
 
@@ -94,15 +94,15 @@
             </template>
 
             <template v-else-if="column.key === 'industry'">
-              <span>{{ record.industryLabel || '-' }}</span>
+              <span>{{ tDict(record, 'industry') || record.industryLabel || '-' }}</span>
             </template>
 
             <template v-else-if="column.key === 'category'">
-              <span>{{ record.categoryLabel || '-' }}</span>
+              <span>{{ tDict(record, 'category') || record.categoryLabel || '-' }}</span>
             </template>
 
             <template v-else-if="column.key === 'region'">
-              <span>{{ record.regionLabel || '-' }}</span>
+              <span>{{ tDict(record, 'region') || record.regionLabel || '-' }}</span>
             </template>
 
             <template v-else-if="column.key === 'recruitmentCycle'">
@@ -115,7 +115,7 @@
 
             <template v-else-if="column.key === 'applicationStatus'">
               <a-tag :color="record.applicationStatusColor || 'default'" class="application-status-tag">
-                {{ record.applicationStatusLabel || '-' }}
+                {{ tDict(record, 'applicationStatus') || record.applicationStatusLabel || '-' }}
               </a-tag>
             </template>
 
@@ -355,37 +355,37 @@
       <template #title>
         <span style="display:inline-flex;align-items:center;gap:8px">
           <ReadOutlined aria-hidden="true" />
-          <span>{{ '辅导详情' }}</span>
+          <span>{{ t('student.applications.k104') }}</span>
         </span>
       </template>
 
       <section v-if="selectedCoaching" class="student-coaching-hero">
         <span class="student-coaching-hero__accent" aria-hidden="true" />
         <div class="student-coaching-hero__title-group">
-          <span class="stage-tag" :style="stageTagStyle(selectedCoaching.interviewStage)">{{ selectedCoaching.interviewStageLabel || '-' }}</span>
+          <span class="stage-tag" :style="stageTagStyle(selectedCoaching.interviewStage)">{{ tDict(selectedCoaching, 'interviewStage') || selectedCoaching.interviewStageLabel || '-' }}</span>
           <span class="student-coaching-hero__id">#{{ selectedCoaching.coachingId }}</span>
         </div>
         <div class="student-coaching-hero__inline">
           <span class="student-coaching-hero__inline-item">
             <i class="mdi mdi-calendar-clock-outline" aria-hidden="true" />
-            <span :class="{ 'student-coaching-hero__muted': !selectedCoaching.interviewTime }">{{ selectedCoaching.interviewTime || '面试时间待安排' }}</span>
+            <span :class="{ 'student-coaching-hero__muted': !selectedCoaching.interviewTime }">{{ selectedCoaching.interviewTime || t('student.applications.k79') }}</span>
           </span>
           <span class="student-coaching-hero__inline-item">
             <i class="mdi mdi-account-tie-voice-outline" aria-hidden="true" />
-            <span :class="{ 'student-coaching-hero__muted': !selectedCoaching.companyInterviewer }">{{ selectedCoaching.companyInterviewer || '公司面试官待补充' }}</span>
+            <span :class="{ 'student-coaching-hero__muted': !selectedCoaching.companyInterviewer }">{{ selectedCoaching.companyInterviewer || t('student.applications.k80') }}</span>
           </span>
         </div>
         <dl class="student-coaching-hero__stats">
           <div class="student-coaching-hero__stat">
             <dt>{{ t('student.applications.k14') }}</dt>
             <dd :class="{ 'student-coaching-hero__muted': !(selectedCoaching.mentorNames || selectedCoaching.mentorName) }">
-              {{ selectedCoaching.mentorNames || selectedCoaching.mentorName || '待匹配' }}
+              {{ selectedCoaching.mentorNames || selectedCoaching.mentorName || t('student.applications.k81') }}
             </dd>
           </div>
           <div class="student-coaching-hero__stat">
             <dt>{{ t('student.applications.k15') }}</dt>
             <dd :class="selectedCoaching.latestRating ? 'student-coaching-hero__accent-value' : 'student-coaching-hero__muted'">
-              {{ selectedCoaching.latestRating || '未评分' }}
+              {{ selectedCoaching.latestRating || t('student.applications.k82') }}
             </dd>
           </div>
           <div class="student-coaching-hero__stat">
@@ -404,7 +404,7 @@
             <i class="mdi mdi-timeline-clock-outline" aria-hidden="true" />
             {{ t('student.applications.k18') }}
           </span>
-          <span class="student-coaching-records__count">{{ coachingClassRecords.length }} 条</span>
+          <span class="student-coaching-records__count">{{ t('student.applications.k106', { n: coachingClassRecords.length }) }}</span>
         </header>
         <div v-if="coachingClassRecords.length === 0" class="student-coaching-records__empty">
           <i class="mdi mdi-history" aria-hidden="true" />
@@ -423,7 +423,7 @@
                 <span class="student-coaching-timeline__mentor">{{ cls.mentorName || '-' }}</span>
                 <span :class="cls.rate ? 'student-coaching-timeline__rate' : 'student-coaching-timeline__rate student-coaching-timeline__rate--empty'">
                   <i v-if="cls.rate" class="mdi mdi-star" aria-hidden="true" />
-                  {{ cls.rate || '未评分' }}
+                  {{ cls.rate || t('student.applications.k82') }}
                 </span>
               </div>
               <div class="student-coaching-timeline__meta">
@@ -464,7 +464,7 @@
       <template #title>
         <span style="display:inline-flex;align-items:center;gap:8px">
           <EditOutlined aria-hidden="true" />
-          <span>{{ '修改辅导信息' }}</span>
+          <span>{{ t('student.applications.k105') }}</span>
         </span>
       </template>
 
@@ -473,7 +473,7 @@
           <span class="student-coaching-context__accent" aria-hidden="true" />
           <div class="student-coaching-context__body">
             <div class="student-coaching-context__title">
-              <span class="stage-tag" :style="stageTagStyle(selectedCoaching.interviewStage)">{{ selectedCoaching.interviewStageLabel || '-' }}</span>
+              <span class="stage-tag" :style="stageTagStyle(selectedCoaching.interviewStage)">{{ tDict(selectedCoaching, 'interviewStage') || selectedCoaching.interviewStageLabel || '-' }}</span>
               <span class="student-coaching-context__id">#{{ selectedCoaching.coachingId }}</span>
             </div>
             <div class="student-coaching-context__sub">
@@ -594,7 +594,7 @@ import {
 import { InterviewCalendar, OverlaySurfaceModal } from '@osg/shared/components'
 import type { InterviewEvent } from '@osg/shared/types'
 import { getToken } from '@osg/shared/utils'
-import { useDictFacade, mergeDictWithExistingValues } from '@osg/shared'
+import { useDictFacade, mergeDictWithExistingValues, useI18nDict } from '@osg/shared'
 import {
   getStudentApplicationsMeta,
   getStudentApplicationCoachingClassRecords,
@@ -609,6 +609,7 @@ import {
 } from '@osg/shared/api'
 
 const { t } = useI18n()
+const { tDict } = useI18nDict('admin.dict')
 
 const { items: companyTypeDictOptions, load: loadCompanyTypeDict } = useDictFacade('osg_company_type')
 const mergedCompanyTypeOptions = computed(() =>

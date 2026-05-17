@@ -7,6 +7,7 @@
 	<resultMap type="SysMenu" id="SysMenuResult">
 		<id     property="menuId"         column="menu_id"        />
 		<result property="menuName"       column="menu_name"      />
+		<result property="i18nKey"        column="i18n_key"       />
 		<result property="parentName"     column="parent_name"    />
 		<result property="parentId"       column="parent_id"      />
 		<result property="orderNum"       column="order_num"      />
@@ -29,7 +30,7 @@
 	</resultMap>
 
 	<sql id="selectMenuVo">
-        select menu_id, menu_name, parent_id, order_num, path, component, `query`, route_name, is_frame, is_cache, menu_type, visible, status, ifnull(perms,'') as perms, icon, create_time 
+        select menu_id, menu_name, i18n_key, parent_id, order_num, path, component, `query`, route_name, is_frame, is_cache, menu_type, visible, status, ifnull(perms,'') as perms, icon, create_time
 		from sys_menu
     </sql>
     

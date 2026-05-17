@@ -46,12 +46,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="roleSort"     column="role_sort"      />
         <result property="dataScope"    column="data_scope"     />
         <result property="status"       column="role_status"    />
+        <result property="i18nKey"      column="role_i18n_key"  />
+        <result property="remarkI18nKey" column="role_remark_i18n_key" />
     </resultMap>
 	
 	<sql id="selectUserVo">
         select u.user_id, u.dept_id, u.user_name, u.nick_name, u.email, u.avatar, u.phonenumber, u.password, u.sex, u.status, u.del_flag, u.login_ip, u.login_date, u.pwd_update_date, u.first_login, u.create_by, u.create_time, u.remark,
         d.dept_id, d.parent_id, d.ancestors, d.dept_name, d.order_num, d.leader, d.status as dept_status,
-        r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope, r.status as role_status
+        r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope, r.status as role_status, r.i18n_key as role_i18n_key, r.remark_i18n_key as role_remark_i18n_key
         from sys_user u
 		    left join sys_dept d on u.dept_id = d.dept_id
 		    left join sys_user_role ur on u.user_id = ur.user_id

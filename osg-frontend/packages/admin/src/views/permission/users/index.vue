@@ -36,7 +36,7 @@
             style="width: 160px"
             data-field-name="角色">
             <a-select-option v-for="role in roleOptions" :key="role.roleId" :value="role.roleId">
-              {{ role.roleName }}
+              {{ role.i18nKey && te(`admin.role.${role.i18nKey}`) ? t(`admin.role.${role.i18nKey}`) : role.roleName }}
             </a-select-option>
           </a-select>
         </a-form-item>
@@ -116,7 +116,7 @@
               :key="role.roleId"
               :color="getRoleTagTone(role.roleKey) === 'purple' ? 'purple' : getRoleTagTone(role.roleKey) === 'success' ? 'green' : getRoleTagTone(role.roleKey) === 'warning' ? 'orange' : 'blue'"
             >
-              {{ role.roleName }}
+              {{ role.i18nKey && te(`admin.role.${role.i18nKey}`) ? t(`admin.role.${role.i18nKey}`) : role.roleName }}
             </a-tag>
             <a-tag v-if="!record.roles?.length" color="default">{{ t('admin.permission.users.noRole') }}</a-tag>
           </template>
@@ -199,7 +199,7 @@ import { PageHeader } from '@osg/shared/components/PageHeader'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 const userColumns = computed(() => [
   { title: t('admin.permission.users.columns.id'), dataIndex: 'userId', key: 'userId', width: 80, fixed: 'left' as const },
@@ -283,7 +283,6 @@ const loadUserList = async () => {
 
     userList.value = usersWithRoles
   } catch (_error) {
-    message.error(t('admin.permission.users.messages.loadError'))
   }
 }
 

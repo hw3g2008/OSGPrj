@@ -1,5 +1,8 @@
 <template>
   <div class="login-page">
+    <div class="lang-switch">
+      <a-button size="small" type="text" @click="toggleLang">{{ locale === 'zh' ? 'EN' : '中文' }}</a-button>
+    </div>
     <div class="login-left">
       <h1>{{ t('student.brand.title') }}</h1>
       <p>{{ t('student.brand.tagline') }}</p>
@@ -122,6 +125,7 @@ import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
+import { setLocale } from '@osg/shared'
 import { studentLogin, getStudentInfo as getInfo } from '@osg/shared/api'
 import { setToken, setUser } from '@osg/shared/utils'
 import { useMustChangePassword } from '@osg/shared/composables'
@@ -131,7 +135,10 @@ import {
   validateLoginForm
 } from './login-workflow'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const toggleLang = () => {
+  setLocale(locale.value === 'zh' ? 'en' : 'zh')
+}
 const router = useRouter()
 const route = useRoute()
 
@@ -604,5 +611,12 @@ const handleLogin = async () => {
     width: 100%;
     border-radius: 24px 24px 0 0;
   }
+}
+
+.lang-switch {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  z-index: 10;
 }
 </style>

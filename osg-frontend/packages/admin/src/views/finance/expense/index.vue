@@ -164,7 +164,6 @@ const loadExpenses = async () => {
     const response = await getExpenseList({ tab: 'all' })
     rows.value = response.rows ?? []
   } catch (_error) {
-    message.error(t('admin.finance.expense.messages.loadError'))
   }
 }
 

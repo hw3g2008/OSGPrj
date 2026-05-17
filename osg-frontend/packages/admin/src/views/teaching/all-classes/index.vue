@@ -240,7 +240,6 @@ const loadData = async () => {
     summary.value = response.summary
     total.value = response.total ?? 0
   } catch (_error) {
-    message.error(t('admin.teaching.allClasses.messages.loadError'))
   }
 }
 
@@ -271,7 +270,6 @@ const openDetail = async (recordId: number) => {
     detail.value = await getAllClassesDetail(recordId)
     detailVisible.value = true
   } catch (_error) {
-    message.error(t('admin.teaching.allClasses.messages.detailError'))
   }
 }
 

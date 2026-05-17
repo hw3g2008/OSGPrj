@@ -706,7 +706,6 @@ const openDetailDrawer = async (row: OverviewRow) => {
       : await getLeadMentorJobOverviewDetail(row.applicationId)
     detailDrawerGroups.value = detail.classRecordsByMentor ?? []
   } catch {
-    message.error(t('leadMentor.jobOverview.messages.lessonDetailLoadFailed'))
     isDetailDrawerOpen.value = false
   } finally {
     detailDrawerLoading.value = false
@@ -807,7 +806,6 @@ const handleConfirmAssignMentor = async (payload: AssignMentorConfirmPayload) =>
     await loadAllScopes()
     await nextTick()
   } catch (_error) {
-    message.error(t('leadMentor.jobOverview.messages.assignFailed'))
   }
 }
 
@@ -832,7 +830,6 @@ const handleAcknowledgeStage = async (row: OverviewRow) => {
     await loadAllScopes()
     await nextTick()
   } catch (_error) {
-    message.error(t('leadMentor.jobOverview.messages.acknowledgeFailed'))
   }
 }
 

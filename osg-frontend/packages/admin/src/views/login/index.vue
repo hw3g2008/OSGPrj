@@ -1,5 +1,10 @@
 <template>
   <div class="login-page">
+    <div class="lang-switch">
+      <a-button size="small" type="text" @click="toggleLang">
+        {{ locale === 'zh' ? 'EN' : '中文' }}
+      </a-button>
+    </div>
     <div class="login-left">
       <h1>OSG Admin</h1>
       <p>{{ t('admin.login.brand.systemName') }}</p>
@@ -124,9 +129,14 @@ import { message } from 'ant-design-vue'
 import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { getCaptchaImage } from '@osg/shared/api/auth'
+import { setLocale } from '@osg/shared'
 import ForgotPasswordModal from '@/components/ForgotPasswordModal.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+const toggleLang = () => {
+  setLocale(locale.value === 'zh' ? 'en' : 'zh')
+}
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
@@ -153,7 +163,7 @@ const captchaSrc = computed(() => {
 
 const formState = reactive({
   username: 'admin',
-  password: 'Osg@2026',
+  password: 'admin123',
   code: '',
   uuid: '',
   rememberMe: false
@@ -178,8 +188,8 @@ const handleSubmit = async () => {
     message.success(t('admin.login.message.success'))
     const redirect = route.query.redirect as string
     router.push(redirect || '/dashboard')
-  } catch (error: any) {
-    message.error(error.message || t('admin.login.message.failure'))
+  } catch {
+    // http interceptor 已经弹过 message.error，这里只刷新验证码
     refreshCaptcha()
   } finally {
     loading.value = false
@@ -208,6 +218,14 @@ onMounted(() => {
 .login-page {
   min-height: 100vh;
   display: flex;
+  position: relative;
+}
+
+.lang-switch {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  z-index: 10;
 }
 
 .login-left {

@@ -1,9 +1,6 @@
 <template>
   <div id="page-mock-practice">
-    <PageHeader
-      :title-zh="t('mentor.mockPractice.k10')"
-      title-en="Mock Practice"
-    />
+    <PageHeader :title-zh="t('mentor.mockPractice.k10')" />
 
     <!-- 列表 -->
     <a-card :bordered="false">
@@ -58,7 +55,8 @@
         :pagination="false"
         :row-key="(r: any) => r.practiceId ?? r.id"
         :custom-row="customRow"
-        :locale="t('mentor.mockPractice.k16')"
+        :locale="{ emptyText: t('mentor.mockPractice.k16') }"
+        :scroll="{ x: 1100 }"
         size="middle"
       >
         <template #bodyCell="{ column, record }">
@@ -123,12 +121,12 @@ const reportPrefill = ref<{ studentId?: number; referenceType?: ReferenceType; r
 const filteredList = computed(() => list.value)
 
 const columns = [
-  { title: t('mentor.mockPractice.k17'), key: 'studentId', dataIndex: 'studentId' },
-  { title: t('mentor.mockPractice.k18'), key: 'studentName', dataIndex: 'studentName' },
-  { title: t('mentor.mockPractice.k19'), key: 'practiceType', dataIndex: 'practiceType' },
-  { title: t('mentor.mockPractice.k20'), key: 'assignedTime', dataIndex: 'assignedTime' },
-  { title: t('mentor.mockPractice.k21'), key: 'lessonReported', dataIndex: 'lessonReported' },
-  { title: t('mentor.mockPractice.k22'), key: 'action' },
+  { title: t('mentor.mockPractice.k17'), key: 'studentId', dataIndex: 'studentId', width: 100, fixed: 'left' as const },
+  { title: t('mentor.mockPractice.k18'), key: 'studentName', dataIndex: 'studentName', width: 180 },
+  { title: t('mentor.mockPractice.k19'), key: 'practiceType', dataIndex: 'practiceType', width: 160 },
+  { title: t('mentor.mockPractice.k20'), key: 'assignedTime', dataIndex: 'assignedTime', width: 160 },
+  { title: t('mentor.mockPractice.k21'), key: 'lessonReported', dataIndex: 'lessonReported', width: 140, align: 'center' as const },
+  { title: t('mentor.mockPractice.k22'), key: 'action', width: 120, fixed: 'right' as const },
 ]
 
 function customRow(record: any) {
@@ -248,7 +246,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.filter-bar :deep(.ant-form-item){margin-bottom:0;margin-right:12px}
+.filter-bar :deep(.ant-form-item){margin-bottom:12px;margin-right:12px}
 :deep(.row-new) > td{background:linear-gradient(90deg,#FEE2E2,#FEF2F2) !important}
 :deep(.row-new) > td:first-child{border-left:4px solid #EF4444}
 :deep(.row-midterm) > td{background:#F3E8FF !important}

@@ -393,7 +393,6 @@ async function handleExport() {
     })
     message.success(t('admin.career.jobOverview.index.exportSuccess'))
   } catch (_error) {
-    message.error(t('admin.career.jobOverview.index.exportFail'))
   } finally {
     exporting.value = false
   }

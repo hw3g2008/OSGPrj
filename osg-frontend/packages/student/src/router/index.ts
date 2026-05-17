@@ -4,6 +4,7 @@ import MainLayout from '@/layouts/MainLayout.vue'
 import { COMING_SOON_TOAST, isStudentPathAvailable, normalizeStudentPath } from '@/navigation/access'
 import { PHASE1_DEFAULT_PATH } from '@/navigation/phase1'
 import { getToken, getUser } from '@osg/shared/utils'
+import { localizeText } from '@osg/shared'
 
 const STUDENT_COMING_SOON_ROUTE_NAME = 'StudentComingSoon'
 const STUDENT_COMING_SOON_SUBTITLE = "当前页面不在本次学生端交付范围内。" // i18n-skip-line: route meta title
@@ -25,8 +26,8 @@ function resolveComingSoonProps(query: Record<string, unknown>) {
   const requestedPath = normalizeStudentPath(readSingleQueryValue(query.from) ?? '')
 
   return {
-    title: readSingleQueryValue(query.title) ?? COMING_SOON_TOAST,
-    subtitle: STUDENT_COMING_SOON_SUBTITLE,
+    title: localizeText(readSingleQueryValue(query.title) ?? COMING_SOON_TOAST),
+    subtitle: localizeText(STUDENT_COMING_SOON_SUBTITLE),
     requestedPath: requestedPath === '/' ? '' : requestedPath
   }
 }

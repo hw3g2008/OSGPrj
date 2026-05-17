@@ -1,5 +1,8 @@
 <template>
   <div class="login-page">
+    <div class="lang-switch">
+      <a-button size="small" type="text" @click="toggleLang">{{ locale === 'zh' ? 'EN' : '中文' }}</a-button>
+    </div>
     <!-- 装饰圆 -->
     <div class="login-decor login-decor--1" />
     <div class="login-decor login-decor--2" />
@@ -119,6 +122,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { setLocale } from '@osg/shared'
 import {
   login,
   getInfo,
@@ -130,7 +134,10 @@ import { setToken, setUser } from '@osg/shared/utils'
 import { ForgotPasswordModal } from '@osg/shared/components'
 import { useMustChangePassword } from '@osg/shared/composables'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const toggleLang = () => {
+  setLocale(locale.value === 'zh' ? 'en' : 'zh')
+}
 const { setMustChangePassword } = useMustChangePassword()
 
 const router = useRouter()
@@ -324,4 +331,11 @@ const handleLogin = async () => {
 .login-links a { color: #7399C6; text-decoration: none; font-weight: 500; }
 .login-links a:hover { text-decoration: underline; }
 
+
+.lang-switch {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  z-index: 10;
+}
 </style>

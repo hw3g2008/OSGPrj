@@ -514,7 +514,6 @@ async function handleSearch(scope: ScopeKey) {
     const rows = await loadScope(scope)
     scopeRows.value = { ...scopeRows.value, [scope]: rows }
   } catch (_error) {
-    message.error(t('leadMentor.mockPractice.messages.searchFailed'))
   }
 }
 
@@ -597,7 +596,6 @@ const handleAssignMockConfirm = async () => {
     await loadAllScopes()
     await nextTick()
   } catch (_error) {
-    message.error(t('leadMentor.mockPractice.messages.assignFailed'))
   }
 }
 
@@ -609,7 +607,6 @@ const handleAcknowledgeAssignment = async (practiceId: number) => {
     await loadAllScopes()
     await nextTick()
   } catch (_error) {
-    message.error(t('leadMentor.mockPractice.messages.acknowledgeFailed'))
   }
 }
 

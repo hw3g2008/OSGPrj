@@ -250,7 +250,6 @@ const loadData = async () => {
     })
     mentorOptions.value = Array.from(mentors)
   } catch (_error) {
-    message.error(t('admin.teaching.feedback.messages.loadError'))
   }
 }
 

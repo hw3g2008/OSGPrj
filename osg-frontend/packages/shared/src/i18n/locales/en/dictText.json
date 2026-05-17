@@ -1,0 +1,34 @@
+{
+  "_comment": "English translations for dict values + system labels. Business may override via admin i18n-manager.",
+  "coaching_type": {
+    "interview": "Interview Coaching",
+    "case_study": "Case Study",
+    "resume_review": "Resume Review",
+    "mock_interview": "Mock Interview"
+  },
+  "coaching_status": {
+    "pending_assignment": "Pending Assignment",
+    "lead_mentor_assigning": "Lead Mentor Assigning",
+    "assigned": "Assigned",
+    "in_progress": "In Progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "pending_confirm": "Pending Confirm"
+  },
+  "course_rating": {
+    "pending": "Pending Rating",
+    "rated": "Rated"
+  },
+  "course_action": {
+    "view": "View",
+    "rate": "Rate"
+  },
+  "course_badge": {
+    "new": "NEW"
+  },
+  "mentor_role": {
+    "mentor": "Mentor",
+    "lead_mentor": "Lead Mentor",
+    "assistant": "Assistant"
+  }
+}

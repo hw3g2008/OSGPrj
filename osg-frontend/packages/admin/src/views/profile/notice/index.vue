@@ -122,7 +122,6 @@ const loadNotices = async () => {
     })
     rows.value = response.rows ?? []
   } catch (_error) {
-    message.error(t('admin.profile.notice.messages.loadFailed'))
   }
 }
 

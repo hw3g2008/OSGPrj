@@ -875,7 +875,6 @@ const loadMentorOptions = async (keyword = '') => {
     const all = await getStaffOptions(keyword)
     mentorOptions.value = all.filter(s => s.staffType === 'lead_mentor')
   } catch (_error) {
-    message.error(t('admin.students.addModal.messages.loadMentorFailed'))
   } finally {
     mentorLoading.value = false
   }
@@ -887,7 +886,6 @@ const loadAssistantOptions = async (keyword = '') => {
     const all = await getStaffOptions(keyword)
     assistantOptions.value = all.filter(s => s.staffType === 'assistant')
   } catch (_error) {
-    message.error(t('admin.students.addModal.messages.loadAssistantFailed'))
   } finally {
     assistantLoading.value = false
   }

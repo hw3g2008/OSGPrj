@@ -152,7 +152,7 @@
         :loading="loading"
         :pagination="tablePagination"
         :scroll="{ x: 'max-content' }"
-        :locale="t('assistant.classRecords.k13')"
+        :locale="{ emptyText: t('assistant.classRecords.k13') }"
         :row-class-name="rowClassName"
         row-key="recordId"
         :row-attrs="() => ({ 'data-class-record-row': '' })"
@@ -236,7 +236,7 @@
         </a-descriptions-item>
         <a-descriptions-item :label="t('assistant.classRecords.k16')">
           {{ selectedRecord.studentName || '-' }}
-          <span class="muted-id">（ID: {{ selectedRecord.studentId }}）</span>
+          <span class="muted-id">(ID: {{ selectedRecord.studentId }})</span>
         </a-descriptions-item>
         <a-descriptions-item :label="t('assistant.classRecords.k11')">
           {{ selectedRecord.mentorName || '-' }} / {{ reporterRoleLabel(selectedRecord.reporterRole) }}

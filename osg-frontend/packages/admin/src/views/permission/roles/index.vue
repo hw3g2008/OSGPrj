@@ -48,10 +48,10 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'roleName'">
-            <strong>{{ record.roleName }}</strong>
+            <strong>{{ record.i18nKey ? t(`admin.role.${record.i18nKey}`) : record.roleName }}</strong>
           </template>
           <template v-else-if="column.dataIndex === 'remark'">
-            <span style="color: var(--muted)">{{ record.remark || '-' }}</span>
+            <span style="color: var(--muted)">{{ record.remarkI18nKey ? t(`admin.role.${record.remarkI18nKey}`) : (record.remark || '-') }}</span>
           </template>
           <template v-else-if="column.dataIndex === 'menuNames'">
             <template v-if="record.roleKey === 'super_admin'">
@@ -63,7 +63,7 @@
                 :key="menu"
                 :style="pillStyle(getPermissionColor(menu))"
               >
-                {{ menu }}
+                {{ menuLabelTranslate(menu) }}
               </span>
               <span v-if="record.menuNames?.length > 5" :style="pillStyle('default')">
                 +{{ record.menuNames.length - 5 }}
@@ -131,7 +131,18 @@ import { PlusOutlined } from '@ant-design/icons-vue'
 import { normalizeMenuTree } from './menuTree'
 import dayjs from 'dayjs'
 
-const { t } = useI18n()
+const { t, locale, messages } = useI18n()
+
+// Build reverse map: zh menu label -> i18n key for sidebar menus (per-locale)
+const menuLabelTranslate = (zhLabel: string): string => {
+  if (locale.value === 'zh') return zhLabel
+  // @ts-expect-error vue-i18n messages typing
+  const zhMenus = messages.value?.zh?.admin?.layout?.menus || {}
+  for (const [key, value] of Object.entries(zhMenus)) {
+    if (value === zhLabel) return t(`admin.layout.menus.${key}`)
+  }
+  return zhLabel
+}
 
 const roleColumns = computed(() => [
   { title: 'ID', dataIndex: 'roleId', key: 'roleId', width: 80, fixed: 'left' as const },
@@ -237,7 +248,6 @@ const loadRoleList = async () => {
 
     roleList.value = rolesWithMenus
   } catch (error) {
-    message.error(t('admin.permission.roles.messages.loadError'))
   } finally {
     loading.value = false
   }
@@ -274,7 +284,6 @@ const handleDelete = (record: any) => {
         message.success(t('admin.permission.roles.messages.deleteSuccess'))
         loadRoleList()
       } catch (error) {
-        message.error(t('admin.permission.roles.messages.deleteError'))
       }
     }
   })

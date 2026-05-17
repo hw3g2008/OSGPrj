@@ -67,6 +67,32 @@ public class SysRole extends BaseEntity
     /** 角色绑定用户数（仅列表查询时填充） */
     private Integer userCount;
 
+    /** 角色名国际化 key（前端按当前 locale 翻译） */
+    private String i18nKey;
+
+    /** 备注国际化 key（前端按当前 locale 翻译） */
+    private String remarkI18nKey;
+
+    public String getI18nKey()
+    {
+        return i18nKey;
+    }
+
+    public void setI18nKey(String i18nKey)
+    {
+        this.i18nKey = i18nKey;
+    }
+
+    public String getRemarkI18nKey()
+    {
+        return remarkI18nKey;
+    }
+
+    public void setRemarkI18nKey(String remarkI18nKey)
+    {
+        this.remarkI18nKey = remarkI18nKey;
+    }
+
     public SysRole()
     {
 

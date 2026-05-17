@@ -220,6 +220,7 @@ onMounted(() => {
 
 .main {
   flex: 1;
+  min-width: 0; /* 关键：允许 flex 子元素收缩，否则内部 a-table scroll-x 不触发，页面横向溢出 */
   min-height: 100vh;
   margin-left: 260px;
   background: var(--bg);

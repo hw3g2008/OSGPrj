@@ -114,7 +114,6 @@ const loadFiles = async () => {
     const response = await getFileList({ keyword: keyword.value || undefined })
     rows.value = response.rows ?? []
   } catch (_error) {
-    message.error(t('admin.resources.files.messages.loadError'))
   }
 }
 

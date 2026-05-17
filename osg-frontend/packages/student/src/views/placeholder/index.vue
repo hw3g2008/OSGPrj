@@ -1,8 +1,8 @@
 <template>
   <div class="placeholder-page">
-    <OsgPageContainer :title="title || COMING_SOON_TOAST">
+    <OsgPageContainer :title="title || localizeText(COMING_SOON_TOAST)">
       <a-card :bordered="false" class="placeholder-card">
-        <a-tag color="blue" class="placeholder-eyebrow">{{ COMING_SOON_TOAST }}</a-tag>
+        <a-tag color="blue" class="placeholder-eyebrow">{{ localizeText(COMING_SOON_TOAST) }}</a-tag>
         <p class="placeholder-subtitle">{{ subtitle || t('student.placeholder.k3') }}</p>
         <a-alert
           v-if="requestedPath"
@@ -22,6 +22,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { OsgPageContainer } from '@osg/shared/components'
+import { localizeText } from '@osg/shared'
 import { COMING_SOON_TOAST } from '@/navigation/access'
 
 const { t } = useI18n()

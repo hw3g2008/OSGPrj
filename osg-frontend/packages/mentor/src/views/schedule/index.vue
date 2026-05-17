@@ -65,7 +65,7 @@
               class="form-input week-hours"
               min="0"
               max="40"
-              placeholder="?"
+              placeholder="0-40"
               :value="currentWeek.totalHours"
               @input="syncCurrentHours"
             >
@@ -118,7 +118,7 @@
               class="form-input week-hours"
               min="0"
               max="40"
-              placeholder="?"
+              placeholder="0-40"
               :value="nextWeek.totalHours"
               @input="syncNextHours"
             >
@@ -542,10 +542,11 @@ onMounted(async () => {
 .slot-option:last-child{margin-bottom:0}
 .form-textarea,.form-input{width:100%;padding:12px 14px;border:2px solid #E2E8F0;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box}
 .form-textarea{resize:vertical}
-.form-actions{display:flex;justify-content:center;padding-top:16px;border-top:1px solid #E2E8F0}
+.form-actions{display:flex;justify-content:center;align-items:center;gap:12px;padding-top:16px;border-top:1px solid #E2E8F0}
 .form-actions.split{justify-content:flex-start}
-.current-submit{padding:14px 40px;font-size:16px;background:#DC2626;box-shadow:0 4px 12px rgba(220,38,38,0.3)}
-.next-submit{padding:12px 32px;background:linear-gradient(135deg,#F59E0B,#D97706)}
+.form-actions.split .ant-btn{height:auto;padding:12px 32px}
+.current-submit{height:auto;padding:14px 40px;font-size:16px;background:#DC2626;box-shadow:0 4px 12px rgba(220,38,38,0.3)}
+.next-submit{height:auto;padding:12px 32px;background:linear-gradient(135deg,#F59E0B,#D97706)}
 .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 .modal-content{background:#fff;border-radius:20px;max-height:90vh;overflow-y:auto}
 .modal-content--success{box-shadow:0 24px 64px rgba(15,23,42,.22)}

@@ -1,0 +1,34 @@
+{
+  "_comment": "Global dict-value translations shared by all 5 frontend ends. Key shape: <dictType>.<dictValue>. Seeded from sys_dict_data.dict_label (zh). Business may override via admin i18n-manager (writes sys_i18n_override → manifest API).",
+  "coaching_type": {
+    "interview": "面试辅导",
+    "case_study": "案例分析",
+    "resume_review": "简历精修",
+    "mock_interview": "模拟面试"
+  },
+  "coaching_status": {
+    "pending_assignment": "待分配",
+    "lead_mentor_assigning": "班主任分配中",
+    "assigned": "已分配",
+    "in_progress": "进行中",
+    "completed": "已完成",
+    "cancelled": "已取消",
+    "pending_confirm": "需确认"
+  },
+  "course_rating": {
+    "pending": "待评价",
+    "rated": "已评价"
+  },
+  "course_action": {
+    "view": "查看详情",
+    "rate": "评价"
+  },
+  "course_badge": {
+    "new": "NEW"
+  },
+  "mentor_role": {
+    "mentor": "导师",
+    "lead_mentor": "班主任",
+    "assistant": "助教"
+  }
+}

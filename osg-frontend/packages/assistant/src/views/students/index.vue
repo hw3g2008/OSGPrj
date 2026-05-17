@@ -72,7 +72,7 @@
         :loading="loading"
         :pagination="tablePagination"
         :scroll="{ x: 'max-content' }"
-        :locale="t('assistant.students.k11')"
+        :locale="{ emptyText: t('assistant.students.k11') }"
         row-key="studentId"
         :row-attrs="() => ({ 'data-student-row': '' })"
         size="middle"

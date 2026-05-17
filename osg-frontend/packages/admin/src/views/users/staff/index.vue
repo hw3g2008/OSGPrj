@@ -266,6 +266,7 @@ import {
   type StaffPayload
 } from '@osg/shared/api/admin/staff'
 import { http } from '@osg/shared/utils/request'
+import { resolveDictDisplayName } from '@osg/shared/utils'
 import { useDictFacade, type DictFacadeOption } from '@osg/shared/composables'
 import { useUserStore } from '@/stores/user'
 import { OverlaySurfaceModal } from '@osg/shared/components'
@@ -287,8 +288,12 @@ const { items: subItems, load: loadSub } = useDictFacade('osg_sub_direction')
 const { items: ratingItems, load: loadRating } = useDictFacade('osg_rating')
 const { items: companyItems, load: loadCompany } = useDictFacade('osg_company_name')
 
-const dictLabel = (items: DictFacadeOption[], val?: string) =>
-  val ? (items.find((i) => i.value === val)?.label ?? val) : '-'
+const dictLabel = (items: DictFacadeOption[], val?: string) => {
+  if (!val) return '-'
+  const opt = items.find((i) => i.value === val)
+  if (!opt) return val
+  return resolveDictDisplayName({ label: opt.label, i18nKey: opt.i18nKey }, t) || val
+}
 
 const splitField = (val?: string): string[] =>
   val ? val.split(',').map((s) => s.trim()).filter(Boolean) : []
@@ -421,7 +426,6 @@ const handleExport = async () => {
     })
     message.success(t('admin.users.staff.messages.exportSuccess'))
   } catch (_error) {
-    message.error(t('admin.users.staff.messages.exportFail'))
   } finally {
     exporting.value = false
   }

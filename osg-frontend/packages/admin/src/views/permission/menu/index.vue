@@ -51,7 +51,7 @@
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'menuName'">
             <span class="menu-name-cell">
-              <strong>{{ record.menuName }}</strong>
+              <strong>{{ record.i18nKey ? t(`admin.menu.${record.i18nKey}`) : record.menuName }}</strong>
             </span>
           </template>
           <template v-else-if="column.dataIndex === 'menuType'">
@@ -151,7 +151,6 @@ const loadMenuList = async () => {
     })
     dataList.value = buildMenuTree(flatList)
   } catch (_error) {
-    message.error(t('admin.permission.menu.msg.loadFailed'))
   }
 }
 
@@ -183,7 +182,6 @@ const handleMenuSubmit = async (payload: MenuMutationPayload) => {
     editingMenu.value = null
     await loadMenuList()
   } catch (_error) {
-    message.error(t('admin.permission.menu.msg.saveFailed'))
   }
 }
 

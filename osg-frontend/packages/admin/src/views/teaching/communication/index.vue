@@ -115,7 +115,6 @@ const loadData = async () => {
     })
     rows.value = response.rows ?? []
   } catch (_error) {
-    message.error(t('admin.teaching.communication.messages.loadError'))
   }
 }
 

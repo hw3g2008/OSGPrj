@@ -1,0 +1,2634 @@
+[
+  {
+    "path": ".mainLayout.k23",
+    "text": "确认退出"
+  },
+  {
+    "path": ".mainLayout.k24",
+    "text": "确定要退出登录吗？"
+  },
+  {
+    "path": ".access.k1",
+    "text": "敬请期待"
+  },
+  {
+    "path": ".router.k1",
+    "text": "当前页面不在本次学生端交付范围内。"
+  },
+  {
+    "path": ".router.k2",
+    "text": "登录"
+  },
+  {
+    "path": ".router.k3",
+    "text": "找回密码"
+  },
+  {
+    "path": ".router.k4",
+    "text": "账号已锁定"
+  },
+  {
+    "path": ".router.k9",
+    "text": "上课记录"
+  },
+  {
+    "path": ".router.k12",
+    "text": "AI简历分析"
+  },
+  {
+    "path": ".router.k13",
+    "text": "求职中心"
+  },
+  {
+    "path": ".router.k16",
+    "text": "面试测试"
+  },
+  {
+    "path": ".router.k17",
+    "text": "课程申请"
+  },
+  {
+    "path": ".router.k18",
+    "text": "文件"
+  },
+  {
+    "path": ".router.k19",
+    "text": "在线测试题库"
+  },
+  {
+    "path": ".router.k20",
+    "text": "真人面试题库"
+  },
+  {
+    "path": ".router.k21",
+    "text": "面试真题"
+  },
+  {
+    "path": ".router.k25",
+    "text": "投诉与建议"
+  },
+  {
+    "path": ".router.k26",
+    "text": "沟通记录"
+  },
+  {
+    "path": ".router.k27",
+    "text": "受限模式"
+  },
+  {
+    "path": ".router.k29",
+    "text": "学习资源"
+  },
+  {
+    "path": ".accountLocked.k1",
+    "text": "联系班主任"
+  },
+  {
+    "path": ".accountLocked.k3",
+    "text": "合同已结束"
+  },
+  {
+    "path": ".accountLocked.k4",
+    "text": "账号已加入黑名单，无法查看求职信息。如有疑问，请联系您的班主任。"
+  },
+  {
+    "path": ".accountLocked.k5",
+    "text": "合同已结束，无法查看求职信息。续签合同后将自动恢复正常状态。"
+  },
+  {
+    "path": ".accountLocked.k6",
+    "text": "请通过站内信或邮件联系您的班主任处理后续事宜。"
+  },
+  {
+    "path": ".aiInterview.k2",
+    "text": "上传面试"
+  },
+  {
+    "path": ".aiInterview.k3",
+    "text": "最新分析结果"
+  },
+  {
+    "path": ".aiInterview.k4",
+    "text": "分析文件"
+  },
+  {
+    "path": ".aiInterview.k5",
+    "text": "综合评分"
+  },
+  {
+    "path": ".aiInterview.k6",
+    "text": "表达清晰度"
+  },
+  {
+    "path": ".aiInterview.k7",
+    "text": "90分"
+  },
+  {
+    "path": ".aiInterview.k8",
+    "text": "逻辑结构"
+  },
+  {
+    "path": ".aiInterview.k9",
+    "text": "88分"
+  },
+  {
+    "path": ".aiInterview.k10",
+    "text": "专业知识"
+  },
+  {
+    "path": ".aiInterview.k11",
+    "text": "82分"
+  },
+  {
+    "path": ".aiInterview.k12",
+    "text": "自信程度"
+  },
+  {
+    "path": ".aiInterview.k13",
+    "text": "80分"
+  },
+  {
+    "path": ".aiInterview.k14",
+    "text": "AI改进建议"
+  },
+  {
+    "path": ".aiInterview.k15",
+    "text": "优势"
+  },
+  {
+    "path": ".aiInterview.k16",
+    "text": "回答结构清晰，使用 STAR 方法得当，专业术语运用准确。"
+  },
+  {
+    "path": ".aiInterview.k17",
+    "text": "改进建议"
+  },
+  {
+    "path": ".aiInterview.k18",
+    "text": "建议在回答技术问题时增加更多具体数据支撑，语速可以稍微放慢。"
+  },
+  {
+    "path": ".aiInterview.k19",
+    "text": "分析历史"
+  },
+  {
+    "path": ".aiInterview.k21",
+    "text": "支持上传录音或视频文件，用于生成 AI 面试分析结果。"
+  },
+  {
+    "path": ".aiInterview.k22",
+    "text": "拖拽文件到这里，或点击选择文件"
+  },
+  {
+    "path": ".aiInterview.k25",
+    "text": "开始分析"
+  },
+  {
+    "path": ".aiInterview.k26",
+    "text": "文件名"
+  },
+  {
+    "path": ".aiInterview.k27",
+    "text": "公司 / 轮次"
+  },
+  {
+    "path": ".aiInterview.k28",
+    "text": "AI 分析报告"
+  },
+  {
+    "path": ".aiInterview.k30",
+    "text": "上传面试素材"
+  },
+  {
+    "path": ".aiInterview.k33",
+    "text": "面试轮次"
+  },
+  {
+    "path": ".aiInterview.k34",
+    "text": "分析时间"
+  },
+  {
+    "path": ".aiInterview.k36",
+    "text": "85分"
+  },
+  {
+    "path": ".aiInterview.k37",
+    "text": "表达稳定、结构清晰，建议补充更多定量结果支撑核心观点。"
+  },
+  {
+    "path": ".aiInterview.k38",
+    "text": "Case 框架完整，建议在假设验证阶段更积极地主动澄清信息。"
+  },
+  {
+    "path": ".aiInterview.k39",
+    "text": "75分"
+  },
+  {
+    "path": ".aiInterview.k40",
+    "text": "回答素材足够，但语言节奏偏快，可以增加 pause 和总结句。"
+  },
+  {
+    "path": ".aiResume.k1",
+    "text": "AI简历分析"
+  },
+  {
+    "path": ".aiResume.k2",
+    "text": "上传分析"
+  },
+  {
+    "path": ".aiResume.k3",
+    "text": "最新分析结果"
+  },
+  {
+    "path": ".aiResume.k4",
+    "text": "分析文件："
+  },
+  {
+    "path": ".aiResume.k5",
+    "text": "已分析"
+  },
+  {
+    "path": ".aiResume.k11",
+    "text": "AI改进建议"
+  },
+  {
+    "path": ".aiResume.k12",
+    "text": "格式清晰，排版专业"
+  },
+  {
+    "path": ".aiResume.k13",
+    "text": "教育背景和实习经历完整"
+  },
+  {
+    "path": ".aiResume.k14",
+    "text": "技能部分涵盖关键能力"
+  },
+  {
+    "path": ".aiResume.k16",
+    "text": "实习经历缺少量化数据（如：提升 XX%）"
+  },
+  {
+    "path": ".aiResume.k17",
+    "text": "建议添加更多行业关键词（DCF, M&A 等）"
+  },
+  {
+    "path": ".aiResume.k18",
+    "text": "Leadership 经历描述可更具体"
+  },
+  {
+    "path": ".aiResume.k19",
+    "text": "推荐修改"
+  },
+  {
+    "path": ".aiResume.k20",
+    "text": "将“参与项目”改为“主导完成 XX 项目”"
+  },
+  {
+    "path": ".aiResume.k21",
+    "text": "添加 GPA/排名信息（如适用）"
+  },
+  {
+    "path": ".aiResume.k22",
+    "text": "增加与目标岗位相关的课程项目"
+  },
+  {
+    "path": ".aiResume.k24",
+    "text": "共 2 条记录"
+  },
+  {
+    "path": ".aiResume.k25",
+    "text": "查看报告"
+  },
+  {
+    "path": ".aiResume.k26",
+    "text": "上传简历文件，生成 AI 简历分析结果。"
+  },
+  {
+    "path": ".aiResume.k27",
+    "text": "拖拽简历到这里，或点击选择文件"
+  },
+  {
+    "path": ".aiResume.k28",
+    "text": "支持 PDF / Word 格式"
+  },
+  {
+    "path": ".aiResume.k30",
+    "text": "开始分析"
+  },
+  {
+    "path": ".aiResume.k31",
+    "text": "优势"
+  },
+  {
+    "path": ".aiResume.k32",
+    "text": "待改进"
+  },
+  {
+    "path": ".aiResume.k33",
+    "text": "实习经历缺少量化数据"
+  },
+  {
+    "path": ".aiResume.k34",
+    "text": "建议添加更多行业关键词"
+  },
+  {
+    "path": ".aiResume.k36",
+    "text": "上传简历分析"
+  },
+  {
+    "path": ".aiResume.k37",
+    "text": "AI简历分析报告"
+  },
+  {
+    "path": ".aiResume.k38",
+    "text": "分析时间"
+  },
+  {
+    "path": ".aiResume.k39",
+    "text": "文件名"
+  },
+  {
+    "path": ".aiResume.k40",
+    "text": "AI评分"
+  },
+  {
+    "path": ".aiResume.k43",
+    "text": "已完成"
+  },
+  {
+    "path": ".applications.k3",
+    "text": "申请辅导"
+  },
+  {
+    "path": ".applications.k4",
+    "text": "面试安排"
+  },
+  {
+    "path": ".applications.k5",
+    "text": "HireVue / Online Test 信息"
+  },
+  {
+    "path": ".applications.k6",
+    "text": "复用岗位页的紫色模态样式、说明文案和上传入口。"
+  },
+  {
+    "path": ".applications.k7",
+    "text": "点击上传截图"
+  },
+  {
+    "path": ".applications.k8",
+    "text": "支持 JPG、PNG 格式"
+  },
+  {
+    "path": ".applications.k9",
+    "text": "面试 & 辅导信息"
+  },
+  {
+    "path": ".applications.k10",
+    "text": "保持岗位页同款分段节奏，先确认导师数量与时间，再补充偏好。"
+  },
+  {
+    "path": ".applications.k14",
+    "text": "辅导导师"
+  },
+  {
+    "path": ".applications.k15",
+    "text": "最新评分"
+  },
+  {
+    "path": ".applications.k16",
+    "text": "已上报课消"
+  },
+  {
+    "path": ".applications.k17",
+    "text": "次"
+  },
+  {
+    "path": ".applications.k18",
+    "text": "课消时间线"
+  },
+  {
+    "path": ".applications.k19",
+    "text": "暂无课消记录"
+  },
+  {
+    "path": ".applications.k22",
+    "text": "投递时间"
+  },
+  {
+    "path": ".applications.k23",
+    "text": "投递方式"
+  },
+  {
+    "path": ".applications.k24",
+    "text": "备注（选填）"
+  },
+  {
+    "path": ".applications.k26",
+    "text": "全部阶段"
+  },
+  {
+    "path": ".applications.k27",
+    "text": "全部辅导状态"
+  },
+  {
+    "path": ".applications.k30",
+    "text": "当前面试阶段"
+  },
+  {
+    "path": ".applications.k31",
+    "text": "选择阶段后，页面会切换到对应的 HireVue 或面试辅导分段内容。"
+  },
+  {
+    "path": ".applications.k32",
+    "text": "请选择当前阶段"
+  },
+  {
+    "path": ".applications.k34",
+    "text": "VI 链接"
+  },
+  {
+    "path": ".applications.k35",
+    "text": "请输入 Video Interview 链接"
+  },
+  {
+    "path": ".applications.k36",
+    "text": "OT 链接"
+  },
+  {
+    "path": ".applications.k37",
+    "text": "请输入 Online Test 链接"
+  },
+  {
+    "path": ".applications.k38",
+    "text": "登录账号"
+  },
+  {
+    "path": ".applications.k39",
+    "text": "账号"
+  },
+  {
+    "path": ".applications.k40",
+    "text": "登录密码"
+  },
+  {
+    "path": ".applications.k41",
+    "text": "密码"
+  },
+  {
+    "path": ".applications.k43",
+    "text": "请填写 VI/OT 的截止时间，系统会一并写入进度说明。"
+  },
+  {
+    "path": ".applications.k44",
+    "text": "上传邀请邮件截图"
+  },
+  {
+    "path": ".applications.k45",
+    "text": "需要几个导师？"
+  },
+  {
+    "path": ".applications.k46",
+    "text": "根据面试难度，您可申请 1-3 位导师进行面试测试。"
+  },
+  {
+    "path": ".applications.k47",
+    "text": "请选择导师数量"
+  },
+  {
+    "path": ".applications.k48",
+    "text": "面试时间"
+  },
+  {
+    "path": ".applications.k49",
+    "text": "请填写该轮面试的具体时间，如尚未确定可勾选&quot;未确定&quot;。"
+  },
+  {
+    "path": ".applications.k50",
+    "text": "意向导师（选填）"
+  },
+  {
+    "path": ".applications.k51",
+    "text": "如有特别想要的导师，请填写导师姓名"
+  },
+  {
+    "path": ".applications.k52",
+    "text": "排除导师（选填）"
+  },
+  {
+    "path": ".applications.k53",
+    "text": "如有不想选择的导师，请填写导师姓名"
+  },
+  {
+    "path": ".applications.k54",
+    "text": "其他需要说明的内容..."
+  },
+  {
+    "path": ".applications.k55",
+    "text": "选择面试时间"
+  },
+  {
+    "path": ".applications.k56",
+    "text": "公司面试官"
+  },
+  {
+    "path": ".applications.k57",
+    "text": "请输入公司面试官姓名"
+  },
+  {
+    "path": ".applications.k58",
+    "text": "renderModalTitle(CheckCircleOutlined, '标记已投递')"
+  },
+  {
+    "path": ".applications.k59",
+    "text": "确认投递"
+  },
+  {
+    "path": ".applications.k60",
+    "text": "请选择投递方式"
+  },
+  {
+    "path": ".applications.k61",
+    "text": "如：投递了哪个部门、使用了谁的内推等"
+  },
+  {
+    "path": ".applications.k63",
+    "text": "已投递"
+  },
+  {
+    "path": ".applications.k64",
+    "text": "面试中"
+  },
+  {
+    "path": ".applications.k65",
+    "text": "已结束"
+  },
+  {
+    "path": ".applications.k72",
+    "text": "求职状态"
+  },
+  {
+    "path": ".applications.k74",
+    "text": "旷课"
+  },
+  {
+    "path": ".applications.k75",
+    "text": "出席"
+  },
+  {
+    "path": ".applications.k76",
+    "text": "暂无阶段辅导申请"
+  },
+  {
+    "path": ".applications.k79",
+    "text": "面试时间待安排"
+  },
+  {
+    "path": ".applications.k80",
+    "text": "公司面试官待补充"
+  },
+  {
+    "path": ".applications.k81",
+    "text": "待匹配"
+  },
+  {
+    "path": ".applications.k82",
+    "text": "未评分"
+  },
+  {
+    "path": ".applications.k83",
+    "text": " 次"
+  },
+  {
+    "path": ".applications.k84",
+    "text": "辅导信息已更新"
+  },
+  {
+    "path": ".applications.k85",
+    "text": "请选择面试阶段"
+  },
+  {
+    "path": ".applications.k86",
+    "text": "状态已更新！已通知班主任、助教和后台管理员。"
+  },
+  {
+    "path": ".applications.k87",
+    "text": "请选择投递时间"
+  },
+  {
+    "path": ".applications.k88",
+    "text": "已标记为已投递"
+  },
+  {
+    "path": ".applications.k89",
+    "text": "邀请邮件截图上传成功"
+  },
+  {
+    "path": ".applications.k90",
+    "text": "上传响应缺少 url，请重试"
+  },
+  {
+    "path": ".applications.k91",
+    "text": "邀请邮件截图上传失败，请重试"
+  },
+  {
+    "path": ".applications.k92",
+    "text": "面试时间：未确定"
+  },
+  {
+    "path": ".applications.k94",
+    "text": "请填写 VI 链接"
+  },
+  {
+    "path": ".applications.k95",
+    "text": "请填写 OT 链接"
+  },
+  {
+    "path": ".applications.k96",
+    "text": "请填写 OT 登录账号"
+  },
+  {
+    "path": ".applications.k97",
+    "text": "请填写 OT 登录密码"
+  },
+  {
+    "path": ".applications.k98",
+    "text": "请填写 HireVue / OT 截止时间"
+  },
+  {
+    "path": ".applications.k99",
+    "text": "请上传邀请邮件截图"
+  },
+  {
+    "path": ".applications.k100",
+    "text": "请填写该阶段的面试时间，或勾选\"未确定\""
+  },
+  {
+    "path": ".career.k2",
+    "text": "Java开发"
+  },
+  {
+    "path": ".career.k3",
+    "text": "北京"
+  },
+  {
+    "path": ".career.k5",
+    "text": "已投递"
+  },
+  {
+    "path": ".career.k6",
+    "text": "收藏"
+  },
+  {
+    "path": ".career.k7",
+    "text": "记录进度"
+  },
+  {
+    "path": ".career.k9",
+    "text": "投递记录"
+  },
+  {
+    "path": ".career.k10",
+    "text": "求职统计"
+  },
+  {
+    "path": ".career.k11",
+    "text": "投递数"
+  },
+  {
+    "path": ".career.k12",
+    "text": "面试邀约"
+  },
+  {
+    "path": ".career.k13",
+    "text": "Offer 数"
+  },
+  {
+    "path": ".career.k16",
+    "text": "投递时间"
+  },
+  {
+    "path": ".career.k19",
+    "text": "阿里巴巴"
+  },
+  {
+    "path": ".career.k20",
+    "text": "Java 开发"
+  },
+  {
+    "path": ".career.k21",
+    "text": "面试中"
+  },
+  {
+    "path": ".career.k22",
+    "text": "腾讯"
+  },
+  {
+    "path": ".career.k23",
+    "text": "后端开发"
+  },
+  {
+    "path": ".career.k24",
+    "text": "字节跳动"
+  },
+  {
+    "path": ".career.k25",
+    "text": "已通过"
+  },
+  {
+    "path": ".communication.k4",
+    "text": "记录人"
+  },
+  {
+    "path": ".communication.k5",
+    "text": "沟通方式"
+  },
+  {
+    "path": ".communication.k6",
+    "text": "沟通时间"
+  },
+  {
+    "path": ".communication.k7",
+    "text": "沟通内容"
+  },
+  {
+    "path": ".communication.k8",
+    "text": "跟进事项"
+  },
+  {
+    "path": ".communication.k11",
+    "text": "沟通记录详情"
+  },
+  {
+    "path": ".communication.k13",
+    "text": "微信"
+  },
+  {
+    "path": ".communication.k14",
+    "text": "电话"
+  },
+  {
+    "path": ".communication.k15",
+    "text": "邮件"
+  },
+  {
+    "path": ".communication.k16",
+    "text": "面谈"
+  },
+  {
+    "path": ".communication.k18",
+    "text": "讨论面试准备进度，建议增加面试测试次数并提前整理近期 networking 收获。"
+  },
+  {
+    "path": ".communication.k19",
+    "text": "待跟进"
+  },
+  {
+    "path": ".communication.k20",
+    "text": "本周补充 2 次面试测试，并在下次辅导前回传最新岗位进展。"
+  },
+  {
+    "path": ".communication.k22",
+    "text": "确认下周课程安排，调整上课时间，并同步技术面试的准备重点。"
+  },
+  {
+    "path": ".communication.k23",
+    "text": "已完成"
+  },
+  {
+    "path": ".communication.k24",
+    "text": "课程时间已经改到周三 19:00，准备材料已同步到资源中心。"
+  },
+  {
+    "path": ".communication.k25",
+    "text": "发送简历修改建议和面试资料，提醒同步更新个人中心中的求职方向。"
+  },
+  {
+    "path": ".communication.k26",
+    "text": "简历新版本已上传，求职方向变更进入待审核队列。"
+  },
+  {
+    "path": ".complaint.k1",
+    "text": "投诉与建议"
+  },
+  {
+    "path": ".complaint.k3",
+    "text": "请输入对方姓名"
+  },
+  {
+    "path": ".complaint.k4",
+    "text": "请详细描述您的体验和反馈"
+  },
+  {
+    "path": ".courses.k1",
+    "text": "课程信息"
+  },
+  {
+    "path": ".courses.k2",
+    "text": "当前评价"
+  },
+  {
+    "path": ".courses.k3",
+    "text": "详细信息"
+  },
+  {
+    "path": ".courses.k4",
+    "text": "面试测试目的"
+  },
+  {
+    "path": ".courses.k5",
+    "text": "涉及概念和主题"
+  },
+  {
+    "path": ".courses.k6",
+    "text": "需要改进的方面"
+  },
+  {
+    "path": ".courses.k7",
+    "text": "导师评价"
+  },
+  {
+    "path": ".courses.k8",
+    "text": "导师推荐"
+  },
+  {
+    "path": ".courses.k9",
+    "text": "考试得分"
+  },
+  {
+    "path": ".courses.k10",
+    "text": "逐题分析"
+  },
+  {
+    "path": ".courses.k11",
+    "text": "学生进度评估"
+  },
+  {
+    "path": ".courses.k13",
+    "text": "整体评分"
+  },
+  {
+    "path": ".courses.k14",
+    "text": "点击星星给本节课打分"
+  },
+  {
+    "path": ".courses.k15",
+    "text": "评价标签"
+  },
+  {
+    "path": ".courses.k16",
+    "text": "详细反馈"
+  },
+  {
+    "path": ".courses.k17",
+    "text": "很差"
+  },
+  {
+    "path": ".courses.k18",
+    "text": "一般"
+  },
+  {
+    "path": ".courses.k19",
+    "text": "还行"
+  },
+  {
+    "path": ".courses.k20",
+    "text": "很好"
+  },
+  {
+    "path": ".courses.k21",
+    "text": "非常棒"
+  },
+  {
+    "path": ".courses.k22",
+    "text": "尚未评价"
+  },
+  {
+    "path": ".courses.k23",
+    "text": "请先选择整体评分"
+  },
+  {
+    "path": ".courses.k24",
+    "text": "请填写详细反馈"
+  },
+  {
+    "path": ".courses.k25",
+    "text": "评价提交成功！"
+  },
+  {
+    "path": ".dashboard.k5",
+    "text": "学情分析报告"
+  },
+  {
+    "path": ".dashboard.k6",
+    "text": "当前共有"
+  },
+  {
+    "path": ".dashboard.k7",
+    "text": "条进行中的求职记录，\r\n              已完成"
+  },
+  {
+    "path": ".dashboard.k8",
+    "text": "条模拟应聘记录，\r\n              待评价课程"
+  },
+  {
+    "path": ".dashboard.k9",
+    "text": "条，\r\n              岗位池可见"
+  },
+  {
+    "path": ".dashboard.k10",
+    "text": "个岗位。"
+  },
+  {
+    "path": ".dashboard.k17",
+    "text": "实时摘要"
+  },
+  {
+    "path": ".dashboard.k21",
+    "text": "累计"
+  },
+  {
+    "path": ".dashboard.k22",
+    "text": "次"
+  },
+  {
+    "path": ".dashboard.k23",
+    "text": "暂无真实面试记录"
+  },
+  {
+    "path": ".dashboard.k27",
+    "text": "填写面试真题"
+  },
+  {
+    "path": ".dashboard.k28",
+    "text": "填写沟通记录"
+  },
+  {
+    "path": ".dashboard.k33",
+    "text": "版本"
+  },
+  {
+    "path": ".dashboard.k34",
+    "text": "文件名"
+  },
+  {
+    "path": ".dashboard.k35",
+    "text": "指导导师"
+  },
+  {
+    "path": ".dashboard.k36",
+    "text": "更新时间"
+  },
+  {
+    "path": ".dashboard.k39",
+    "text": "办公室"
+  },
+  {
+    "path": ".dashboard.k41",
+    "text": "项目"
+  },
+  {
+    "path": ".dashboard.k42",
+    "text": "轮次"
+  },
+  {
+    "path": ".dashboard.k43",
+    "text": "正常"
+  },
+  {
+    "path": ".dashboard.k46",
+    "text": "查看您的岗位申请和面试安排"
+  },
+  {
+    "path": ".dashboard.k48",
+    "text": "查看我的上课记录和导师反馈"
+  },
+  {
+    "path": ".dashboard.k51",
+    "text": "为您填报了"
+  },
+  {
+    "path": ".dashboard.k52",
+    "text": "条新的上课记录，请及时评价"
+  },
+  {
+    "path": ".dashboard.k53",
+    "text": "去评价"
+  },
+  {
+    "path": ".dashboard.k55",
+    "text": "辅导内容"
+  },
+  {
+    "path": ".dashboard.k56",
+    "text": "课程内容"
+  },
+  {
+    "path": ".dashboard.k57",
+    "text": "上课日期"
+  },
+  {
+    "path": ".dashboard.k58",
+    "text": "时长"
+  },
+  {
+    "path": ".dashboard.k59",
+    "text": "我的评价"
+  },
+  {
+    "path": ".dashboard.k61",
+    "text": "修改评价"
+  },
+  {
+    "path": ".dashboard.k62",
+    "text": "课程评价"
+  },
+  {
+    "path": ".dashboard.k63",
+    "text": "整体评分"
+  },
+  {
+    "path": ".dashboard.k64",
+    "text": "评价标签"
+  },
+  {
+    "path": ".dashboard.k65",
+    "text": "详细反馈"
+  },
+  {
+    "path": ".dashboard.k67",
+    "text": "提交评价"
+  },
+  {
+    "path": ".dashboard.k68",
+    "text": "评价提交成功"
+  },
+  {
+    "path": ".dashboard.k69",
+    "text": "继续补充更多真实反馈"
+  },
+  {
+    "path": ".dashboard.k70",
+    "text": "基础资料与求职意向已同步"
+  },
+  {
+    "path": ".dashboard.k74",
+    "text": "当前暂无进行中的求职记录，建议先完善岗位收藏与申请动作。"
+  },
+  {
+    "path": ".faq.k2",
+    "text": "如何申请课程/Staffing Request？"
+  },
+  {
+    "path": ".faq.k3",
+    "text": "点击左侧菜单中的相关入口，选择对应学生类型并填写信息，提交后 Lead Mentor 会安排课程。"
+  },
+  {
+    "path": ".faq.k4",
+    "text": "如何更新我的简历？"
+  },
+  {
+    "path": ".faq.k5",
+    "text": "进入“我的简历 Resume”页面，点击右上角“上传新简历”按钮，选择 PDF 或 Word 文件上传。"
+  },
+  {
+    "path": ".faq.k6",
+    "text": "Mock Interview后多久能收到反馈？"
+  },
+  {
+    "path": ".faq.k7",
+    "text": "通常在 Mock Interview 结束后 24-48 小时内，Mentor 会在课程反馈页面提交反馈。"
+  },
+  {
+    "path": ".faq.k8",
+    "text": "如何填写面试真题？"
+  },
+  {
+    "path": ".faq.k9",
+    "text": "完成真实面试后，请进入“面试真题 Questions”页面，点击“填写真题”按钮提交公司、岗位和问题信息。"
+  },
+  {
+    "path": ".faq.k10",
+    "text": "Networking Log有什么用？"
+  },
+  {
+    "path": ".faq.k11",
+    "text": "记录 Networking 沟通可以帮助 Lead Mentor 了解您的求职进度，并提供更有针对性的指导。"
+  },
+  {
+    "path": ".faq.k12",
+    "text": "如何联系我的Lead Mentor？"
+  },
+  {
+    "path": ".faq.k13",
+    "text": "您可以通过微信群、邮件或在课程申请备注中提出问题，紧急情况也可以联系 RA 助教协助处理。"
+  },
+  {
+    "path": ".faq.k14",
+    "text": "题库资料可以下载吗？"
+  },
+  {
+    "path": ".faq.k15",
+    "text": "可以。请优先使用最新资料，部分过期材料仅作为参考。"
+  },
+  {
+    "path": ".feedback.k3",
+    "text": "回答结构清晰，对行业问题的理解扎实，建议继续强化 behavioral examples 的数据表达。"
+  },
+  {
+    "path": ".feedback.k4",
+    "text": "材料准备不足，建议先补齐公司研究和基础 technical 框架后再安排下一轮练习。"
+  },
+  {
+    "path": ".feedback.k5",
+    "text": "知识点覆盖基本完整，但缺少高质量 follow-up 回答，建议继续增加 mock 次数。"
+  },
+  {
+    "path": ".feedback.k6",
+    "text": "Email outreach 比较成熟，电话沟通节奏稳定，对方愿意继续保持联系。"
+  },
+  {
+    "path": ".feedback.k7",
+    "text": "脚本痕迹偏重，建议补充更个性化的 follow-up 和针对性提问。"
+  },
+  {
+    "path": ".feedback.k8",
+    "text": "对方反馈积极，后续可围绕香港 office 的团队差异继续深挖。"
+  },
+  {
+    "path": ".feedback.k9",
+    "text": "DCF Analysis 表现稳定，case 结构完整，建议继续提升对 market assumptions 的灵活应对。"
+  },
+  {
+    "path": ".feedback.k10",
+    "text": "LBO Model 部分还不够熟练，建议加强 debt schedule 和 returns bridge 讲解。"
+  },
+  {
+    "path": ".feedback.k11",
+    "text": "M&A Valuation 回答优秀，框架清楚且表达自信，是当前最稳定的一次演练。"
+  },
+  {
+    "path": ".feedback.k12",
+    "text": "Financial Modeling 框架不稳，需要回到基础重练并补齐公式解释。"
+  },
+  {
+    "path": ".files.k1",
+    "text": "文件"
+  },
+  {
+    "path": ".files.k2",
+    "text": "搜索文件名..."
+  },
+  {
+    "path": ".files.k4",
+    "text": "文件夹"
+  },
+  {
+    "path": ".files.k5",
+    "text": "8项"
+  },
+  {
+    "path": ".files.k6",
+    "text": "咨询行业概览.pdf"
+  },
+  {
+    "path": ".interviewBank.k1",
+    "text": "真人面试题库"
+  },
+  {
+    "path": ".interviewBank.k4",
+    "text": "搜索题库..."
+  },
+  {
+    "path": ".interviewBank.k5",
+    "text": "面试阶段"
+  },
+  {
+    "path": ".interviewBank.k8",
+    "text": "题库名称"
+  },
+  {
+    "path": ".interviewBank.k9",
+    "text": "题目数"
+  },
+  {
+    "path": ".interviewBank.k10",
+    "text": "更新时间"
+  },
+  {
+    "path": ".loginWorkflow.k1",
+    "text": "请输入邮箱"
+  },
+  {
+    "path": ".loginWorkflow.k2",
+    "text": "邮箱格式不正确"
+  },
+  {
+    "path": ".loginWorkflow.k3",
+    "text": "请输入密码"
+  },
+  {
+    "path": ".loginWorkflow.k4",
+    "text": "登录成功"
+  },
+  {
+    "path": ".loginWorkflow.k5",
+    "text": "邮箱或密码错误"
+  },
+  {
+    "path": ".mockPractice.k2",
+    "text": "查看申请"
+  },
+  {
+    "path": ".mockPractice.k3",
+    "text": "你为什么要做面试测试？"
+  },
+  {
+    "path": ".mockPractice.k4",
+    "text": "说明公司、岗位与紧迫程度，导师能更精准地为你准备。"
+  },
+  {
+    "path": ".mockPractice.k5",
+    "text": "需要几位导师？"
+  },
+  {
+    "path": ".mockPractice.k6",
+    "text": "Optional · 偏好"
+  },
+  {
+    "path": ".mockPractice.k7",
+    "text": "意向导师"
+  },
+  {
+    "path": ".mockPractice.k8",
+    "text": "排除导师"
+  },
+  {
+    "path": ".mockPractice.k9",
+    "text": "备注说明"
+  },
+  {
+    "path": ".mockPractice.k11",
+    "text": "提交申请"
+  },
+  {
+    "path": ".mockPractice.k12",
+    "text": "申请时间"
+  },
+  {
+    "path": ".mockPractice.k13",
+    "text": "预约时间"
+  },
+  {
+    "path": ".mockPractice.k14",
+    "text": "分配导师"
+  },
+  {
+    "path": ".mockPractice.k15",
+    "text": "导师数量"
+  },
+  {
+    "path": ".mockPractice.k16",
+    "text": "位"
+  },
+  {
+    "path": ".mockPractice.k17",
+    "text": "申请内容"
+  },
+  {
+    "path": ".mockPractice.k20",
+    "text": "详细反馈"
+  },
+  {
+    "path": ".mockPractice.k21",
+    "text": "改进建议"
+  },
+  {
+    "path": ".mockPractice.k22",
+    "text": "即将参加某公司的面试 / 希望提升某类问题的应对..."
+  },
+  {
+    "path": ".mockPractice.k23",
+    "text": "选择参与面试的导师人数"
+  },
+  {
+    "path": ".mockPractice.k24",
+    "text": "导师姓名"
+  },
+  {
+    "path": ".mockPractice.k25",
+    "text": "如有特殊需求或时间偏好，写在这里..."
+  },
+  {
+    "path": ".mockPractice.k28",
+    "text": "已上课时"
+  },
+  {
+    "path": ".mockPractice.k31",
+    "text": "由班主任统一分配导师并安排软技能考核"
+  },
+  {
+    "path": ".mockPractice.k32",
+    "text": "测试说明"
+  },
+  {
+    "path": ".mockPractice.k33",
+    "text": "人际关系测试将由班主任直接分配导师，测试内容包括邮件沟通、电话礼仪、自我介绍等职场软技能。"
+  },
+  {
+    "path": ".mockPractice.k34",
+    "text": "阶段性知识检测将结合当前学习进度安排考核"
+  },
+  {
+    "path": ".mockPractice.k35",
+    "text": "考试说明"
+  },
+  {
+    "path": ".mockPractice.k36",
+    "text": "期中考试是阶段性知识检测，由班主任直接分配导师进行考核，考核内容根据您的学习进度而定。"
+  },
+  {
+    "path": ".mockPractice.k37",
+    "text": "提交申请后，班主任会尽快协助安排合适导师"
+  },
+  {
+    "path": ".mockPractice.k38",
+    "text": "安排说明"
+  },
+  {
+    "path": ".mockPractice.k39",
+    "text": "面试测试会根据您的目标公司、轮次和准备状态安排导师，请尽量补充完整背景信息以便更精准地分配。"
+  },
+  {
+    "path": ".mockPractice.k40",
+    "text": "MENTOR SESSION · 面试测试"
+  },
+  {
+    "path": ".mockPractice.k41",
+    "text": "准备好直面面试官了吗？"
+  },
+  {
+    "path": ".mockPractice.k42",
+    "text": "与资深导师 1 对 1 演练，把每一次模拟都变成真实战场的预演。"
+  },
+  {
+    "path": ".mockPractice.k43",
+    "text": "提交后班主任通常 24 小时内回复并安排导师"
+  },
+  {
+    "path": ".mockPractice.k44",
+    "text": "SOFT SKILL CHECK · 人际测试"
+  },
+  {
+    "path": ".mockPractice.k45",
+    "text": "检验你的职场沟通力"
+  },
+  {
+    "path": ".mockPractice.k46",
+    "text": "邮件礼仪、电话表达、自我介绍 —— 软技能决定第一印象。"
+  },
+  {
+    "path": ".mockPractice.k47",
+    "text": "班主任将根据排期为你直接分配测试导师"
+  },
+  {
+    "path": ".mockPractice.k48",
+    "text": "PROGRESS REVIEW · 期中考核"
+  },
+  {
+    "path": ".mockPractice.k49",
+    "text": "阶段性知识盘点"
+  },
+  {
+    "path": ".mockPractice.k50",
+    "text": "基于你当前的学习进度，导师会出一份贴合你节奏的检测题。"
+  },
+  {
+    "path": ".mockPractice.k51",
+    "text": "考核安排会与学习节奏匹配，无需提前准备"
+  },
+  {
+    "path": ".mockPractice.k52",
+    "text": "请填写面试测试申请原因"
+  },
+  {
+    "path": ".mockPractice.k53",
+    "text": "请选择导师数量"
+  },
+  {
+    "path": ".mockPractice.k54",
+    "text": "面试测试申请已提交！班主任将尽快为您安排导师。"
+  },
+  {
+    "path": ".mockPractice.k55",
+    "text": "申请已提交！班主任将为您分配导师。"
+  },
+  {
+    "path": ".netlog.k1",
+    "text": "沟通记录"
+  },
+  {
+    "path": ".netlog.k2",
+    "text": "完成了一次沟通？"
+  },
+  {
+    "path": ".netlog.k3",
+    "text": "记录你的Networking成果"
+  },
+  {
+    "path": ".netlog.k4",
+    "text": "填写记录"
+  },
+  {
+    "path": ".netlog.k7",
+    "text": "对方"
+  },
+  {
+    "path": ".netlog.k8",
+    "text": "级别"
+  },
+  {
+    "path": ".netlog.k12",
+    "text": "对方姓名"
+  },
+  {
+    "path": ".netlog.k13",
+    "text": "沟通时间"
+  },
+  {
+    "path": ".netlog.k14",
+    "text": "沟通方式"
+  },
+  {
+    "path": ".netlog.k15",
+    "text": "沟通内容"
+  },
+  {
+    "path": ".netlog.k16",
+    "text": "收获与总结"
+  },
+  {
+    "path": ".netlog.k21",
+    "text": "搜索公司/对方..."
+  },
+  {
+    "path": ".netlog.k22",
+    "text": "沟通记录详情"
+  },
+  {
+    "path": ".netlog.k23",
+    "text": "填写沟通记录"
+  },
+  {
+    "path": ".netlog.k25",
+    "text": "如：Goldman Sachs"
+  },
+  {
+    "path": ".netlog.k26",
+    "text": "如：John Smith"
+  },
+  {
+    "path": ".netlog.k27",
+    "text": "沟通日期"
+  },
+  {
+    "path": ".netlog.k28",
+    "text": "记录本次 networking 的沟通内容"
+  },
+  {
+    "path": ".netlog.k30",
+    "text": "电话"
+  },
+  {
+    "path": ".netlog.k31",
+    "text": "邮件"
+  },
+  {
+    "path": ".netlog.k32",
+    "text": "面谈"
+  },
+  {
+    "path": ".netlog.k33",
+    "text": "通过 LinkedIn 联系到对方，进行了 30 分钟电话沟通，重点了解 IBD 部门工作内容与面试流程。"
+  },
+  {
+    "path": ".netlog.k34",
+    "text": "1. 了解了 IBD 的日常工作节奏\\n2. 获得了面试准备建议\\n3. 对方愿意在后续流程中提供内推支持"
+  },
+  {
+    "path": ".netlog.k35",
+    "text": "通过邮件跟进前次 coffee chat，确认了团队在香港办公室的招聘节奏与首轮行为面方向。"
+  },
+  {
+    "path": ".netlog.k36",
+    "text": "1. 招聘节奏集中在 1 月\\n2. 推荐提前准备 Why this desk / Why Hong Kong 相关问题"
+  },
+  {
+    "path": ".notice.k2",
+    "text": "全部已读"
+  },
+  {
+    "path": ".notice.k4",
+    "text": "未读消息"
+  },
+  {
+    "path": ".notice.k6",
+    "text": "系统通知"
+  },
+  {
+    "path": ".notice.k7",
+    "text": "消息列表"
+  },
+  {
+    "path": ".notice.k8",
+    "text": "未读"
+  },
+  {
+    "path": ".notice.k12",
+    "text": "面试测试已安排"
+  },
+  {
+    "path": ".notice.k13",
+    "text": "您申请的面试测试已安排，导师：Jerry Li，时间：01/18/2026 14:00"
+  },
+  {
+    "path": ".notice.k14",
+    "text": "您申请的面试测试已安排成功，详情如下：分配导师 Jerry Li，预约时间 2026-01-18 14:00，模拟内容 Goldman Sachs IB 二面。"
+  },
+  {
+    "path": ".notice.k15",
+    "text": "10分钟前"
+  },
+  {
+    "path": ".notice.k17",
+    "text": "王导师已提交您的期中考试反馈，评分：4分（良好），点击查看详情"
+  },
+  {
+    "path": ".notice.k18",
+    "text": "导师反馈已经同步到课程反馈页面，请及时查看并安排 follow-up 复盘。"
+  },
+  {
+    "path": ".notice.k19",
+    "text": "2小时前"
+  },
+  {
+    "path": ".notice.k20",
+    "text": "合同即将到期提醒"
+  },
+  {
+    "path": ".notice.k21",
+    "text": "您的服务合同将于 30 天后到期，如需续签请联系班主任。"
+  },
+  {
+    "path": ".notice.k22",
+    "text": "合同将在 02/17/2026 到期，如需续签请提前联系班主任安排后续流程。"
+  },
+  {
+    "path": ".notice.k24",
+    "text": "欢迎加入OSG"
+  },
+  {
+    "path": ".notice.k25",
+    "text": "您的账号已激活，班主任 Test Lead Mentor 将为您提供服务。"
+  },
+  {
+    "path": ".notice.k26",
+    "text": "欢迎加入 OSG Student。请先完成个人信息检查，并查看首页快捷操作。"
+  },
+  {
+    "path": ".onlineTestBank.k1",
+    "text": "在线测试题库"
+  },
+  {
+    "path": ".onlineTestBank.k4",
+    "text": "搜索题库..."
+  },
+  {
+    "path": ".onlineTestBank.k7",
+    "text": "题库名称"
+  },
+  {
+    "path": ".onlineTestBank.k8",
+    "text": "题目数"
+  },
+  {
+    "path": ".onlineTestBank.k9",
+    "text": "更新时间"
+  },
+  {
+    "path": ".placeholder.k1",
+    "text": "当前页面会在后续需求中逐步开放，本次先保留导航与路由承接，避免误入未交付功能。"
+  },
+  {
+    "path": ".placeholder.k2",
+    "text": "`已保留路由：${requestedPath}`"
+  },
+  {
+    "path": ".placeholder.k3",
+    "text": "当前页面不在本次学生端交付范围内。"
+  },
+  {
+    "path": ".positions.k5",
+    "text": "您的求职意向尚未填写完整，无法为您筛选合适的岗位。请先到\"求职意向\"中补全"
+  },
+  {
+    "path": ".positions.k6",
+    "text": "招聘周期 / 求职地区 / 主攻方向"
+  },
+  {
+    "path": ".positions.k7",
+    "text": "三项后再返回此页查看岗位列表。"
+  },
+  {
+    "path": ".positions.k9",
+    "text": "根据您的求职意向，当前展示"
+  },
+  {
+    "path": ".positions.k12",
+    "text": "主攻方向的岗位信息"
+  },
+  {
+    "path": ".positions.k13",
+    "text": "前往修改求职意向"
+  },
+  {
+    "path": ".positions.k16",
+    "text": "个岗位"
+  },
+  {
+    "path": ".positions.k17",
+    "text": "官网"
+  },
+  {
+    "path": ".positions.k18",
+    "text": "共"
+  },
+  {
+    "path": ".positions.k19",
+    "text": "收藏的岗位"
+  },
+  {
+    "path": ".positions.k20",
+    "text": "公司信息"
+  },
+  {
+    "path": ".positions.k21",
+    "text": "辅导需求"
+  },
+  {
+    "path": ".positions.k22",
+    "text": "暂不需要辅导，仅添加到追踪列表"
+  },
+  {
+    "path": ".positions.k23",
+    "text": "需要辅导，同时申请导师辅导"
+  },
+  {
+    "path": ".positions.k24",
+    "text": "HireVue or Online Test（在线测试）"
+  },
+  {
+    "path": ".positions.k25",
+    "text": "HireVue / Online Test 信息"
+  },
+  {
+    "path": ".positions.k26",
+    "text": "点击上传截图"
+  },
+  {
+    "path": ".positions.k27",
+    "text": "支持 JPG、PNG 格式"
+  },
+  {
+    "path": ".positions.k28",
+    "text": "是，需要导师协助"
+  },
+  {
+    "path": ".positions.k29",
+    "text": "否，仅需题库权限"
+  },
+  {
+    "path": ".positions.k30",
+    "text": "记录岗位进度"
+  },
+  {
+    "path": ".positions.k31",
+    "text": "标记已投递"
+  },
+  {
+    "path": ".positions.k32",
+    "text": "岗位申请"
+  },
+  {
+    "path": ".positions.k33",
+    "text": "0 位（不需要导师）"
+  },
+  {
+    "path": ".positions.k34",
+    "text": "1 位导师"
+  },
+  {
+    "path": ".positions.k35",
+    "text": "2 位导师"
+  },
+  {
+    "path": ".positions.k36",
+    "text": "3 位导师"
+  },
+  {
+    "path": ".positions.k37",
+    "text": "求职意向不完整，无法展示岗位"
+  },
+  {
+    "path": ".positions.k43",
+    "text": "求职状态"
+  },
+  {
+    "path": ".positions.k44",
+    "text": "record.favorited ? '已收藏点击取消' : '添加到收藏'"
+  },
+  {
+    "path": ".positions.k45",
+    "text": "record.favorited ? '取消收藏' : '收藏'"
+  },
+  {
+    "path": ".positions.k49",
+    "text": "找不到想申请的岗位？填写以下信息手动添加到您的求职列表"
+  },
+  {
+    "path": ".positions.k52",
+    "text": "公司名称（选填）"
+  },
+  {
+    "path": ".positions.k54",
+    "text": "公司类别（选填）"
+  },
+  {
+    "path": ".positions.k55",
+    "text": "如：投行、基金、咨询"
+  },
+  {
+    "path": ".positions.k56",
+    "text": "岗位地区（选填）"
+  },
+  {
+    "path": ".positions.k58",
+    "text": "城市（选填）"
+  },
+  {
+    "path": ".positions.k59",
+    "text": "请先选择岗位地区"
+  },
+  {
+    "path": ".positions.k60",
+    "text": "公司官网（选填）"
+  },
+  {
+    "path": ".positions.k61",
+    "text": "岗位链接"
+  },
+  {
+    "path": ".positions.k62",
+    "text": "你现在处于什么阶段？"
+  },
+  {
+    "path": ".positions.k63",
+    "text": "请选择面试阶段"
+  },
+  {
+    "path": ".positions.k65",
+    "text": "VI 链接"
+  },
+  {
+    "path": ".positions.k66",
+    "text": "请输入 Video Interview 链接"
+  },
+  {
+    "path": ".positions.k67",
+    "text": "OT 链接"
+  },
+  {
+    "path": ".positions.k68",
+    "text": "请输入 Online Test 链接"
+  },
+  {
+    "path": ".positions.k69",
+    "text": "登录账号"
+  },
+  {
+    "path": ".positions.k70",
+    "text": "账号"
+  },
+  {
+    "path": ".positions.k71",
+    "text": "登录密码"
+  },
+  {
+    "path": ".positions.k72",
+    "text": "密码"
+  },
+  {
+    "path": ".positions.k74",
+    "text": "请填写 VI/OT 的截止时间"
+  },
+  {
+    "path": ".positions.k75",
+    "text": "选择截止日期与时间"
+  },
+  {
+    "path": ".positions.k76",
+    "text": "上传邀请邮件截图"
+  },
+  {
+    "path": ".positions.k77",
+    "text": "是否需要导师协助？"
+  },
+  {
+    "path": ".positions.k78",
+    "text": "该阶段的面试时间"
+  },
+  {
+    "path": ".positions.k79",
+    "text": "请填写该阶段面试的具体时间，方便导师安排辅导"
+  },
+  {
+    "path": ".positions.k80",
+    "text": "选择面试日期与时间"
+  },
+  {
+    "path": ".positions.k81",
+    "text": "你期望有几个导师辅导？（选填）"
+  },
+  {
+    "path": ".positions.k82",
+    "text": "意向导师（选填）"
+  },
+  {
+    "path": ".positions.k83",
+    "text": "如有特别想要的导师，请填写导师姓名"
+  },
+  {
+    "path": ".positions.k84",
+    "text": "排除导师（选填）"
+  },
+  {
+    "path": ".positions.k85",
+    "text": "如有不想选择的导师，请填写导师姓名"
+  },
+  {
+    "path": ".positions.k86",
+    "text": "备注说明（选填）"
+  },
+  {
+    "path": ".positions.k87",
+    "text": "如有其他需求或说明，请在此填写..."
+  },
+  {
+    "path": ".positions.k88",
+    "text": "保存进度"
+  },
+  {
+    "path": ".positions.k89",
+    "text": "当前阶段"
+  },
+  {
+    "path": ".positions.k90",
+    "text": "选择阶段"
+  },
+  {
+    "path": ".positions.k92",
+    "text": "记录这一轮的关键进展或提醒"
+  },
+  {
+    "path": ".positions.k93",
+    "text": "确认投递"
+  },
+  {
+    "path": ".positions.k94",
+    "text": "投递日期"
+  },
+  {
+    "path": ".positions.k95",
+    "text": "选择投递日期"
+  },
+  {
+    "path": ".positions.k96",
+    "text": "投递方式"
+  },
+  {
+    "path": ".positions.k97",
+    "text": "选择投递方式"
+  },
+  {
+    "path": ".positions.k98",
+    "text": "如：投递了哪个部门或是否有内推"
+  },
+  {
+    "path": ".positions.k99",
+    "text": "提交申请"
+  },
+  {
+    "path": ".positions.k100",
+    "text": "申请将流转至班主任和后台管理员，他们都有权限为您分配导师。"
+  },
+  {
+    "path": ".positions.k101",
+    "text": "未归类"
+  },
+  {
+    "path": ".positions.k102",
+    "text": "Goldman Sachs / IB Analyst / 已投递"
+  },
+  {
+    "path": ".positions.k103",
+    "text": "Goldman Sachs / IB Analyst / 收藏"
+  },
+  {
+    "path": ".positions.k104",
+    "text": "Goldman Sachs / IB Analyst / 进度"
+  },
+  {
+    "path": ".positions.k105",
+    "text": "JP Morgan / S&T Analyst / 未投递"
+  },
+  {
+    "path": ".positions.k106",
+    "text": "JP Morgan / S&T Analyst / 收藏"
+  },
+  {
+    "path": ".positions.k107",
+    "text": "JP Morgan / S&T Analyst / 申请辅导"
+  },
+  {
+    "path": ".positions.k108",
+    "text": "McKinsey / Business Analyst / 未投递"
+  },
+  {
+    "path": ".positions.k109",
+    "text": "McKinsey / Business Analyst / 收藏"
+  },
+  {
+    "path": ".positions.k110",
+    "text": "McKinsey / Business Analyst / 申请辅导"
+  },
+  {
+    "path": ".positions.k111",
+    "text": "JP Morgan / 取消收藏"
+  },
+  {
+    "path": ".positions.k112",
+    "text": "JP Morgan / 投递"
+  },
+  {
+    "path": ".positions.k113",
+    "text": "JP Morgan / 申请辅导"
+  },
+  {
+    "path": ".positions.k114",
+    "text": "McKinsey / 取消收藏"
+  },
+  {
+    "path": ".positions.k115",
+    "text": "McKinsey / 申请辅导"
+  },
+  {
+    "path": ".positions.k116",
+    "text": "官网投递"
+  },
+  {
+    "path": ".positions.k118",
+    "text": "部门"
+  },
+  {
+    "path": ".positions.k126",
+    "text": "收藏时间"
+  },
+  {
+    "path": ".positions.k127",
+    "text": "邀请邮件截图上传成功"
+  },
+  {
+    "path": ".positions.k128",
+    "text": "上传响应缺少 url，请重试"
+  },
+  {
+    "path": ".positions.k129",
+    "text": "上传失败，请重试"
+  },
+  {
+    "path": ".positions.k130",
+    "text": "已取消收藏"
+  },
+  {
+    "path": ".positions.k131",
+    "text": "请填写岗位名称"
+  },
+  {
+    "path": ".positions.k132",
+    "text": "请填写岗位链接"
+  },
+  {
+    "path": ".positions.k133",
+    "text": "请选择当前面试阶段"
+  },
+  {
+    "path": ".positions.k134",
+    "text": "请选择 VI 或 OT 类型"
+  },
+  {
+    "path": ".positions.k135",
+    "text": "请填写 VI 链接"
+  },
+  {
+    "path": ".positions.k136",
+    "text": "请完整填写 OT 链接、账号和密码"
+  },
+  {
+    "path": ".positions.k137",
+    "text": "请填写截止时间"
+  },
+  {
+    "path": ".positions.k138",
+    "text": "请填写面试时间"
+  },
+  {
+    "path": ".positions.k139",
+    "text": "岗位已添加到您的追踪列表"
+  },
+  {
+    "path": ".positions.k140",
+    "text": "岗位进度已更新"
+  },
+  {
+    "path": ".positions.k141",
+    "text": "该岗位尚未投递"
+  },
+  {
+    "path": ".positions.k142",
+    "text": "请先投递该岗位后，再切换其他状态"
+  },
+  {
+    "path": ".positions.k143",
+    "text": "请选择投递日期"
+  },
+  {
+    "path": ".positions.k144",
+    "text": "已标记为已投递"
+  },
+  {
+    "path": ".positions.k145",
+    "text": "请上传邀请邮件截图"
+  },
+  {
+    "path": ".positions.k146",
+    "text": "请选择是否需要导师协助"
+  },
+  {
+    "path": ".positions.k147",
+    "text": "请填写该阶段的面试时间"
+  },
+  {
+    "path": ".positions.k148",
+    "text": "辅导申请已提交"
+  },
+  {
+    "path": ".profile.k2",
+    "text": "编辑信息"
+  },
+  {
+    "path": ".profile.k5",
+    "text": "核心信息"
+  },
+  {
+    "path": ".profile.k6",
+    "text": "英文姓名"
+  },
+  {
+    "path": ".profile.k7",
+    "text": "性别"
+  },
+  {
+    "path": ".profile.k8",
+    "text": "邮箱"
+  },
+  {
+    "path": ".profile.k9",
+    "text": "导师配置"
+  },
+  {
+    "path": ".profile.k12",
+    "text": "学业信息"
+  },
+  {
+    "path": ".profile.k13",
+    "text": "学校"
+  },
+  {
+    "path": ".profile.k14",
+    "text": "专业"
+  },
+  {
+    "path": ".profile.k15",
+    "text": "毕业年份"
+  },
+  {
+    "path": ".profile.k16",
+    "text": "高中"
+  },
+  {
+    "path": ".profile.k17",
+    "text": "是否读研或延毕"
+  },
+  {
+    "path": ".profile.k18",
+    "text": "签证"
+  },
+  {
+    "path": ".profile.k19",
+    "text": "求职方向"
+  },
+  {
+    "path": ".profile.k20",
+    "text": "求职地区"
+  },
+  {
+    "path": ".profile.k23",
+    "text": "子方向"
+  },
+  {
+    "path": ".profile.k24",
+    "text": "联系方式"
+  },
+  {
+    "path": ".profile.k25",
+    "text": "电话"
+  },
+  {
+    "path": ".profile.k26",
+    "text": "微信ID"
+  },
+  {
+    "path": ".profile.k28",
+    "text": "请选择或输入学校"
+  },
+  {
+    "path": ".profile.k29",
+    "text": "选填"
+  },
+  {
+    "path": ".profile.k30",
+    "text": "请选择招聘周期（可多选）"
+  },
+  {
+    "path": ".profile.k31",
+    "text": "请选择求职地区（可多选）"
+  },
+  {
+    "path": ".profile.k32",
+    "text": "请选择主攻方向（可多选）"
+  },
+  {
+    "path": ".profile.k33",
+    "text": "请选择或输入子方向"
+  },
+  {
+    "path": ".profile.k36",
+    "text": "正常"
+  },
+  {
+    "path": ".questions.k1",
+    "text": "面试真题"
+  },
+  {
+    "path": ".questions.k2",
+    "text": "填写真题"
+  },
+  {
+    "path": ".questions.k5",
+    "text": "部门"
+  },
+  {
+    "path": ".questions.k6",
+    "text": "地点"
+  },
+  {
+    "path": ".questions.k7",
+    "text": "轮次"
+  },
+  {
+    "path": ".questions.k8",
+    "text": "题目数"
+  },
+  {
+    "path": ".questions.k9",
+    "text": "更新时间"
+  },
+  {
+    "path": ".questions.k14",
+    "text": "填写"
+  },
+  {
+    "path": ".questions.k17",
+    "text": "提交真题"
+  },
+  {
+    "path": ".questions.k19",
+    "text": "以下信息来自您的入职面试申请，审核通过后将自动开放给相同申请（同公司、部门、办公地点、面试状态）的学生。"
+  },
+  {
+    "path": ".questions.k20",
+    "text": "审核状态"
+  },
+  {
+    "path": ".questions.k22",
+    "text": "已开放题库 3"
+  },
+  {
+    "path": ".questions.k26",
+    "text": "如：Goldman Sachs"
+  },
+  {
+    "path": ".questions.k28",
+    "text": "如：Investment Banking"
+  },
+  {
+    "path": ".questions.k30",
+    "text": "如：New York"
+  },
+  {
+    "path": ".questions.k34",
+    "text": "如：John Smith, VP"
+  },
+  {
+    "path": ".questions.k36",
+    "text": "请逐条填写面试题目"
+  },
+  {
+    "path": ".questions.k37",
+    "text": "填写面试真题（来自入职面试申请）"
+  },
+  {
+    "path": ".questions.k40",
+    "text": "编辑面试真题"
+  },
+  {
+    "path": ".questions.k41",
+    "text": "请逐条补充或修改面试题目"
+  },
+  {
+    "path": ".questions.k42",
+    "text": "待填写"
+  },
+  {
+    "path": ".questions.k43",
+    "text": "待审核"
+  },
+  {
+    "path": ".questions.k44",
+    "text": "已通过"
+  },
+  {
+    "path": ".questions.k45",
+    "text": "6题"
+  },
+  {
+    "path": ".questions.k46",
+    "text": "5题"
+  },
+  {
+    "path": ".questions.k47",
+    "text": "4题"
+  },
+  {
+    "path": ".questions.k48",
+    "text": "3题"
+  },
+  {
+    "path": ".report.k1",
+    "text": "上课记录"
+  },
+  {
+    "path": ".report.k3",
+    "text": "提交评价"
+  },
+  {
+    "path": ".report.k5",
+    "text": "待评价"
+  },
+  {
+    "path": ".report.k6",
+    "text": "已评价"
+  },
+  {
+    "path": ".report.k8",
+    "text": "课程来源"
+  },
+  {
+    "path": ".report.k10",
+    "text": "评价状态"
+  },
+  {
+    "path": ".report.k11",
+    "text": "课程评价"
+  },
+  {
+    "path": ".report.k12",
+    "text": "整体评分"
+  },
+  {
+    "path": ".report.k13",
+    "text": "评价标签（可多选）"
+  },
+  {
+    "path": ".report.k14",
+    "text": "详细反馈"
+  },
+  {
+    "path": ".report.k15",
+    "text": "请详细描述您的上课体验、导师表现以及改进建议..."
+  },
+  {
+    "path": ".report.k17",
+    "text": "课时"
+  },
+  {
+    "path": ".report.k18",
+    "text": "上课日期"
+  },
+  {
+    "path": ".report.k19",
+    "text": "来源"
+  },
+  {
+    "path": ".report.k20",
+    "text": "我的评价"
+  },
+  {
+    "path": ".report.k22",
+    "text": "我的申请"
+  },
+  {
+    "path": ".report.k23",
+    "text": "导师填报"
+  },
+  {
+    "path": ".report.k24",
+    "text": "入职面试"
+  },
+  {
+    "path": ".report.k25",
+    "text": "面试测试"
+  },
+  {
+    "path": ".report.k26",
+    "text": "笔试辅导"
+  },
+  {
+    "path": ".report.k27",
+    "text": "模拟期中"
+  },
+  {
+    "path": ".report.k29",
+    "text": "评价"
+  },
+  {
+    "path": ".report.k30",
+    "text": "已评价 ⭐4.5"
+  },
+  {
+    "path": ".report.k31",
+    "text": "重新评价"
+  },
+  {
+    "path": ".report.k32",
+    "text": "已评价 ⭐5.0"
+  },
+  {
+    "path": ".report.k33",
+    "text": "专业能力强"
+  },
+  {
+    "path": ".report.k34",
+    "text": "耐心细致"
+  },
+  {
+    "path": ".report.k35",
+    "text": "反馈及时"
+  },
+  {
+    "path": ".report.k36",
+    "text": "收获很大"
+  },
+  {
+    "path": ".report.k37",
+    "text": "准时守约"
+  },
+  {
+    "path": ".report.k38",
+    "text": "1分 - 很差"
+  },
+  {
+    "path": ".report.k39",
+    "text": "2分 - 一般"
+  },
+  {
+    "path": ".report.k40",
+    "text": "3分 - 还行"
+  },
+  {
+    "path": ".report.k41",
+    "text": "4分 - 很好"
+  },
+  {
+    "path": ".report.k42",
+    "text": "5分 - 非常棒"
+  },
+  {
+    "path": ".resources.k2",
+    "text": "学习资源"
+  },
+  {
+    "path": ".resources.k3",
+    "text": "学习文档"
+  },
+  {
+    "path": ".resources.k4",
+    "text": "题库"
+  },
+  {
+    "path": ".resources.k5",
+    "text": "题库功能开发中"
+  },
+  {
+    "path": ".resources.k6",
+    "text": "面试真题"
+  },
+  {
+    "path": ".resources.k7",
+    "text": "面试真题功能开发中"
+  },
+  {
+    "path": ".resources.k8",
+    "text": "Java 核心知识点总结"
+  },
+  {
+    "path": ".resources.k9",
+    "text": "PDF 文档，包含 Java 基础、集合、多线程等"
+  },
+  {
+    "path": ".resources.k10",
+    "text": "Spring Boot 最佳实践"
+  },
+  {
+    "path": ".resources.k11",
+    "text": "Spring Boot 项目开发规范与最佳实践"
+  },
+  {
+    "path": ".resources.k12",
+    "text": "简历模板"
+  },
+  {
+    "path": ".resources.k13",
+    "text": "技术岗位简历模板与撰写指南"
+  },
+  {
+    "path": ".restricted.k1",
+    "text": "受限模式"
+  },
+  {
+    "path": ".restricted.k2",
+    "text": "账号状态受限"
+  },
+  {
+    "path": ".restricted.k3",
+    "text": "您的账号当前处于冻结状态，仅可查看课时管理相关功能。如有疑问请联系您的班主任。"
+  },
+  {
+    "path": ".restricted.k4",
+    "text": "剩余课时"
+  },
+  {
+    "path": ".restricted.k5",
+    "text": "已使用课时"
+  },
+  {
+    "path": ".restricted.k6",
+    "text": "合同总课时"
+  },
+  {
+    "path": ".restricted.k7",
+    "text": "最近课程记录"
+  },
+  {
+    "path": ".restricted.k8",
+    "text": "联系班主任"
+  },
+  {
+    "path": ".restricted.k9",
+    "text": "如需恢复账号或有其他问题，请联系班主任"
+  },
+  {
+    "path": ".restricted.k10",
+    "text": "发送消息"
+  },
+  {
+    "path": ".restricted.k18",
+    "text": "时长"
+  },
+  {
+    "path": ".restricted.k21",
+    "text": "评价"
+  },
+  {
+    "path": ".restricted.k23",
+    "text": "面试测试"
+  },
+  {
+    "path": ".restricted.k24",
+    "text": "已完成"
+  },
+  {
+    "path": ".resume.k2",
+    "text": "上传新简历"
+  },
+  {
+    "path": ".resume.k3",
+    "text": "我上传的简历"
+  },
+  {
+    "path": ".resume.k4",
+    "text": "12/01/2025 · 2.1MB · 当前版本"
+  },
+  {
+    "path": ".resume.k5",
+    "text": "预览"
+  },
+  {
+    "path": ".resume.k7",
+    "text": "点击上传新版本"
+  },
+  {
+    "path": ".resume.k8",
+    "text": "导师修改版本"
+  },
+  {
+    "path": ".resume.k9",
+    "text": "12/10/2025 · 2.3MB · 由 Mentor Jess 修改"
+  },
+  {
+    "path": ".resume.k10",
+    "text": "建议使用导师修改后的版本投递简历"
+  },
+  {
+    "path": ".resume.k12",
+    "text": "共 4 个版本"
+  },
+  {
+    "path": ".resume.k13",
+    "text": "本页为静态原型还原，用于展示 student 端简历预览壳层。"
+  },
+  {
+    "path": ".resume.k15",
+    "text": "简历预览"
+  },
+  {
+    "path": ".resume.k16",
+    "text": "版本"
+  },
+  {
+    "path": ".resume.k17",
+    "text": "文件名"
+  },
+  {
+    "path": ".resume.k18",
+    "text": "来源"
+  },
+  {
+    "path": ".resume.k19",
+    "text": "更新时间"
+  },
+  {
+    "path": ".resume.k20",
+    "text": "大小"
+  },
+  {
+    "path": ".resume.k22",
+    "text": "当前"
+  },
+  {
+    "path": ".resume.k24",
+    "text": "导师版"
+  },
+  {
+    "path": ".resume.k25",
+    "text": "简历上传成功！新版本将显示在列表中。"
+  },
+  {
+    "path": ".schedule.k2",
+    "text": "Java 基础"
+  },
+  {
+    "path": ".schedule.k3",
+    "text": "选择日期:"
+  }
+]

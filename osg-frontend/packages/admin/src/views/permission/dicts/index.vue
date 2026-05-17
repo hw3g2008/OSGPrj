@@ -71,7 +71,7 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'dictLabel'">
-            <strong>{{ record.dictLabel }}</strong>
+            <strong>{{ record.i18nKey && te(`admin.dict.${record.i18nKey}`) ? t(`admin.dict.${record.i18nKey}`) : record.dictLabel }}</strong>
           </template>
           <template v-else-if="column.dataIndex === 'status'">
             <a-tag :color="record.status === '0' ? 'success' : 'error'">
@@ -118,7 +118,7 @@
               :data-surface-sample-key="record.dictLabel"
               @click="handleEdit(record)"
             >
-              {{ t('admin.permission.dicts.actionEdit') }}
+              {{ t('admin.permission.dicts.action.edit') }}
             </a-button>
             <a-button
               v-if="record.status === '0'"
@@ -127,7 +127,7 @@
               danger
               @click="handleDisable(record)"
             >
-              {{ t('admin.permission.dicts.actionDisable') }}
+              {{ t('admin.permission.dicts.action.disable') }}
             </a-button>
             <a-button
               v-if="record.status === '1'"
@@ -135,7 +135,7 @@
               size="small"
               @click="handleEnable(record)"
             >
-              {{ t('admin.permission.dicts.actionEnable') }}
+              {{ t('admin.permission.dicts.action.enable') }}
             </a-button>
           </template>
         </template>
@@ -214,24 +214,34 @@ const categories = computed(() => {
   return registryGroups.value
     .slice()
     .sort((a, b) => a.order - b.order)
-    .map(group => ({
-      key: group.group_key,
-      label: group.group_label,
-      iconClass: group.icon,
-      iconBg: group.icon_bg,
-      iconColor: group.icon_color,
-      tabs: group.dict_types.map(item => {
-        const presentation = getTabPresentation(item.dict_type, item.dict_name)
-        return {
-          key: item.dict_type,
-          label: item.dict_name,
-          createLabel: presentation.createLabel,
-          nameHeader: presentation.nameHeader,
-          hasParent: item.has_parent,
-          parentTab: item.parent_dict_type,
-        }
-      }),
-    }))
+    .map(group => {
+      const groupI18nKey = (group as any).group_i18n_key as string | undefined
+      const groupLabel = groupI18nKey && te(`admin.dict.${groupI18nKey}`)
+        ? t(`admin.dict.${groupI18nKey}`)
+        : group.group_label
+      return {
+        key: group.group_key,
+        label: groupLabel,
+        iconClass: group.icon,
+        iconBg: group.icon_bg,
+        iconColor: group.icon_color,
+        tabs: group.dict_types.map(item => {
+          const presentation = getTabPresentation(item.dict_type, item.dict_name)
+          const typeI18nKey = (item as any).dict_type_i18n_key as string | undefined
+          const tabLabel = typeI18nKey && te(`admin.dict.${typeI18nKey}`)
+            ? t(`admin.dict.${typeI18nKey}`)
+            : item.dict_name
+          return {
+            key: item.dict_type,
+            label: tabLabel,
+            createLabel: presentation.createLabel,
+            nameHeader: presentation.nameHeader,
+            hasParent: item.has_parent,
+            parentTab: item.parent_dict_type,
+          }
+        }),
+      }
+    })
 })
 
 const selectedCategory = ref('')
@@ -397,7 +407,6 @@ const loadDataList = async () => {
     dataList.value = res.rows || []
     pagination.total = res.total || 0
   } catch (error) {
-    message.error(t('admin.permission.dicts.messages.loadDataError'))
   }
 }
 

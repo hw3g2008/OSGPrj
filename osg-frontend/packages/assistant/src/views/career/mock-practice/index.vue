@@ -39,7 +39,7 @@
         :loading="loading"
         :pagination="tablePagination"
         :scroll="{ x: 1100 }"
-        :locale="t('assistant.mockPractice.k7')"
+        :locale="{ emptyText: t('assistant.mockPractice.k7') }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'studentName'">

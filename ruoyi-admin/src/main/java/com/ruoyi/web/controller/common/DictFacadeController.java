@@ -114,6 +114,7 @@ public class DictFacadeController extends BaseController
         m.put("cssClass",  Optional.ofNullable(d.getCssClass()).orElse(""));
         m.put("listClass", Optional.ofNullable(d.getListClass()).orElse(""));
         m.put("remark",    Optional.ofNullable(d.getRemark()).orElse(""));
+        m.put("i18nKey",   Optional.ofNullable(d.getI18nKey()).orElse(""));
         return m;
     }
 }

@@ -234,7 +234,6 @@ const loadData = async () => {
     stats.value = statsResponse
     selectedSettlementIds.value = selectedSettlementIds.value.filter((id) => rows.value.some((row) => row.settlementId === id))
   } catch (_error) {
-    message.error(t('admin.finance.settlement.messages.loadError'))
   }
 }
 

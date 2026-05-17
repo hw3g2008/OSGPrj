@@ -139,7 +139,6 @@ const loadComplaints = async () => {
     const response = await getComplaintList()
     rows.value = response.rows ?? []
   } catch (_error) {
-    message.error(t('admin.profile.complaints.messages.loadFailed'))
   }
 }
 

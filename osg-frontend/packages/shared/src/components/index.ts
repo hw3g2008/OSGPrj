@@ -37,3 +37,4 @@ export { default as ClassRecordDetailDrawer } from './ClassRecordDetailDrawer.vu
 export type { LeadMentorClassRecordMentorGroup, LeadMentorClassRecordDetailItem } from '../api/jobOverview'
 export { default as ClassReportFlowModal } from './ClassReportFlowModal/index.vue'
 export { default as OverlaySurfaceModal } from './OverlaySurfaceModal.vue'
+export { default as DictText } from './DictText.vue'

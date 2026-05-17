@@ -204,7 +204,6 @@ const loadRows = async () => {
     rows.value = response.rows ?? []
     pendingCount.value = response.pendingCount ?? 0
   } catch (_error) {
-    message.error(activeTab.value === 'banks' ? t('admin.resources.interviewBank.messages.bankLoadError') : t('admin.resources.interviewBank.messages.appLoadError'))
   }
 }
 

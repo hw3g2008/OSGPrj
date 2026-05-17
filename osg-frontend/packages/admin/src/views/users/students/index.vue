@@ -410,7 +410,6 @@ const loadStudentList = async () => {
     syncSelectedStudent(rows)
     void hydrateRenewableStudentIds(rows)
   } catch (_error) {
-    message.error(t('admin.students.index.messages.loadFailed'))
   }
 }
 
@@ -578,7 +577,6 @@ const openStudentRenew = async (record: StudentListItem) => {
     renewContractReactivate.value = false
     renewContractVisible.value = true
   } catch (_error) {
-    message.error(t('admin.students.index.messages.renewContextFailed'))
   } finally {
     renewContractLoadingId.value = null
   }

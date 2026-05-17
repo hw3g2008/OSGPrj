@@ -1,5 +1,8 @@
 <template>
   <div id="login-page" class="login-page">
+    <div class="lang-switch">
+      <a-button size="small" type="text" @click="toggleLang">{{ locale === 'zh' ? 'EN' : '中文' }}</a-button>
+    </div>
     <div class="login-accent login-accent-left"></div>
     <div class="login-accent login-accent-bottom"></div>
     <div class="login-accent login-accent-right"></div>
@@ -106,11 +109,15 @@ import {
   verifyResetCode,
 } from '@osg/shared/api'
 import { clearAuth, setToken, setUser } from '@osg/shared/utils'
+import { setLocale } from '@osg/shared'
 import { ForgotPasswordModal } from '@osg/shared/components'
 import { useMustChangePassword } from '@osg/shared/composables'
 
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const toggleLang = () => {
+  setLocale(locale.value === 'zh' ? 'en' : 'zh')
+}
 const { setMustChangePassword } = useMustChangePassword()
 
 const featureTexts = [
@@ -522,5 +529,12 @@ const handleLogin = async () => {
   .code-row {
     grid-template-columns: 1fr;
   }
+}
+
+.lang-switch {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  z-index: 10;
 }
 </style>

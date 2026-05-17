@@ -217,7 +217,6 @@ const loadRows = async () => {
       )
     }
   } catch (_error) {
-    message.error(activeTab.value === 'banks' ? t('admin.resources.onlineTestBank.messages.bankLoadError') : t('admin.resources.onlineTestBank.messages.appLoadError'))
   }
 }
 

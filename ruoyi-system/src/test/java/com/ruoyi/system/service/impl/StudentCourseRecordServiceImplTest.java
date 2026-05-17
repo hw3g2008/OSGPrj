@@ -73,7 +73,8 @@ class StudentCourseRecordServiceImplTest
         assertEquals("模拟应聘", rows.get(0).get("coachingType"));
         assertEquals("模拟面试", rows.get(0).get("courseContent"));
         assertEquals("Jerry Li", rows.get(0).get("mentor"));
-        assertEquals("待评价", rows.get(0).get("ratingLabel"));
+        // ratingLabel is empty when pending — frontend renders i18n key via <DictText type="course_rating" value="pending"/>
+        assertEquals("", rows.get(0).get("ratingLabel"));
         verify(osgClassRecordMapper).selectStudentApprovedClassRecordList(12766L);
         verify(studentCourseRecordMapper, never()).selectCourseRecordList(any());
     }

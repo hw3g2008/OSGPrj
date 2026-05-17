@@ -38,7 +38,6 @@
           <a-range-picker
             v-model:value="filters.interviewRange"
             value-format="YYYY-MM-DD"
-            :placeholder="t('assistant.jobOverview.k20')"
             style="width: 100%"
             allow-clear
           />
@@ -80,7 +79,7 @@
         :pagination="tablePagination"
         :scroll="{ x: 1280 }"
         :row-class-name="(record: ExtendedRecord) => rowClassName(record)"
-        :locale="t('assistant.jobOverview.k21')"
+        :locale="{ emptyText: t('assistant.jobOverview.k21') }"
         class="ajo-table"
       >
         <template #bodyCell="{ column, record }">
@@ -208,9 +207,9 @@
                 <div class="ajo-mentor-card__meta">
                   <div class="ajo-mentor-card__name">{{ group.mentorName || t('assistant.jobOverview.k42') }}</div>
                   <div class="ajo-mentor-card__stats">
-                    <span><ClockCircleOutlined />共 {{ Number(group.totalHours || 0) }}h</span>
+                    <span><ClockCircleOutlined />{{ t('assistant.jobOverview.totalHours', { n: Number(group.totalHours || 0) }) }}</span>
                     <span v-if="group.avgRating !== null && group.avgRating !== undefined"><StarFilled />{{ t('assistant.jobOverview.k43', { n: group.avgRating }) }}</span>
-                    <span><FileTextOutlined />{{ (group.records || []).length }} 条</span>
+                    <span><FileTextOutlined />{{ t('assistant.jobOverview.recordsCount', { n: (group.records || []).length }) }}</span>
                   </div>
                 </div>
               </div>

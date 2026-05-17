@@ -346,12 +346,6 @@ function formatCount(value: number | null | undefined) {
   return String(value)
 }
 
-function extractErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message.trim()
-  }
-  return fallback
-}
 
 function applyNextScheduleDraft(scheduleView: LeadMentorScheduleView | null) {
   weeklyHours.value = scheduleView?.availableHours && scheduleView.availableHours > 0
@@ -430,7 +424,6 @@ async function loadScheduleViews(preserveDraft = false) {
       forceScheduleDismissed.value = false
     }
   } catch (error) {
-    message.error(extractErrorMessage(error, t('leadMentor.schedule.k40')))
   }
 }
 
@@ -444,7 +437,6 @@ async function saveNextSchedule() {
     await loadScheduleViews()
     message.success(t('leadMentor.schedule.k41'))
   } catch (error) {
-    message.error(extractErrorMessage(error, t('leadMentor.schedule.k42')))
   }
 }
 

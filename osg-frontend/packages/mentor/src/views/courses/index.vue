@@ -1,9 +1,6 @@
 <template>
   <div id="page-myclass">
-    <PageHeader
-      :title-zh="t('mentor.courses.k27')"
-      title-en="Class Records"
-    >
+    <PageHeader :title-zh="t('mentor.courses.k27')">
       <template #actions>
         <a-button type="primary" @click="showReportModal = true">
           <i class="mdi mdi-plus" style="margin-right:4px" />{{ t('mentor.courses.k1') }}
@@ -22,7 +19,7 @@
     <!-- 筛选 + 表格 -->
     <a-card :bordered="false">
       <a-form layout="inline" class="filter-bar" style="margin-bottom: 16px">
-        <a-form-item>
+        <a-form-item :label="t('mentor.courses.k72')">
           <a-input
             v-model:value="filters.keyword"
             :placeholder="t('mentor.courses.k28')"
@@ -30,22 +27,22 @@
             style="width:200px"
           />
         </a-form-item>
-        <a-form-item>
-          <a-select v-model:value="filters.coachingType" :placeholder="t('mentor.courses.k2')" style="width:140px" allow-clear>
-            <a-select-option value="">{{ t('mentor.courses.k2') }}</a-select-option>
+        <a-form-item :label="t('mentor.courses.k2')">
+          <a-select v-model:value="filters.coachingType" style="width:140px" allow-clear>
+            <a-select-option value="">{{ t('mentor.courses.k37') }}</a-select-option>
             <a-select-option value="job_coaching">{{ t('mentor.courses.k3') }}</a-select-option>
             <a-select-option value="mock_interview">{{ t('mentor.courses.k4') }}</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item>
-          <a-select v-model:value="filters.contentType" :placeholder="t('mentor.courses.k5')" style="width:160px" allow-clear>
-            <a-select-option value="">{{ t('mentor.courses.k5') }}</a-select-option>
+        <a-form-item :label="t('mentor.courses.k5')">
+          <a-select v-model:value="filters.contentType" style="width:160px" allow-clear>
+            <a-select-option value="">{{ t('mentor.courses.k37') }}</a-select-option>
             <a-select-option v-for="ct in contentTypes" :key="ct" :value="ct">{{ ct }}</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item>
-          <a-select v-model:value="filters.timeRange" :placeholder="t('mentor.courses.k6')" style="width:140px" allow-clear>
-            <a-select-option value="">{{ t('mentor.courses.k6') }}</a-select-option>
+        <a-form-item :label="t('mentor.courses.k6')">
+          <a-select v-model:value="filters.timeRange" style="width:140px" allow-clear>
+            <a-select-option value="">{{ t('mentor.courses.k37') }}</a-select-option>
             <a-select-option value="this_week">{{ t('mentor.courses.k7') }}</a-select-option>
             <a-select-option value="last_week">{{ t('mentor.courses.k8') }}</a-select-option>
             <a-select-option value="this_month">{{ t('mentor.courses.k9') }}</a-select-option>
@@ -63,7 +60,8 @@
         :data-source="filteredRecords"
         :pagination="false"
         :row-key="(r: any) => r.id"
-        :locale="t('mentor.courses.k29')"
+        :locale="{ emptyText: t('mentor.courses.k29') }"
+        :scroll="{ x: 1400 }"
         size="middle"
       >
         <template #bodyCell="{ column, record }">
@@ -153,7 +151,13 @@
           </div>
           <div class="detail-section">
             <div class="detail-label">{{ t('mentor.courses.k18') }}</div>
-            <div class="detail-panel">{{ summarizeFeedback(detailModal.record?.feedbackContent) || detailModal.record?.contentDetail || t('mentor.courses.k56') }}</div>
+            <dl v-if="feedbackKV && feedbackKV.length" class="detail-feedback-kv">
+              <template v-for="item in feedbackKV" :key="item.label">
+                <dt>{{ item.label }}</dt>
+                <dd>{{ item.value }}</dd>
+              </template>
+            </dl>
+            <div v-else class="detail-panel">{{ summarizeFeedback(detailModal.record?.feedbackContent) || detailModal.record?.contentDetail || t('mentor.courses.k56') }}</div>
           </div>
         </div>
       </div>
@@ -248,6 +252,8 @@ const tabs = computed(() => {
   ]
 })
 
+const feedbackKV = computed(() => parseFeedbackKV(detailModal.value.record?.feedbackContent))
+
 const filteredRecords = computed(() => {
   let list = records.value
   const keyword = filters.value.keyword.trim()
@@ -268,15 +274,15 @@ const filteredRecords = computed(() => {
 
 // 课时费列删除 — 用户需求「上报课程记录的页面，不显示最下方的课时费」（导师/班主任/助教三端统一）
 const columns = [
-  { title: t('mentor.courses.k41'), key: 'recordNo', dataIndex: 'recordNo' },
-  { title: t('mentor.courses.k15'), key: 'student' },
-  { title: t('mentor.courses.k16'), key: 'coachingType' },
-  { title: t('mentor.courses.k5'), key: 'contentType' },
-  { title: t('mentor.courses.k17'), key: 'classDate', dataIndex: 'classDate' },
-  { title: t('mentor.courses.k42'), key: 'durationHours', dataIndex: 'durationHours' },
-  { title: t('mentor.courses.k43'), key: 'reviewStatus' },
-  { title: t('mentor.courses.k44'), key: 'studentEvaluation' },
-  { title: t('mentor.courses.k45'), key: 'actions' },
+  { title: t('mentor.courses.k41'), key: 'recordNo', dataIndex: 'recordNo', width: 120, fixed: 'left' as const },
+  { title: t('mentor.courses.k15'), key: 'student', width: 180 },
+  { title: t('mentor.courses.k16'), key: 'coachingType', width: 240 },
+  { title: t('mentor.courses.k5'), key: 'contentType', width: 160 },
+  { title: t('mentor.courses.k17'), key: 'classDate', dataIndex: 'classDate', width: 130 },
+  { title: t('mentor.courses.k42'), key: 'durationHours', dataIndex: 'durationHours', width: 100 },
+  { title: t('mentor.courses.k43'), key: 'reviewStatus', width: 130 },
+  { title: t('mentor.courses.k44'), key: 'studentEvaluation', width: 130 },
+  { title: t('mentor.courses.k45'), key: 'actions', width: 140, fixed: 'right' as const },
 ]
 
 function coachingTagColor(t: string) {
@@ -355,21 +361,68 @@ function evaluationTag(record: Record<string, any>) {
 }
 
 /**
- * RULE-C: feedbackContent 后端存 JSON 字符串，UI 不能裸显示。
- * 抽取 highlights / narrative / nextSteps 作为人类可读摘要。
+ * RULE-C: feedbackContent 后端存 JSON 字符串 / 纯文本 / 历史脏数据混杂，UI 不能裸显示。
+ * 1) 过滤垃圾值（单字母 / 纯数字 / "ok"/"y"/"x" 等噪音）
+ * 2) 支持 mock_interview 与 job_coaching 两种 JSON schema
  */
+const TRASH_FEEDBACK = new Set(['ok', 'na', 'n/a', 'no', 'yes', 'tbd', '--', '-'])
+function isMeaningfulText(text: string): boolean {
+  const trimmed = text.trim()
+  if (!trimmed) return false
+  if (trimmed.length <= 2) return false
+  if (/^\d{1,3}(\.\d{1,2})?$/.test(trimmed)) return false
+  if (TRASH_FEEDBACK.has(trimmed.toLowerCase())) return false
+  return true
+}
 function summarizeFeedback(raw: unknown): string {
   if (!raw) return ''
   if (typeof raw !== 'string' && typeof raw !== 'object') return ''
   let obj: any = raw
   if (typeof raw === 'string') {
     const trimmed = raw.trim()
-    if (!trimmed.startsWith('{')) return trimmed
-    try { obj = JSON.parse(trimmed) } catch { return trimmed }
+    if (!trimmed.startsWith('{')) return isMeaningfulText(trimmed) ? trimmed : ''
+    try { obj = JSON.parse(trimmed) } catch { return isMeaningfulText(trimmed) ? trimmed : '' }
   }
-  const parts = [obj?.highlights, obj?.narrative, obj?.improvements, obj?.nextSteps]
-    .filter((v) => typeof v === 'string' && v.trim().length > 0)
+  const candidates = [
+    obj?.highlights, obj?.narrative, obj?.improvements, obj?.nextSteps,
+    obj?.purpose, obj?.concept, obj?.improvement, obj?.performance, obj?.wishedButNotDone,
+  ]
+  const parts = candidates.filter((v) => typeof v === 'string' && v.trim().length > 0)
   return parts.join(' · ').slice(0, 160)
+}
+
+type FeedbackKV = { label: string; value: string }
+function parseFeedbackKV(raw: unknown): FeedbackKV[] | null {
+  if (typeof raw !== 'string') return null
+  const trimmed = raw.trim()
+  if (!trimmed.startsWith('{')) return null
+  let obj: any
+  try { obj = JSON.parse(trimmed) } catch { return null }
+  if (!obj || typeof obj !== 'object') return null
+  const items: FeedbackKV[] = []
+  const push = (label: string, value: any) => {
+    if (value === null || value === undefined) return
+    const text = typeof value === 'string' ? value.trim() : String(value).trim()
+    if (!text) return
+    items.push({ label, value: text })
+  }
+  const ratings = obj.ratings
+  if (ratings && typeof ratings === 'object') {
+    push(t('mentor.courses.k59'), ratings.preparation)
+    push(t('mentor.courses.k60'), ratings.communication)
+    push(t('mentor.courses.k61'), ratings.technical)
+    push(t('mentor.courses.k62'), ratings.confidence)
+    push(t('mentor.courses.k63'), ratings.overall)
+  }
+  push(t('mentor.courses.k64'), obj.highlights)
+  push(t('mentor.courses.k65'), obj.improvements)
+  push(t('mentor.courses.k66'), obj.nextSteps)
+  push(t('mentor.courses.k67'), obj.purpose)
+  push(t('mentor.courses.k68'), obj.concept)
+  push(t('mentor.courses.k69'), obj.improvement)
+  push(t('mentor.courses.k70'), obj.performance)
+  push(t('mentor.courses.k71'), obj.wishedButNotDone)
+  return items.length ? items : null
 }
 
 function normalizeCourseRecord(record: Record<string, any>) {
@@ -377,7 +430,9 @@ function normalizeCourseRecord(record: Record<string, any>) {
   const rate = Number(record.rate ?? record.hourlyRate ?? 0)
   const recordId = record.recordId ?? record.id
   const rawContentType = record.contentType ?? record.classStatus ?? record.courseType ?? record.courseSource ?? ''
-  const detailFallback = record.contentDetail ?? summarizeFeedback(record.feedbackContent) ?? record.comments ?? record.topics ?? record.reviewRemark ?? ''
+  // 列表 "Coaching Content" 列副文本只允许显示真·辅导内容字段（topics / comments / baseCourseTopics）
+  // feedbackContent 是「课程反馈」语义，只在详情弹窗的 Course Feedback 区出现，避免列表语义错位+重复
+  const detailFallback = record.topics ?? record.comments ?? record.baseCourseTopics ?? ''
   return {
     ...record,
     id: recordId,
@@ -542,7 +597,7 @@ onMounted(async () => {
 
 <style scoped>
 .tabs-radio :deep(.ant-radio-button-wrapper){padding:0 16px}
-.filter-bar :deep(.ant-form-item){margin-bottom:0;margin-right:12px}
+.filter-bar :deep(.ant-form-item){margin-bottom:12px;margin-right:12px}
 .text-muted{color:#94A3B8}
 .text-sm{font-size:12px}
 .form-grid{display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:16px}
@@ -583,4 +638,7 @@ onMounted(async () => {
 .detail-section{margin-top:20px}
 .detail-panel{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:16px;color:#334155;line-height:1.7;white-space:pre-wrap}
 .detail-panel--danger{background:#FEF2F2;border-color:#FECACA;color:#991B1B}
+.detail-feedback-kv{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:12px 16px;margin:0;display:grid;grid-template-columns:max-content 1fr;column-gap:16px;row-gap:8px}
+.detail-feedback-kv dt{font-weight:600;color:#475569;line-height:1.6}
+.detail-feedback-kv dd{margin:0;color:#1E293B;line-height:1.6;white-space:pre-wrap}
 </style>

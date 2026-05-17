@@ -13,43 +13,56 @@
         </template>
       </PageHeader>
 
-      <div class="filter-row">
-        <a-select
-          v-model:value="filters.companyName"
-          :placeholder="t('mentor.jobOverview.k9')"
-          allow-clear
-          show-search
-          style="width: 180px"
-          :options="companyOptions"
-        />
-        <a-select
-          v-model:value="filters.currentStage"
-          :placeholder="t('mentor.jobOverview.k10')"
-          allow-clear
-          style="width: 180px"
-          :options="stageOptions"
-        />
-        <a-range-picker
-          v-model:value="filters.interviewRange"
-          value-format="YYYY-MM-DD"
-          :placeholder="t('mentor.jobOverview.k11')"
-          style="width: 280px"
-        />
-        <a-select
-          v-model:value="filters.lessonReported"
-          :placeholder="t('mentor.jobOverview.k12')"
-          allow-clear
-          style="width: 160px"
-        >
-          <a-select-option :value="true">{{ t('mentor.jobOverview.k2') }}</a-select-option>
-          <a-select-option :value="false">{{ t('mentor.jobOverview.k3') }}</a-select-option>
-        </a-select>
-        <a-button type="primary" @click="handleSearch">
-          <template #icon><SearchOutlined /></template>
-          {{ t('mentor.jobOverview.k4') }}
-        </a-button>
-        <a-button @click="handleReset">{{ t('mentor.jobOverview.k5') }}</a-button>
-      </div>
+      <a-card :bordered="false" class="filter-card">
+        <a-form layout="inline" class="filter-bar">
+          <a-form-item :label="t('mentor.jobOverview.k17')">
+            <a-select
+              v-model:value="filters.companyName"
+              :placeholder="t('mentor.jobOverview.k9')"
+              allow-clear
+              show-search
+              style="width: 180px"
+              :options="companyOptions"
+            />
+          </a-form-item>
+          <a-form-item :label="t('mentor.jobOverview.k19')">
+            <a-select
+              v-model:value="filters.currentStage"
+              :placeholder="t('mentor.jobOverview.k10')"
+              allow-clear
+              style="width: 180px"
+              :options="stageOptions"
+            />
+          </a-form-item>
+          <a-form-item :label="t('mentor.jobOverview.k20')">
+            <a-range-picker
+              v-model:value="filters.interviewRange"
+              value-format="YYYY-MM-DD"
+              style="width: 260px"
+            />
+          </a-form-item>
+          <a-form-item :label="t('mentor.jobOverview.k12')">
+            <a-select
+              v-model:value="filters.lessonReported"
+              :placeholder="t('mentor.jobOverview.k26')"
+              allow-clear
+              style="width: 140px"
+            >
+              <a-select-option :value="true">{{ t('mentor.jobOverview.k2') }}</a-select-option>
+              <a-select-option :value="false">{{ t('mentor.jobOverview.k3') }}</a-select-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item>
+            <a-button type="primary" @click="handleSearch">
+              <template #icon><SearchOutlined /></template>
+              {{ t('mentor.jobOverview.k4') }}
+            </a-button>
+          </a-form-item>
+          <a-form-item>
+            <a-button @click="handleReset">{{ t('mentor.jobOverview.k5') }}</a-button>
+          </a-form-item>
+        </a-form>
+      </a-card>
 
       <a-card :bordered="false" class="table-card">
         <a-table
@@ -58,7 +71,8 @@
           :row-key="(record: JobOverviewRow) => record.coachingId ?? record.id"
           :pagination="false"
           :row-class-name="(record: JobOverviewRow) => rowClass(record)"
-          :locale="t('mentor.jobOverview.k13')"
+          :locale="{ emptyText: t('mentor.jobOverview.k13') }"
+          :scroll="{ x: 1300 }"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'student'">
@@ -333,7 +347,8 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.filter-row { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+.filter-card { margin-bottom:16px; border-radius:12px; box-shadow:0 2px 12px rgba(115,153,198,0.08); }
+.filter-bar :deep(.ant-form-item) { margin-bottom:8px; margin-right:12px; }
 .lesson-count-text { font-weight:600; color:#3B82F6; }
 .table-card { margin-bottom:20px; border-radius:16px; box-shadow:0 4px 24px rgba(115,153,198,0.12); }
 

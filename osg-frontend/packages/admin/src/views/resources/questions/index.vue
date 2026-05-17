@@ -207,7 +207,6 @@ const loadRows = async () => {
     pendingCount.value = response.pendingCount ?? 0
     selectedIds.value = []
   } catch (_error) {
-    message.error(t('admin.resources.questions.messages.loadFailed'))
   }
 }
 

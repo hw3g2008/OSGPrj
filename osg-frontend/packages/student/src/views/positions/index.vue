@@ -195,7 +195,7 @@
                       </template>
 
                       <template v-else-if="column.key === 'category'">
-                        <a-tag :color="getCategoryColor(record.category)">{{ record.categoryText }}</a-tag>
+                        <a-tag :color="getCategoryColor(record.category)">{{ categoryDisplayLabel(record) }}</a-tag>
                       </template>
 
                       <template v-else-if="column.key === 'actions'">
@@ -264,16 +264,16 @@
             </template>
 
             <template v-else-if="column.key === 'industryCell'">
-              <a-tooltip :title="record.industryLabel || '-'" placement="topLeft">
+              <a-tooltip :title="tDict(record, 'industry') || record.industryLabel || '-'" placement="topLeft">
                 <span class="industry-pill" :class="`industry-pill--${resolveIndustryMeta(record.industry).tone}`">
-                  {{ record.industryLabel || '-' }}
+                  {{ tDict(record, 'industry') || record.industryLabel || '-' }}
                 </span>
               </a-tooltip>
             </template>
 
             <template v-else-if="column.key === 'category'">
-              <a-tooltip :title="record.categoryText" placement="topLeft">
-                <a-tag :color="getCategoryColor(record.category)" class="cell-tag">{{ record.categoryText }}</a-tag>
+              <a-tooltip :title="categoryDisplayLabel(record)" placement="topLeft">
+                <a-tag :color="getCategoryColor(record.category)" class="cell-tag">{{ categoryDisplayLabel(record) }}</a-tag>
               </a-tooltip>
             </template>
 
@@ -285,7 +285,7 @@
 
             <template v-else-if="column.key === 'regionCell'">
               <!-- RULE-E: 优先字典 label，兜底用 client-side regionDictMap 映射 location 英文 value 到中文 -->
-              <span>{{ regionDisplayLabel(record.regionLabel, record.location) }}</span>
+              <span>{{ regionDisplayLabel(record) }}</span>
             </template>
 
             <template v-else-if="column.key === 'deadlineCell'">
@@ -791,7 +791,7 @@ import {
   type StudentPositionOption,
   type StudentPositionRecord
 } from '@osg/shared/api'
-import { useIndustryMeta, useDictFacade } from '@osg/shared'
+import { useIndustryMeta, useDictFacade, useI18nDict } from '@osg/shared'
 import { getToken } from '@osg/shared/utils'
 import {
   AppstoreOutlined,
@@ -806,7 +806,8 @@ import {
   UnorderedListOutlined
 } from '@ant-design/icons-vue'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
+const { tDict } = useI18nDict('admin.dict')
 
 type ViewMode = 'drilldown' | 'list'
 type TabKey = 'all' | 'favorites'
@@ -849,13 +850,28 @@ const { items: cityDict, load: loadCityDict } = useDictFacade('osg_city')
 const { items: categoryDict, load: loadCategoryDict } = useDictFacade('osg_job_category')
 const { items: companyDict, load: loadCompanyDict } = useDictFacade('osg_company_name')
 
-/** RULE-E: 地区 value → 字典中文 label，避免 'na' / 'asia-pacific' 等英文 raw 露出 */
-function regionDisplayLabel(regionLabel?: string, fallbackValue?: string): string {
-  if (regionLabel) return regionLabel
-  const v = (fallbackValue || '').trim()
-  if (!v) return '-'
-  const match = regionDict.value.find((item) => item.value === v)
-  return match?.label || v
+/**
+ * 通用 dict label 翻译：i18nKey 存在且 t() 能找到则用翻译；否则 fallback 到 label。
+ */
+function tDictLabel(opt: { label: string; i18nKey?: string } | undefined, fallback?: string): string {
+  if (!opt) return fallback ?? '-'
+  if (opt.i18nKey && te(`admin.dict.${opt.i18nKey}`)) return t(`admin.dict.${opt.i18nKey}`)
+  return opt.label || fallback || '-'
+}
+
+/** RULE-E: 地区 value → 字典 label，按 locale 翻译。优先 record.regionI18nKey */
+function regionDisplayLabel(record: any): string {
+  if (record?.regionI18nKey) return tDict(record, 'region') || record.regionLabel || '-'
+  // Backward compat: 旧 path 用 dict facade lookup
+  const v = (record?.location || '').trim()
+  const match = v ? regionDict.value.find((item) => item.value === v) : undefined
+  if (match) return tDictLabel(match, record?.regionLabel)
+  return record?.regionLabel || v || '-'
+}
+
+/** Category 显示：tDict 用 record.categoryI18nKey 翻译，fallback record.categoryText */
+function categoryDisplayLabel(record: any): string {
+  return tDict(record, 'category') || record?.categoryText || record?.category || '-'
 }
 
 function resolveIndustryMeta(industryRaw: string) {

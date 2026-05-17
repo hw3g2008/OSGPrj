@@ -38,6 +38,19 @@ public class SysDictData extends BaseEntity
     @Excel(name = "字典类型")
     private String dictType;
 
+    /** 字典标签国际化 key（前端按当前 locale 翻译） */
+    private String i18nKey;
+
+    public String getI18nKey()
+    {
+        return i18nKey;
+    }
+
+    public void setI18nKey(String i18nKey)
+    {
+        this.i18nKey = i18nKey;
+    }
+
     /** 样式属性（其他样式扩展） */
     private String cssClass;
 

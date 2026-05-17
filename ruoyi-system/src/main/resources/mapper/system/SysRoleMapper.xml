@@ -20,11 +20,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result property="updateTime"         column="update_time"           />
 		<result property="remark"             column="remark"                />
 		<result property="userCount"          column="user_count"             />
+		<result property="i18nKey"            column="i18n_key"              />
+		<result property="remarkI18nKey"      column="remark_i18n_key"       />
 	</resultMap>
 	
 	<sql id="selectRoleVo">
 	    select distinct r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope, r.menu_check_strictly, r.dept_check_strictly,
-            r.status, r.del_flag, r.create_time, r.remark 
+            r.status, r.del_flag, r.create_time, r.remark, r.i18n_key, r.remark_i18n_key
         from sys_role r
 	        left join sys_user_role ur on ur.role_id = r.role_id
 	        left join sys_user u on u.user_id = ur.user_id
@@ -33,7 +35,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     
     <select id="selectRoleList" parameterType="SysRole" resultMap="SysRoleResult">
 		select distinct r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope, r.menu_check_strictly, r.dept_check_strictly,
-			r.status, r.del_flag, r.create_time, r.remark,
+			r.status, r.del_flag, r.create_time, r.remark, r.i18n_key, r.remark_i18n_key,
 			(SELECT COUNT(*) FROM sys_user_role ur2 WHERE ur2.role_id = r.role_id) AS user_count
 		from sys_role r
 			left join sys_user_role ur on ur.role_id = r.role_id

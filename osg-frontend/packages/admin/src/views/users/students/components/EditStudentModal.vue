@@ -920,7 +920,6 @@ const loadStaffOptions = async (keyword = '') => {
     staffOptions.value = response.rows || []
     seedStaffOptionsFromStudent(props.student)
   } catch (_error) {
-    message.error(t('admin.students.editModal.messages.loadStaffFailed'))
   } finally {
     staffLoading.value = false
   }

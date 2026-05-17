@@ -16,6 +16,8 @@ export interface SharedDictItem {
   /** 兜底为 ""（后端 DTO 裁剪），前端转成 undefined */
   listClass: string
   remark: string
+  /** 字典标签国际化 key（前端按 locale 翻译，空串视为无 i18n） */
+  i18nKey?: string
 }
 
 let cached: PositionMetaOption[] | null = null

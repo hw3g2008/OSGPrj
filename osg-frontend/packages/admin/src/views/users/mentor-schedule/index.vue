@@ -227,7 +227,6 @@ const handleRemindAll = async () => {
       message.info(t('admin.users.mentorSchedule.messages.noRemind'))
     }
   } catch (_error) {
-    message.error(t('admin.users.mentorSchedule.messages.remindFail'))
   } finally {
     reminding.value = false
   }
@@ -302,7 +301,6 @@ const handleEditSubmit = async (payload: {
     editVisible.value = false
     await loadScheduleList()
   } catch (_error) {
-    message.error(t('admin.users.mentorSchedule.messages.saveFail'))
   }
 }
 

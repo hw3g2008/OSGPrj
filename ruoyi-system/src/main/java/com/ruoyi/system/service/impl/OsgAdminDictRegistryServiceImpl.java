@@ -22,6 +22,37 @@ public class OsgAdminDictRegistryServiceImpl implements IOsgAdminDictRegistrySer
     private static final String OSG_DICT_PREFIX = "osg_";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    /**
+     * Derive stable i18n key for dict group label.
+     * Convention: "dict_group_<group>"
+     * Spec ref: OsgAdminDictRegistryI18nTest#deriveGroupI18nKey*
+     */
+    public static String deriveGroupI18nKey(String group)
+    {
+        if (group == null) return null;
+        String trimmed = group.trim();
+        if (trimmed.isEmpty()) return null;
+        return "dict_group_" + trimmed;
+    }
+
+    /**
+     * Derive stable i18n key for dict_type.
+     * Convention:
+     *   - Strip leading "osg_" prefix, prepend "dict_type_"
+     *   - Non-osg-prefixed dict_types also get "dict_type_<raw>"
+     * Spec ref: OsgAdminDictRegistryI18nTest#deriveDictTypeI18nKey*
+     */
+    public static String deriveDictTypeI18nKey(String dictType)
+    {
+        if (dictType == null) return null;
+        String trimmed = dictType.trim();
+        if (trimmed.isEmpty()) return null;
+        String stripped = trimmed.startsWith(OSG_DICT_PREFIX)
+                ? trimmed.substring(OSG_DICT_PREFIX.length())
+                : trimmed;
+        return "dict_type_" + stripped;
+    }
+
     private final ISysDictTypeService dictTypeService;
 
     public OsgAdminDictRegistryServiceImpl(ISysDictTypeService dictTypeService)
@@ -76,6 +107,7 @@ public class OsgAdminDictRegistryServiceImpl implements IOsgAdminDictRegistrySer
         Map<String, Object> group = new LinkedHashMap<>();
         group.put("group_key", groupKey);
         group.put("group_label", groupLabel);
+        group.put("group_i18n_key", deriveGroupI18nKey(groupKey));
         group.put("icon", asText(metadata.get("icon")));
         group.put("icon_color", asText(metadata.get("iconColor")));
         group.put("icon_bg", asText(metadata.get("iconBg")));
@@ -89,6 +121,7 @@ public class OsgAdminDictRegistryServiceImpl implements IOsgAdminDictRegistrySer
         Map<String, Object> entry = new LinkedHashMap<>();
         entry.put("dict_type", dictType.getDictType());
         entry.put("dict_name", dictType.getDictName());
+        entry.put("dict_type_i18n_key", deriveDictTypeI18nKey(dictType.getDictType()));
         entry.put("has_parent", Boolean.TRUE.equals(metadata.get("hasParent")));
         String parentDictType = asText(metadata.get("parentDictType"));
         if (StringUtils.isNotEmpty(parentDictType))

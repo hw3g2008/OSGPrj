@@ -5,8 +5,8 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">
-              {{ mockPracticeMeta.pageSummary.titleZh }}
-              <span>{{ mockPracticeMeta.pageSummary.titleEn }}</span>
+              {{ t('student.mockPractice.pageTitleZh') }}
+              <span>{{ t('student.mockPractice.pageTitleEn') }}</span>
             </h1>
           </div>
         </div>
@@ -23,34 +23,34 @@
           <div :class="['practice-card__icon', `practice-card__icon--${entry.id}`]">
             <i class="mdi" :class="practiceCardIcon(entry.id)" aria-hidden="true"></i>
           </div>
-          <h3 class="practice-card__title">{{ entry.title }}</h3>
-          <p class="practice-card__desc">{{ entry.description }}</p>
+          <h3 class="practice-card__title">{{ t(`student.mockPractice.cards.${entry.id}.title`) || entry.title }}</h3>
+          <p class="practice-card__desc">{{ t(`student.mockPractice.cards.${entry.id}.description`) || entry.description }}</p>
           <a-button
             type="primary"
             :class="['practice-card__button', `practice-card__button--${entry.id}`]"
             @click.stop="openPracticeModal(entry.id)"
           >
-            {{ entry.cta }}
+            {{ t(`student.mockPractice.cards.${entry.id}.cta`) || entry.cta }}
           </a-button>
         </a-card>
       </div>
 
-      <a-card :title="mockPracticeMeta.practiceSection.recordsTitle" :bordered="false" class="records-card">
+      <a-card :title="t('student.mockPractice.recordsTitle')" :bordered="false" class="records-card">
         <template #title>
           <span class="records-card__title">
             <i class="mdi mdi-history" aria-hidden="true"></i>
-            {{ mockPracticeMeta.practiceSection.recordsTitle }}
+            {{ t('student.mockPractice.recordsTitle') }}
           </span>
         </template>
         <div class="records-toolbar">
           <a-input
             v-model:value="practiceFilters.keyword"
-            :placeholder="mockPracticeMeta.practiceSection.keywordPlaceholder"
+            :placeholder="t('student.mockPractice.placeholderKeyword')"
             class="records-toolbar__search"
           />
           <a-select
             v-model:value="practiceFilters.type"
-            :placeholder="mockPracticeMeta.practiceSection.typePlaceholder"
+            :placeholder="t('student.mockPractice.placeholderType')"
             allow-clear
             class="records-toolbar__select"
           >
@@ -59,12 +59,12 @@
               :key="`practice-type-${option.value}`"
               :value="option.value"
             >
-              {{ option.label }}
+              {{ t(`student.mockPractice.typeOption.${option.value}`) || option.label }}
             </a-select-option>
           </a-select>
           <a-select
             v-model:value="practiceFilters.status"
-            :placeholder="mockPracticeMeta.practiceSection.statusPlaceholder"
+            :placeholder="t('student.mockPractice.placeholderStatus')"
             allow-clear
             class="records-toolbar__select"
           >
@@ -73,12 +73,12 @@
               :key="`practice-status-${option.value}`"
               :value="option.value"
             >
-              {{ option.label }}
+              {{ t(`student.mockPractice.statusOption.${option.value}`) || option.label }}
             </a-select-option>
           </a-select>
           <a-select
             v-model:value="practiceFilters.range"
-            :placeholder="mockPracticeMeta.practiceSection.rangePlaceholder"
+            :placeholder="t('student.mockPractice.placeholderRange')"
             allow-clear
             class="records-toolbar__select"
           >
@@ -87,7 +87,7 @@
               :key="`practice-range-${option.value}`"
               :value="option.value"
             >
-              {{ option.label }}
+              {{ t(`student.mockPractice.rangeOption.${option.value}`) || option.label }}
             </a-select-option>
           </a-select>
           <a-button
@@ -110,16 +110,18 @@
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'type'">
-              <a-tag :color="record.typeColor" class="type-tag">
-                <i class="mdi" :class="practiceTypeIcon(record.typeValue)" aria-hidden="true"></i>
-                {{ record.type }}
-              </a-tag>
+              <a-tooltip :title="localizeType(record)" placement="top">
+                <a-tag :color="record.typeColor" class="type-tag">
+                  <i class="mdi" :class="practiceTypeIcon(record.typeValue)" aria-hidden="true"></i>
+                  <span class="type-tag__text">{{ localizeType(record) }}</span>
+                </a-tag>
+              </a-tooltip>
             </template>
 
             <template v-else-if="column.key === 'mentor'">
               <div class="mentor-cell">
-                <div>{{ record.mentor }}</div>
-                <span>{{ record.mentorMeta }}</span>
+                <div>{{ localizeMentor(record.mentor) }}</div>
+                <span>{{ localizeMentorMeta(record.mentorMeta) }}</span>
               </div>
             </template>
 
@@ -337,11 +339,11 @@
           <div class="coach-modal__eyebrow coach-modal__eyebrow--quiet">
             <span class="coach-modal__eyebrow-text">APPLICATION RECORD · #{{ selectedRecord.id }}</span>
           </div>
-          <h2 class="coach-modal__title">{{ selectedRecord.type }}</h2>
+          <h2 class="coach-modal__title">{{ localizeType(selectedRecord) }}</h2>
           <p class="coach-modal__subtitle">
             {{ t('student.mockPractice.k58', { time: selectedRecord.appliedAt || '—' }) }}
             <span class="coach-modal__status-pill" :data-status="selectedRecord.statusValue">
-              {{ selectedRecord.status }}
+              {{ localizeStatus(selectedRecord) }}
             </span>
           </p>
         </div>
@@ -365,7 +367,7 @@
           <div class="coach-meta__cell">
             <div class="coach-meta__label">{{ t('student.mockPractice.k14') }}</div>
             <div class="coach-meta__value">
-              {{ selectedRecord.assignedMentors || selectedRecord.mentor || t('student.mockPractice.k60') }}
+              {{ selectedRecord.assignedMentors || localizeMentor(selectedRecord.mentor) || t('student.mockPractice.k60') }}
             </div>
           </div>
           <div class="coach-meta__cell">
@@ -415,7 +417,7 @@
             <template v-else>{{ t('student.mockPractice.k19') }}</template>
           </h2>
           <p class="coach-modal__subtitle">
-            {{ selectedRecord.type }}
+            {{ localizeType(selectedRecord) }}
             <template v-if="selectedRecord.appliedAt">{{ t('student.mockPractice.k63', { time: selectedRecord.appliedAt }) }}</template>
           </p>
         </div>
@@ -509,7 +511,7 @@ const { t } = useI18n()
 type PracticeModalKey = string
 
 const practiceColumns = [
-  { title: t('student.mockPractice.k26'), dataIndex: 'type', key: 'type', width: 120 },
+  { title: t('student.mockPractice.k26'), dataIndex: 'type', key: 'type', width: 160 },
   { title: t('student.mockPractice.k17'), dataIndex: 'content', key: 'content', width: 180 },
   { title: t('student.mockPractice.k12'), dataIndex: 'appliedAt', key: 'appliedAt', width: 140 },
   { title: t('student.mockPractice.k27'), dataIndex: 'mentor', key: 'mentor', width: 180 },
@@ -517,6 +519,36 @@ const practiceColumns = [
   { title: t('student.mockPractice.k29'), dataIndex: 'feedback', key: 'feedback', width: 220 },
   { title: t('student.mockPractice.k30'), key: 'action', width: 140, fixed: 'right' as const }
 ]
+
+// Backend (StudentMockPracticeServiceImpl) hardcodes Chinese fallback strings into the
+// `mentor` / `mentorMeta` / `type` / `status` fields. Translate them on the client by
+// matching known sentinel values, then fall back to i18n keys keyed by typeValue/statusValue.
+const MENTOR_PENDING_LITERALS = new Set(['待分配', 'Pending Assignment'])
+const MENTOR_META_ASSIGNING_LITERALS = new Set(['班主任分配中', 'Lead Mentor assigning'])
+
+const localizeMentor = (value: string | null | undefined): string => {
+  if (!value) return ''
+  return MENTOR_PENDING_LITERALS.has(value) ? t('student.mockPractice.mentorPending') : value
+}
+
+const localizeMentorMeta = (value: string | null | undefined): string => {
+  if (!value) return ''
+  return MENTOR_META_ASSIGNING_LITERALS.has(value) ? t('student.mockPractice.mentorMetaAssigning') : value
+}
+
+const localizeType = (record: { typeValue?: string; type?: string } | null | undefined): string => {
+  if (!record) return ''
+  const key = `student.mockPractice.typeOption.${record.typeValue}`
+  const translated = record.typeValue ? t(key) : ''
+  return translated && translated !== key ? translated : (record.type || '')
+}
+
+const localizeStatus = (record: { statusValue?: string; status?: string } | null | undefined): string => {
+  if (!record) return ''
+  const key = `student.mockPractice.statusOption.${record.statusValue}`
+  const translated = record.statusValue ? t(key) : ''
+  return translated && translated !== key ? translated : (record.status || '')
+}
 
 const practiceFilters = ref({
   keyword: '',
@@ -1018,10 +1050,19 @@ onMounted(() => {
     font-weight: 600;
     padding: 4px 10px;
     border-radius: 999px;
+    max-width: 100%;
 
     .mdi {
       font-size: 14px;
+      flex-shrink: 0;
     }
+  }
+
+  .type-tag__text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
   }
 
   // === 行底色：根据 typeValue 区分（原型 page-mock-practice 行 #F0F9FF / #FFFBEB / #F3E8FF） ===

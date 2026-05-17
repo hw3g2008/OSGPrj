@@ -24,6 +24,8 @@ export interface DictFacadeOption {
   parentValue?: string
   /** 从 remark JSON {"extra":{...}} 解析出的扩展属性（如 osg_country_code.extra.callingCode = "+86"） */
   extra?: Record<string, string>
+  /** 字典标签国际化 key（按 locale 翻译，空/缺省时 fallback 到 label） */
+  i18nKey?: string
 }
 
 const cacheByType: Record<string, DictFacadeOption[] | undefined> = {}
@@ -74,6 +76,7 @@ function dictItemToOption(d: SharedDictItem): DictFacadeOption {
     remark: d.remark || undefined,
     parentValue: typeof remarkJson?.parentValue === 'string' ? remarkJson.parentValue : undefined,
     extra: remarkJson?.extra && typeof remarkJson.extra === 'object' ? remarkJson.extra : undefined,
+    i18nKey: d.i18nKey || undefined,
   }
 }
 

@@ -18,7 +18,15 @@ import enLeadMentor from './locales/en/lead-mentor.json'
 import enAssistant from './locales/en/assistant.json'
 import enDictText from './locales/en/dictText.json'
 
+// 把 common.json 里的 `legacy.*` 同时铺平到根级 namespace。
+// 后端 sys_dict_data.i18n_key 存的是 flat key（如 `dict_data_major_consulting`），
+// 而 bundled 文案位于 `common.legacy.dict_data_major_consulting`；
+// 这里 spread `legacy` 让 `t('dict_data_major_consulting')` 可直接命中。
+const zhLegacy = (zhCommon as any)?.legacy ?? {}
+const enLegacy = (enCommon as any)?.legacy ?? {}
+
 const zh = {
+  ...zhLegacy,
   common: zhCommon,
   admin: zhAdmin,
   student: zhStudent,
@@ -29,6 +37,7 @@ const zh = {
 }
 
 const en = {
+  ...enLegacy,
   common: enCommon,
   admin: enAdmin,
   student: enStudent,
@@ -55,7 +64,10 @@ export const i18n = createI18n({
   legacy: false,
   locale: resolveInitialLocale(),
   fallbackLocale: 'zh',
-  messages: { zh, en },
+  // 显式 widen 为 Record<string, any>，避免 spread 3950 个 legacy key 触发
+  // TS2589（Type instantiation is excessively deep）—— vue-i18n 的 t() 类型推断
+  // 会沿 messages 形状深度展开，spread 后 union 体积过大。
+  messages: { zh, en } as unknown as Record<string, Record<string, any>>,
 })
 
 export type SupportedLocale = 'zh' | 'en'

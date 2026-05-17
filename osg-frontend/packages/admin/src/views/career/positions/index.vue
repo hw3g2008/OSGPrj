@@ -727,7 +727,6 @@ const loadPage = async () => {
     drillDownRows.value = drillRes || []
     syncExpandedState(drillDownRows.value)
   } catch (_error) {
-    message.error(t('admin.career.positions.index.messages.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -781,7 +780,6 @@ const openStudentsModal = async (record: PositionListItem) => {
   try {
     studentRows.value = await getPositionStudents(record.positionId)
   } catch (_error) {
-    message.error(t('admin.career.positions.index.messages.loadStudentsFailed'))
   } finally {
     studentsLoading.value = false
   }
@@ -800,7 +798,6 @@ const handleSavePosition = async (payload: PositionPayload) => {
     createDefaults.value = null
     await Promise.all([loadReferenceData(), loadPage()])
   } catch (_error) {
-    message.error(payload.positionId ? t('admin.career.positions.index.messages.updateFailed') : t('admin.career.positions.index.messages.createFailed'))
   }
 }
 
@@ -823,7 +820,6 @@ const handleBatchUpload = async (file: File) => {
       message.success(parts.join('，') || t('admin.career.positions.index.messages.importSuccessDetail', { count: result.successCount }))
     }
   } catch (_error) {
-    message.error(t('admin.career.positions.index.messages.batchUploadFailed'))
   }
 }
 
