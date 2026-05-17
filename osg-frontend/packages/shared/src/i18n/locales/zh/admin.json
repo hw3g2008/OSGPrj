@@ -456,7 +456,7 @@
   },
   "menu": {
     "permission_management": "权限管理",
-    "user_center": "用户中心",
+    "user_center": "学员中心",
     "job_search_center": "求职中心",
     "teaching_center": "教学中心",
     "financial_center": "财务中心",
@@ -466,7 +466,7 @@
     "permission_configuration": "权限配置",
     "backend_user_management": "后台用户管理",
     "dictionary_management": "字典管理",
-    "student_list": "学生列表",
+    "student_list": "学员列表",
     "contract_management": "合同管理",
     "mentor_list": "导师列表",
     "tutor_schedule_management": "导师排期管理",
@@ -483,7 +483,7 @@
     "real_person_interview_question_bank": "真人面试题库",
     "real_interview_questions": "面试真题",
     "mail": "邮件",
-    "message_management": "消息管理",
+    "message_management": "消息",
     "complaints_and_suggestions": "投诉建议",
     "operation_log": "操作日志"
   },
@@ -1583,7 +1583,7 @@
     "superAdmin": "超级管理员",
     "sections": {
       "permission": "权限管理",
-      "userCenter": "用户中心",
+      "userCenter": "学员中心",
       "career": "求职中心",
       "teaching": "教学中心",
       "finance": "财务中心",
@@ -1595,7 +1595,7 @@
       "permissionConfig": "权限配置",
       "adminUserManagement": "后台用户管理",
       "dictManagement": "字典管理",
-      "studentList": "学生列表",
+      "studentList": "学员列表",
       "contractManagement": "合同管理",
       "mentorList": "导师列表",
       "mentorScheduleManagement": "导师排期管理",
@@ -1613,7 +1613,7 @@
       "interviewBank": "真人面试题库",
       "interviewQuestions": "面试真题",
       "email": "邮件",
-      "messageManagement": "消息管理",
+      "messageManagement": "消息",
       "complaints": "投诉建议",
       "operationLogs": "操作日志"
     },

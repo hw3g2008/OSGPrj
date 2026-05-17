@@ -129,20 +129,13 @@ import RoleModal from './components/RoleModal.vue'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { normalizeMenuTree } from './menuTree'
+import { createMenuLabelTranslate } from './menuLabelTranslate'
 import dayjs from 'dayjs'
 
-const { t, locale, messages } = useI18n()
+const i18n = useI18n()
+const { t } = i18n
 
-// Build reverse map: zh menu label -> i18n key for sidebar menus (per-locale)
-const menuLabelTranslate = (zhLabel: string): string => {
-  if (locale.value === 'zh') return zhLabel
-  // @ts-expect-error vue-i18n messages typing
-  const zhMenus = messages.value?.zh?.admin?.layout?.menus || {}
-  for (const [key, value] of Object.entries(zhMenus)) {
-    if (value === zhLabel) return t(`admin.layout.menus.${key}`)
-  }
-  return zhLabel
-}
+const menuLabelTranslate = createMenuLabelTranslate(i18n)
 
 const roleColumns = computed(() => [
   { title: 'ID', dataIndex: 'roleId', key: 'roleId', width: 80, fixed: 'left' as const },

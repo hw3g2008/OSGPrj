@@ -98,8 +98,11 @@ import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { addRole, getRoleMenuIds, updateRole } from '@/api/role'
 import { OverlaySurfaceModal } from '@osg/shared/components'
+import { createMenuLabelTranslate } from '../menuLabelTranslate'
 
-const { t } = useI18n()
+const i18n = useI18n()
+const { t } = i18n
+const menuLabelTranslate = createMenuLabelTranslate(i18n)
 
 type MenuNode = {
   id: number
@@ -175,9 +178,10 @@ const permissionGroups = computed<PermissionGroup[]>(() => {
   return (props.menuTree || [])
     .map((group) => ({
       id: group.id,
-      label: group.label,
+      label: menuLabelTranslate(group.label),
       icon: inferGroupIcon(group.label),
-      items: collectLeafItems(group.children?.length ? group.children : [group]),
+      items: collectLeafItems(group.children?.length ? group.children : [group])
+        .map((item) => ({ id: item.id, label: menuLabelTranslate(item.label) })),
     }))
     .filter((group) => group.items.length > 0)
 })

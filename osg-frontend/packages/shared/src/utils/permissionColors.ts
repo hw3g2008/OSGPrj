@@ -21,9 +21,9 @@ export const PERMISSION_COLOR_CONFIG: Record<string, PermissionColorType> = {
   '基础数据管理': 'purple',
   '字典管理': 'purple',
   
-  // 用户中心 - 蓝色系
-  '用户中心': 'info',
-  '学生列表': 'info',
+  // 学员中心 - 蓝色系
+  '学员中心': 'info',
+  '学员列表': 'info',
   '合同管理': 'info',
   '导师列表': 'info',
   '导师排期管理': 'info',
@@ -55,7 +55,7 @@ export const PERMISSION_COLOR_CONFIG: Record<string, PermissionColorType> = {
   // 个人中心 - 灰色系
   '个人中心': 'default',
   '邮件': 'default',
-  '消息管理': 'default',
+  '消息': 'default',
   '投诉建议': 'default',
   '操作日志': 'default'
 }
