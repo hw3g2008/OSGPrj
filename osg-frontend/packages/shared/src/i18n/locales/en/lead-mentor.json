@@ -54,7 +54,7 @@
       "title": "Quick Entry",
       "positionApply": "Position Applications",
       "positionApplyMeta": "{count} pending",
-      "scheduleManage": "Session Scheduling",
+      "scheduleManage": "Session Schedule",
       "myClasses": "My Sessions",
       "myStudents": "My Students",
       "mySchedule": "My Schedule",
@@ -72,29 +72,29 @@
         "mockPractice": "Mock Practice"
       },
       "studentCenter": {
-        "title": "Student Center",
+        "title": "Students",
         "studentList": "Student List"
       },
       "teaching": {
-        "title": "Teaching",
-        "classRecords": "Class Records",
+        "title": "Coaching",
+        "classRecords": "Session Records",
         "communicationRecords": "Communication Records"
       },
       "finance": {
         "title": "Finance",
-        "settlement": "Settlement",
-        "expense": "Expense"
+        "settlement": "Session Billing",
+        "expense": "Reimbursement"
       },
       "resources": {
         "title": "Resources",
         "files": "Files",
-        "onlineTests": "Online Tests",
-        "interviewBank": "Interview Bank"
+        "onlineTests": "Online Assessments",
+        "interviewBank": "Mock Interview Bank"
       },
       "profile": {
         "title": "Profile",
         "basic": "Basic Info",
-        "schedule": "Schedule",
+        "schedule": "Session Schedule",
         "notice": "Notice",
         "faq": "FAQ"
       }
@@ -253,7 +253,7 @@
     }
   },
   "classRecords": {
-    "pageTitle": "Class Records",
+    "pageTitle": "Session Records",
     "scope": {
       "mine": "My Sessions",
       "managed": "Managed Sessions"
@@ -317,7 +317,7 @@
       "defaultName": "Student {id}"
     },
     "error": {
-      "loadFailed": "Failed to load class records"
+      "loadFailed": "Failed to load session records"
     },
     "messages": {
       "submitSuccess": "Record #{id} submitted and pending review"
@@ -533,7 +533,7 @@
     "scoreUnit": "/ 5",
     "actualDuration": "Actual Duration",
     "detailedFeedback": "Detailed Feedback",
-    "classRecordFeedback": "Class Record Feedback",
+    "classRecordFeedback": "Session Record Feedback",
     "suggestions": "Suggestions",
     "close": "Close"
   },

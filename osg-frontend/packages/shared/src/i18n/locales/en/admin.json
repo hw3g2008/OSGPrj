@@ -6,7 +6,7 @@
       "systemName": "Admin System",
       "feature": {
         "studentMentor": "Student & Mentor Management",
-        "courseFinance": "Session & Financial Settlement",
+        "courseFinance": "Session Billing & Finance",
         "positionResource": "Position & Resource Management"
       }
     },
@@ -278,12 +278,12 @@
     "dict_data_student_mock_job_status_214": "Interviewing",
     "dict_data_student_mock_job_status_215": "已获Offer",
     "dict_data_student_mock_job_status_216": "已获Offer",
-    "dict_data_student_class_records_page_copy_217": "Class Records",
-    "dict_data_student_class_records_page_copy_219": "View my class records and mentor feedback",
-    "dict_data_student_class_records_page_copy_221": "New Class Records",
+    "dict_data_student_class_records_page_copy_217": "Session Records",
+    "dict_data_student_class_records_page_copy_219": "View my session records and mentor feedback",
+    "dict_data_student_class_records_page_copy_221": "New Session Records",
     "dict_data_student_class_records_page_copy_222": "Mentor",
     "dict_data_student_class_records_page_copy_223": "logged",
-    "dict_data_student_class_records_page_copy_224": "new class record(s) for you. Please rate them.",
+    "dict_data_student_class_records_page_copy_224": "new session record(s) for you. Please rate them.",
     "dict_data_student_class_records_page_copy_225": "Rate now",
     "dict_data_student_class_records_page_copy_226": "Search Mentor...",
     "dict_data_student_class_records_page_copy_227": "Coaching Type",
@@ -474,13 +474,13 @@
     "posts_created_by_students": "Student-added Positions",
     "overview_of_student_job_search": "Job Overview",
     "simulated_application_management": "Mock Practice",
-    "course_records": "Session Record",
+    "course_records": "Session Records",
     "interpersonal_communication_records": "Communication Records",
-    "class_hour_settlement": "Session Settlement",
-    "reimbursement_management": "Expense Management",
+    "class_hour_settlement": "Session Billing",
+    "reimbursement_management": "Reimbursement",
     "file": "Files",
-    "online_test_question_bank": "Online Test Bank",
-    "real_person_interview_question_bank": "Interview Bank",
+    "online_test_question_bank": "Online Assessments",
+    "real_person_interview_question_bank": "Mock Interview Bank",
     "real_interview_questions": "Interview Questions",
     "mail": "Email",
     "message_management": "Messages",
@@ -493,17 +493,17 @@
     "role_clerk": "Clerk",
     "role_clerk_desc": "Clerk, manages students and contracts",
     "role_course_auditor": "Course Auditor",
-    "role_course_auditor_desc": "Course auditor, reviews class records and session settlements",
+    "role_course_auditor_desc": "Course auditor, reviews session records and session billing",
     "role_accountant": "Accountant",
-    "role_accountant_desc": "Accountant, handles settlement and expense management",
+    "role_accountant_desc": "Accountant, handles session billing and reimbursement",
     "role_position_admin": "Position Admin",
     "role_position_admin_desc": "Position admin, manages positions and job overview",
     "role_file_admin": "File Admin",
     "role_file_admin_desc": "File admin, manages file resources",
-    "role_online_quiz_admin": "Online Test Bank Admin",
-    "role_online_quiz_admin_desc": "Online test bank admin",
-    "role_interview_admin": "Interview Bank Admin",
-    "role_interview_admin_desc": "Interview bank admin",
+    "role_online_quiz_admin": "Online Assessments Admin",
+    "role_online_quiz_admin_desc": "Online assessments admin",
+    "role_interview_admin": "Mock Interview Bank Admin",
+    "role_interview_admin_desc": "Mock interview bank admin",
     "role_expense_auditor": "Expense Auditor",
     "role_expense_auditor_desc": "Expense auditor, reviews expenses",
     "role_mentor": "Mentor",
@@ -780,7 +780,7 @@
       }
     },
     "interviewBank": {
-      "pageTitle": "Interview Bank",
+      "pageTitle": "Mock Interview Bank",
       "createBank": "New Bank",
       "pendingAlert": "{count} student application(s) pending assignment",
       "pendingAlertDesc": "Please handle interview bank applications transferred from head teachers first.",
@@ -853,7 +853,7 @@
       }
     },
     "onlineTestBank": {
-      "pageTitle": "Online Test Bank",
+      "pageTitle": "Online Assessments",
       "createBank": "New Bank",
       "pendingAlert": "{count} student application(s) pending assignment",
       "pendingAlertDesc": "Please handle online test applications transferred from head teachers first.",
@@ -1604,13 +1604,13 @@
       "studentSelfAddedPositions": "Student-added Positions",
       "studentJobOverview": "Job Overview",
       "mockPracticeManagement": "Mock Practice",
-      "classRecords": "Session Record",
+      "classRecords": "Session Records",
       "communicationRecords": "Communication Records",
-      "hourSettlement": "Session Settlement",
-      "expenseManagement": "Expense Management",
+      "hourSettlement": "Session Billing",
+      "expenseManagement": "Reimbursement",
       "files": "Files",
-      "onlineTestBank": "Online Test Bank",
-      "interviewBank": "Interview Bank",
+      "onlineTestBank": "Online Assessments",
+      "interviewBank": "Mock Interview Bank",
       "interviewQuestions": "Interview Questions",
       "email": "Email",
       "messageManagement": "Messages",
@@ -2513,7 +2513,7 @@
         "rate": "Rating",
         "action": "Action"
       },
-      "empty": "No class records found",
+      "empty": "No session records found",
       "pagination": {
         "total": "Total {total} records"
       },
@@ -2587,11 +2587,11 @@
       }
     },
     "classRecords": {
-      "pageTitle": "Class Records",
+      "pageTitle": "Session Records",
       "export": "Export",
       "exporting": "Exporting...",
       "alert": {
-        "message": "Class Record Flow",
+        "message": "Session Record Flow",
         "step1": "① Student applies / Mock Interview",
         "step2": "② Head Teacher assigns mentor",
         "step3": "③ Mentor teaches & submits record",
@@ -2652,18 +2652,18 @@
         "status": "Status",
         "action": "Action"
       },
-      "empty": "No class records found",
+      "empty": "No session records found",
       "action": {
         "review": "Review",
         "detail": "Detail"
       },
       "messages": {
-        "loadError": "Failed to load class records",
+        "loadError": "Failed to load session records",
         "detailError": "Failed to load record detail",
         "approveSuccess": "Class record approved",
-        "approveFail": "Failed to approve class record",
+        "approveFail": "Failed to approve session record",
         "rejectSuccess": "Class record rejected",
-        "rejectFail": "Failed to reject class record",
+        "rejectFail": "Failed to reject session record",
         "exportSuccess": "Export successful",
         "exportFail": "Export failed"
       },
@@ -2712,13 +2712,13 @@
         "absent": "Absent"
       },
       "detailModal": {
-        "title": "Class Record Detail",
-        "loading": "Loading class record detail...",
+        "title": "Session Record Detail",
+        "loading": "Loading session record detail...",
         "close": "Close"
       },
       "reviewModal": {
-        "title": "Class Record Review",
-        "loading": "Loading class record...",
+        "title": "Session Record Review",
+        "loading": "Loading session record...",
         "rejectReasonLabel": "Rejection Reason *",
         "rejectReasonPlaceholder": "Select rejection reason",
         "missingRejectReason": "Please select a rejection reason",
@@ -2957,7 +2957,7 @@
       }
     },
     "settlement": {
-      "pageTitle": "Settlement",
+      "pageTitle": "Session Billing",
       "export": "Export",
       "flowStepsTitle": "Payment Flow",
       "searchPlaceholder": "Search mentor / student",
