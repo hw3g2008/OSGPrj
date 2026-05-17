@@ -464,7 +464,7 @@ import { splitPhone, joinPhone, MAX_AMOUNT, MAX_AMOUNT_MESSAGE, MAX_CONTRACT_HOU
 import { getToken } from '@osg/shared/utils/storage'
 import { useDictFacade } from '@osg/shared/composables'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 const props = withDefaults(defineProps<{
   visible: boolean
@@ -513,12 +513,16 @@ const form = reactive({
 const { items: countryCodeItems, load: loadCountryCode } = useDictFacade('osg_country_code')
 const phoneCountryOptions = computed(() => {
   const items = countryCodeItems.value
-    .map((item) => ({
-      value: item.extra?.callingCode || '',
-      label: `${item.extra?.callingCode ?? ''} ${item.label}`.trim(),
-    }))
+    .map((item) => {
+      const i18nKey = item.i18nKey
+      const labelText = i18nKey && te(`admin.dict.${i18nKey}`) ? t(`admin.dict.${i18nKey}`) : item.label
+      return {
+        value: item.extra?.callingCode || '',
+        label: `${item.extra?.callingCode ?? ''} ${labelText}`.trim(),
+      }
+    })
     .filter((opt) => opt.value)
-  return items.length ? items : [{ value: '+1', label: '+1 美国/加拿大' }] // i18n-skip-line: backend values
+  return items.length ? items : [{ value: '+1', label: `+1 ${te('admin.dict.dict_data_country_us_canada') ? t('admin.dict.dict_data_country_us_canada') : 'US/Canada'}` }]
 })
 const filterPhoneCountryOption = (input: string, option: { label: string; value: string }) => {
   const keyword = input.trim().toLowerCase()

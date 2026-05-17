@@ -273,7 +273,7 @@ import {
 import { useDictFacade } from '@osg/shared/composables'
 import { useUserStore } from '@/stores/user'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 const userStore = useUserStore()
 const isSuperAdmin = computed(() => userStore.permissions.includes('*:*:*'))
@@ -321,10 +321,14 @@ const DEFAULT_INITIAL_PASSWORD = 'Osg@2026'
 
 const phoneCountryOptions = computed(() => {
   const items = countryCodeItems.value
-    .map((item) => ({
-      value: item.extra?.callingCode || '',
-      label: `${item.extra?.callingCode ?? ''} ${item.label}`.trim(),
-    }))
+    .map((item) => {
+      const i18nKey = item.i18nKey
+      const labelText = i18nKey && te(`admin.dict.${i18nKey}`) ? t(`admin.dict.${i18nKey}`) : item.label
+      return {
+        value: item.extra?.callingCode || '',
+        label: `${item.extra?.callingCode ?? ''} ${labelText}`.trim(),
+      }
+    })
     .filter((opt) => opt.value)
   return items.length ? items : [{ value: '+1', label: t('admin.users.staff.form.defaultCountryCode') }]
 })

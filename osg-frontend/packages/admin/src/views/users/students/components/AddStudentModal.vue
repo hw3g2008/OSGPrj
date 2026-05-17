@@ -545,6 +545,7 @@ const t = (key: string, named?: Record<string, unknown>) =>
   named
     ? (i18n.global.t as unknown as (k: string, n: Record<string, unknown>) => string)(key, named)
     : (i18n.global.t as unknown as (k: string) => string)(key)
+const te = (key: string) => (i18n.global.te as unknown as (k: string) => boolean)(key)
 
 interface AddStudentBasicInfo {
   studentName: string
@@ -606,10 +607,14 @@ const { items: countryCodeItems, load: loadCountryCode } = useDictFacade('osg_co
 const phoneCountryOptions = computed(() => {
   // 区号取自字典 extra.callingCode（dict_value 用作国家 ISO 代码） // i18n-skip-line: dev comment
   const items = countryCodeItems.value
-    .map((item) => ({
-      value: item.extra?.callingCode || '',
-      label: `${item.extra?.callingCode ?? ''} ${item.label}`.trim(),
-    }))
+    .map((item) => {
+      const i18nKey = item.i18nKey
+      const labelText = i18nKey && te(`admin.dict.${i18nKey}`) ? t(`admin.dict.${i18nKey}`) : item.label
+      return {
+        value: item.extra?.callingCode || '',
+        label: `${item.extra?.callingCode ?? ''} ${labelText}`.trim(),
+      }
+    })
     .filter((opt) => opt.value)
   return items.length ? items : [{ value: '+1', label: `+1 ${t('admin.students.addModal.country.usCan')}` }]
 })
