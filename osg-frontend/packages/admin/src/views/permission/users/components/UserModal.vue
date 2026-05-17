@@ -86,7 +86,7 @@
             :checked="formState.roleIds.includes(role.roleId)"
             @change="(e: any) => toggleRole(role.roleId, e.target.checked)"
           >
-            {{ role.roleName }}
+            {{ role.i18nKey && te(`admin.role.${role.i18nKey}`) ? t(`admin.role.${role.i18nKey}`) : role.roleName }}
           </a-checkbox>
         </div>
       </a-form-item>
@@ -129,7 +129,7 @@ import { message } from 'ant-design-vue'
 import { addUser, updateUser } from '@/api/user'
 import { OverlaySurfaceModal } from '@osg/shared/components'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 const props = defineProps<{
   visible: boolean
