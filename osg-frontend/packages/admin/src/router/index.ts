@@ -131,7 +131,10 @@ router.beforeEach(async (to) => {
 
   if (to.meta.public) {
     if (token && to.name === 'Login') {
-      return { path: '/dashboard' }
+      // v1 暂不上首页（MainLayout 已 v-show="false" 隐藏入口），
+      // 已登录访问 /login 时跳第一个可见菜单项 /permission/roles
+      // （也与根路径 redirect 一致）。
+      return { path: '/permission/roles' }
     } else {
       return true
     }

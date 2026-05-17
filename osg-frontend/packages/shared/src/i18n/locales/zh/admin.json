@@ -1154,6 +1154,7 @@
       "freeze": "冻结",
       "restore": "恢复",
       "addToBlacklist": "加入黑名单",
+      "blacklist": "加入黑名单",
       "refund": "退费"
     },
     "filterBar": {
@@ -1195,6 +1196,13 @@
         "attitude": "态度恶劣",
         "other": "其他原因"
       },
+      "reasons": {
+        "serviceViolation": "违反服务协议",
+        "maliciousComplaint": "恶意投诉",
+        "nonCooperative": "不配合辅导",
+        "badAttitude": "态度恶劣",
+        "other": "其他原因"
+      },
       "otherReasonLabel": "其他原因说明",
       "otherReasonPlaceholder": "请输入具体原因",
       "remarkLabel": "备注说明",
@@ -1211,6 +1219,9 @@
     "statusModal": {
       "title": "修改学员状态",
       "studentFallback": "学员姓名",
+      "headingPre": "确定将",
+      "headingMid": "的状态修改为",
+      "headingPost": "？",
       "targetStatus": {
         "freeze": "冻结",
         "unfreeze": "解冻",
@@ -1234,25 +1245,41 @@
         "confirm": "确认修改"
       },
       "validation": {
-        "reason": "请选择原因"
+        "reason": "请选择原因",
+        "required": "请选择原因"
       },
       "reasonOptions": {
         "pause": "学员申请暂停",
         "expiredHours": "课时用完待续费",
         "violation": "违反服务协议",
         "refundRequest": "学员申请退费",
-        "other": "其他原因"
+        "other": "其他原因",
+        "studentPause": "学员申请暂停",
+        "hoursUsed": "课时用完待续费",
+        "serviceViolation": "违反服务协议",
+        "studentRefund": "学员申请退费"
       }
     },
     "changeReviewTab": {
-      "banner": "审核说明：核心信息、学业信息和求职方向的修改需要后台审核，联系方式修改后直接生效。",
+      "banner": {
+        "prefix": "审核说明：",
+        "text": "核心信息、学业信息和求职方向的修改需要后台审核，联系方式修改后直接生效。"
+      },
       "pending": {
         "title": "待审核的变更",
         "empty": "当前没有待审核的信息变更。"
       },
       "history": {
         "title": "历史变更记录",
-        "empty": "还没有历史变更记录。"
+        "empty": "还没有历史变更记录。",
+        "table": {
+          "changeType": "变更类型",
+          "field": "变更字段",
+          "before": "变更前",
+          "after": "变更后",
+          "time": "变更时间",
+          "status": "状态"
+        }
       },
       "comparison": {
         "before": "变更前",
@@ -1273,17 +1300,24 @@
         "reject": "✗ 驳回",
         "processing": "处理中..."
       },
+      "actions": {
+        "approve": "✓ 通过",
+        "reject": "✗ 驳回",
+        "processing": "处理中..."
+      },
       "status": {
         "autoApplied": "自动生效",
         "approved": "已通过",
         "rejected": "已驳回",
-        "default": "已记录"
+        "default": "已记录",
+        "recorded": "已记录"
       },
       "category": {
         "academic": "学业信息",
         "jobDirection": "求职方向",
         "contact": "联系方式",
-        "default": "核心信息"
+        "default": "核心信息",
+        "core": "核心信息"
       },
       "messages": {
         "approveSuccess": "变更已通过",
@@ -1308,13 +1342,28 @@
           "period": "有效期",
           "status": "状态",
           "attachment": "附件"
-        }
+        },
+        "contractNo": "合同编号",
+        "type": "类型",
+        "amount": "金额",
+        "hours": "课时",
+        "period": "有效期",
+        "status": "状态",
+        "attachment": "附件"
       },
       "usdEquivalent": "{amount} 等值",
       "hoursRemaining": "剩余 {hours}h",
       "dateSeparator": " 至 ",
+      "equivalent": "等值",
+      "separator": "·",
+      "remaining": "剩余",
       "download": "下载",
       "status": {
+        "ended": "已结束",
+        "draft": "草稿",
+        "normal": "正常"
+      },
+      "statusLabels": {
         "ended": "已结束",
         "draft": "草稿",
         "normal": "正常"
@@ -3138,6 +3187,9 @@
         "saveSuccess": "菜单已保存",
         "saveError": "保存菜单失败"
       },
+      "msg": {
+        "saveSuccess": "菜单已保存"
+      },
       "modal": {
         "title": "菜单项配置",
         "infoAlert": "菜单类型决定字段联动：目录仅维护显示结构；菜单维护路由与组件；按钮仅维护权限标识。",
@@ -3155,6 +3207,7 @@
         "componentLabel": "组件路径",
         "permsLabel": "权限标识",
         "sortLabel": "显示排序",
+        "orderNumLabel": "显示排序",
         "statusLabel": "状态",
         "statusEnabled": "启用",
         "statusDisabled": "停用",

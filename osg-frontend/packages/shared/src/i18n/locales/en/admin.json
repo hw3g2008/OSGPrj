@@ -1154,6 +1154,7 @@
       "freeze": "Freeze",
       "restore": "Restore",
       "addToBlacklist": "Blacklist",
+      "blacklist": "Blacklist",
       "refund": "Refund"
     },
     "filterBar": {
@@ -1195,6 +1196,13 @@
         "attitude": "Poor attitude",
         "other": "Other"
       },
+      "reasons": {
+        "serviceViolation": "Violation of service agreement",
+        "maliciousComplaint": "Malicious complaints",
+        "nonCooperative": "Non-cooperation",
+        "badAttitude": "Poor attitude",
+        "other": "Other"
+      },
       "otherReasonLabel": "Other reason details",
       "otherReasonPlaceholder": "Please specify the reason",
       "remarkLabel": "Remarks",
@@ -1211,6 +1219,9 @@
     "statusModal": {
       "title": "Change Student Status",
       "studentFallback": "Student",
+      "headingPre": "Change status of",
+      "headingMid": "to",
+      "headingPost": "?",
       "targetStatus": {
         "freeze": "Frozen",
         "unfreeze": "Unfrozen",
@@ -1234,25 +1245,41 @@
         "confirm": "Confirm"
       },
       "validation": {
-        "reason": "Please select a reason"
+        "reason": "Please select a reason",
+        "required": "Please select a reason"
       },
       "reasonOptions": {
         "pause": "Student requested pause",
         "expiredHours": "Hours depleted, pending renewal",
         "violation": "Violation of service agreement",
         "refundRequest": "Student requested refund",
-        "other": "Other"
+        "other": "Other",
+        "studentPause": "Student requested pause",
+        "hoursUsed": "Hours depleted, pending renewal",
+        "serviceViolation": "Violation of service agreement",
+        "studentRefund": "Student requested refund"
       }
     },
     "changeReviewTab": {
-      "banner": "Review note: Changes to core info, academic info, and career direction require admin review. Contact info changes take effect immediately.",
+      "banner": {
+        "prefix": "Review note: ",
+        "text": "Changes to core info, academic info, and career direction require admin review. Contact info changes take effect immediately."
+      },
       "pending": {
         "title": "Pending Changes",
         "empty": "No pending changes."
       },
       "history": {
         "title": "Change History",
-        "empty": "No change history yet."
+        "empty": "No change history yet.",
+        "table": {
+          "changeType": "Type",
+          "field": "Field",
+          "before": "Before",
+          "after": "After",
+          "time": "Time",
+          "status": "Status"
+        }
       },
       "comparison": {
         "before": "Before",
@@ -1273,17 +1300,24 @@
         "reject": "✗ Reject",
         "processing": "Processing..."
       },
+      "actions": {
+        "approve": "✓ Approve",
+        "reject": "✗ Reject",
+        "processing": "Processing..."
+      },
       "status": {
         "autoApplied": "Auto Applied",
         "approved": "Approved",
         "rejected": "Rejected",
-        "default": "Recorded"
+        "default": "Recorded",
+        "recorded": "Recorded"
       },
       "category": {
         "academic": "Academic Info",
         "jobDirection": "Career Direction",
         "contact": "Contact Info",
-        "default": "Core Info"
+        "default": "Core Info",
+        "core": "Core Info"
       },
       "messages": {
         "approveSuccess": "Change approved",
@@ -1308,13 +1342,28 @@
           "period": "Period",
           "status": "Status",
           "attachment": "Attachment"
-        }
+        },
+        "contractNo": "Contract No.",
+        "type": "Type",
+        "amount": "Amount",
+        "hours": "Hours",
+        "period": "Period",
+        "status": "Status",
+        "attachment": "Attachment"
       },
       "usdEquivalent": "{amount} equiv.",
       "hoursRemaining": "{hours}h left",
       "dateSeparator": " to ",
+      "equivalent": "equiv.",
+      "separator": "·",
+      "remaining": "Remaining",
       "download": "Download",
       "status": {
+        "ended": "Ended",
+        "draft": "Draft",
+        "normal": "Normal"
+      },
+      "statusLabels": {
         "ended": "Ended",
         "draft": "Draft",
         "normal": "Normal"
@@ -3137,6 +3186,9 @@
         "saveSuccess": "Menu saved",
         "saveError": "Failed to save menu"
       },
+      "msg": {
+        "saveSuccess": "Menu saved"
+      },
       "modal": {
         "title": "Menu Configuration",
         "infoAlert": "Type determines field behavior: Directory maintains display structure; Menu maintains routes & components; Button maintains permissions.",
@@ -3154,6 +3206,7 @@
         "componentLabel": "Component Path",
         "permsLabel": "Permission Key",
         "sortLabel": "Order",
+        "orderNumLabel": "Order",
         "statusLabel": "Status",
         "statusEnabled": "Enabled",
         "statusDisabled": "Disabled",
