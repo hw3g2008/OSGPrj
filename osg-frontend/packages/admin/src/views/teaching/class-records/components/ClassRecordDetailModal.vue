@@ -40,7 +40,7 @@
           </div>
           <div class="class-record-detail-modal__cell">
             <span class="class-record-detail-modal__label">{{ t('admin.teaching.classRecords.fields.courseContent') }}</span>
-            <strong><a-tag v-if="detail?.classStatus" color="processing">{{ detail.classStatus }}</a-tag><span v-else>--</span></strong>
+            <strong><a-tag v-if="detail?.classStatus" color="processing">{{ normalizeClassStatusLabel(detail.classStatus) }}</a-tag><span v-else>--</span></strong>
           </div>
           <div class="class-record-detail-modal__cell">
             <span class="class-record-detail-modal__label">{{ t('admin.teaching.classRecords.fields.classDate') }}</span>
@@ -163,6 +163,14 @@ const normalizeSourceLabel = (v?: string | null) => {
   if (v === 'headteacher') return t('admin.teaching.classRecords.sources.headteacher')
   if (v === 'assistant') return t('admin.teaching.classRecords.sources.assistant')
   return v
+}
+
+// class_status raw enum (后端 OsgClassRecordServiceImpl.deriveClassStatus 派生) → 本地化 label
+const normalizeClassStatusLabel = (v?: string | null) => {
+  if (!v) return '--'
+  const key = `admin.teaching.classRecords.classStatus.${v.trim().toLowerCase()}`
+  const label = t(key)
+  return label === key ? v : label
 }
 
 const formatFee = (v?: string | null) => {

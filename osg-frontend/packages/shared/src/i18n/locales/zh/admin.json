@@ -2700,6 +2700,18 @@
         "noReviewRemark": "暂无审核备注",
         "studentRating": "学员评价"
       },
+      "classStatus": {
+        "resume_revision": "新简历",
+        "resume_update": "简历更新",
+        "case_prep": "咨询案例准备",
+        "mock_interview": "模拟面试的课程",
+        "networking_midterm": "人际关系的课程",
+        "mock_midterm": "模拟期中考试",
+        "behavioral": "行为训练",
+        "technical": "技术的",
+        "other": "其他",
+        "absent": "旷课"
+      },
       "detailModal": {
         "title": "课程记录详情",
         "loading": "正在加载课程记录详情...",

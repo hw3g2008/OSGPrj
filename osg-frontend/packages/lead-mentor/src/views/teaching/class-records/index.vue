@@ -654,15 +654,14 @@ function resolveCoachingMeta(courseType: string) {
   }
 }
 
-function resolveContentMeta(classStatus: string, courseContent?: string | null) {
+function resolveContentMeta(classStatus: string) {
   const normalized = normalizeKey(classStatus)
   const mapped = getContentLabelMap()[normalized]
   // 后端已在 OsgClassRecordServiceImpl.deriveClassStatus 派生 class_status；
   // 历史数据由 2026-05-17-class-record-class-status-backfill.sql 回填。
-  // map 仍命中不到时（未知 enum 扩展）退到 courseContent 后端中文文案，再退原 key。
-  const fallback = (courseContent ?? '').toString().trim() || classStatus
+  // 未知 enum 扩展时直接展示原 key，强制后端兜底不再依赖前端 courseContent fallback。
   return {
-    contentLabel: mapped ?? fallback,
+    contentLabel: mapped ?? classStatus,
     contentTone: contentToneMap[normalized] ?? 'tag--info',
   }
 }
@@ -683,7 +682,7 @@ function resolveActionSurface(classStatus: string) {
 
 function buildRowFromList(row: LeadMentorClassRecordRow): ClassRecordRow {
   const coachingMeta = resolveCoachingMeta(row.courseType ?? '')
-  const contentMeta = resolveContentMeta(row.classStatus ?? '', row.courseContent)
+  const contentMeta = resolveContentMeta(row.classStatus ?? '')
   const status = normalizeKey(row.status)
   const normalizedStatus = status === 'approved' || status === 'rejected' ? status : 'pending'
   const statusMeta =

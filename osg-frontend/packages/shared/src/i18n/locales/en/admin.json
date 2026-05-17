@@ -2699,6 +2699,18 @@
         "noReviewRemark": "No review note",
         "studentRating": "Student Rating"
       },
+      "classStatus": {
+        "resume_revision": "Resume Revision",
+        "resume_update": "Resume Update",
+        "case_prep": "Case Prep",
+        "mock_interview": "Mock Interview",
+        "networking_midterm": "Networking Midterm",
+        "mock_midterm": "Mock Midterm",
+        "behavioral": "Behavioral",
+        "technical": "Technical",
+        "other": "Other",
+        "absent": "Absent"
+      },
       "detailModal": {
         "title": "Class Record Detail",
         "loading": "Loading class record detail...",
