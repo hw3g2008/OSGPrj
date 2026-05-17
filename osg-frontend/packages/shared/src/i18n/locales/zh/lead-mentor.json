@@ -179,6 +179,79 @@
       "acknowledgeFailed": "阶段确认失败"
     }
   },
+  "mockPractice": {
+    "pageTitle": "模拟应聘管理",
+    "tab": {
+      "managed": "管理学员",
+      "coaching": "我辅导的",
+      "pending": "待分配导师"
+    },
+    "alert": {
+      "managed": "查看管理学员的模拟应聘进度与导师反馈",
+      "coaching": "您正在辅导以下学员，可在课程结束后上报课消",
+      "pending": "以下学员申请了模拟应聘，需要您分配导师"
+    },
+    "filter": {
+      "type": "类型",
+      "allTypes": "全部类型",
+      "search": "查询",
+      "reset": "重置"
+    },
+    "empty": {
+      "managed": "暂无管理中的模拟应聘",
+      "coaching": "暂无辅导中的模拟应聘",
+      "pending": "暂无待分配的申请"
+    },
+    "col": {
+      "student": "学员",
+      "type": "类型",
+      "appliedAt": "申请时间",
+      "status": "状态",
+      "mentor": "导师",
+      "lessonHours": "课时",
+      "feedback": "反馈",
+      "actions": "操作"
+    },
+    "practiceType": {
+      "mockInterview": "模拟面试",
+      "relationTest": "人际关系测试",
+      "midterm": "期中模考"
+    },
+    "actions": {
+      "reportLesson": "上报课消",
+      "assignMentor": "分配导师",
+      "confirm": "确认"
+    },
+    "messages": {
+      "loadFailed": "模拟应聘列表加载失败",
+      "feedbackLoadFailed": "反馈详情加载失败",
+      "detailLoadFailed": "应聘详情加载失败",
+      "assignContextLost": "导师匹配上下文丢失",
+      "assignSelectMentor": "请至少选择1位导师",
+      "scheduledTimeRequired": "请选择预约时间",
+      "assignCountMismatch": "导师数量必须等于申请导师数量",
+      "assignSuccess": "导师分配已保存",
+      "acknowledgeSuccess": "已确认接收"
+    },
+    "feedback": {
+      "waitingConfirm": "待确认接收",
+      "waitingFeedback": "等待导师反馈",
+      "noFeedback": "暂无反馈",
+      "excellent": "表现优秀",
+      "good": "表现良好",
+      "needsImprovement": "需要提升",
+      "pending": "待开始",
+      "defaultSuggestion": "继续保持，按计划推进训练"
+    },
+    "recommendation": {
+      "continueNext": "可推进下一阶段训练",
+      "needMoreTraining": "建议加强针对性训练"
+    },
+    "mentorDemand": {
+      "count": "需 {count} 位导师",
+      "tbd": "导师数量待定"
+    }
+  },
   "classRecords": {
     "pageTitle": "课程记录",
     "scope": {
@@ -186,6 +259,8 @@
       "managed": "管理课程"
     },
     "filter": {
+      "search": "搜索",
+      "all": "全部",
       "searchPlaceholder": "搜索学员姓名/ID",
       "coachingType": "辅导类型",
       "courseContent": "课程内容",

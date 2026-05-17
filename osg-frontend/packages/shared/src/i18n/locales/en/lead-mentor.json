@@ -179,6 +179,79 @@
       "acknowledgeFailed": "Failed to confirm stage update"
     }
   },
+  "mockPractice": {
+    "pageTitle": "Mock Practice",
+    "tab": {
+      "managed": "Managed Students",
+      "coaching": "Coaching",
+      "pending": "Pending Assignment"
+    },
+    "alert": {
+      "managed": "Track mock practice progress and mentor feedback for managed students",
+      "coaching": "You are coaching the following students. Submit a lesson record after each session.",
+      "pending": "The following students requested mock practice. Please assign a mentor."
+    },
+    "filter": {
+      "type": "Type",
+      "allTypes": "All Types",
+      "search": "Search",
+      "reset": "Reset"
+    },
+    "empty": {
+      "managed": "No managed mock practice yet",
+      "coaching": "No coaching mock practice yet",
+      "pending": "No pending requests"
+    },
+    "col": {
+      "student": "Student",
+      "type": "Type",
+      "appliedAt": "Submitted",
+      "status": "Status",
+      "mentor": "Mentor",
+      "lessonHours": "Hours",
+      "feedback": "Feedback",
+      "actions": "Actions"
+    },
+    "practiceType": {
+      "mockInterview": "Mock Interview",
+      "relationTest": "Relationship Test",
+      "midterm": "Midterm Mock"
+    },
+    "actions": {
+      "reportLesson": "Report Lesson",
+      "assignMentor": "Assign Mentor",
+      "confirm": "Confirm"
+    },
+    "messages": {
+      "loadFailed": "Failed to load mock practice list",
+      "feedbackLoadFailed": "Failed to load feedback detail",
+      "detailLoadFailed": "Failed to load practice detail",
+      "assignContextLost": "Mentor assignment context lost",
+      "assignSelectMentor": "Please select at least 1 mentor",
+      "scheduledTimeRequired": "Please pick a scheduled time",
+      "assignCountMismatch": "Mentor count must match the requested number",
+      "assignSuccess": "Mentor assignment saved",
+      "acknowledgeSuccess": "Assignment acknowledged"
+    },
+    "feedback": {
+      "waitingConfirm": "Waiting for acknowledgement",
+      "waitingFeedback": "Waiting for mentor feedback",
+      "noFeedback": "No feedback yet",
+      "excellent": "Excellent",
+      "good": "Good",
+      "needsImprovement": "Needs Improvement",
+      "pending": "Pending",
+      "defaultSuggestion": "Keep going and follow the training plan"
+    },
+    "recommendation": {
+      "continueNext": "Ready to move to the next stage",
+      "needMoreTraining": "Recommend more targeted training"
+    },
+    "mentorDemand": {
+      "count": "{count} mentor(s) needed",
+      "tbd": "Mentor count TBD"
+    }
+  },
   "classRecords": {
     "pageTitle": "Class Records",
     "scope": {
@@ -186,6 +259,8 @@
       "managed": "Managed Sessions"
     },
     "filter": {
+      "search": "Search",
+      "all": "All",
       "searchPlaceholder": "Search student name / ID",
       "coachingType": "Coaching Type",
       "courseContent": "Course Content",
