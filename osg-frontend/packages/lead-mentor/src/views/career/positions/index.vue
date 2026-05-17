@@ -133,7 +133,7 @@
 
 <script setup lang="ts">
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { useDictFacade, mergeDictWithExistingValues } from '@osg/shared'
+import { useDictFacade, mergeDictWithExistingValues, useI18nDict } from '@osg/shared'
 import { message } from 'ant-design-vue'
 import { SearchOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
@@ -281,15 +281,18 @@ const { items: regionDictOptions, load: loadRegionDict } = useDictFacade('osg_re
 // FIX-C: 主攻方向字典回显（osg_major_direction），用于列表 a-tag 文本映射
 const { items: majorDirectionDictOptions, load: loadMajorDirectionDict } = useDictFacade('osg_major_direction')
 
+// i18n 字典翻译：按 locale 取 i18nKey → t()；缺失时 fallback 到后端原 label（zh）
+const { tByI18nKey } = useI18nDict('admin.dict')
+
 const regionDictMap = computed<Record<string, string>>(() => {
   const map: Record<string, string> = {}
-  for (const opt of regionDictOptions.value) map[opt.value] = opt.label
+  for (const opt of regionDictOptions.value) map[opt.value] = tByI18nKey(opt.i18nKey, opt.label)
   return map
 })
 
 const majorDirectionMap = computed<Record<string, string>>(() => {
   const map: Record<string, string> = {}
-  for (const opt of majorDirectionDictOptions.value) map[opt.value] = opt.label
+  for (const opt of majorDirectionDictOptions.value) map[opt.value] = tByI18nKey(opt.i18nKey, opt.label)
   return map
 })
 

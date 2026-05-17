@@ -68,9 +68,13 @@
       </template>
 
       <template v-else-if="column.dataIndex === 'recruitmentCycle' || column.key === 'recruitmentCycle'">
-        <a-tag v-if="record.recruitmentCycle" :color="record.recruitmentCycleTone || 'purple'">
-          {{ record.recruitmentCycle }}
-        </a-tag>
+        <template v-if="record.recruitmentCycle">
+          <a-tag
+            v-for="c in splitCsv(record.recruitmentCycle)"
+            :key="c"
+            :color="record.recruitmentCycleTone || 'purple'"
+          >{{ c }}</a-tag>
+        </template>
         <span v-else class="osg-positions-list-table__muted">-</span>
       </template>
 
@@ -206,7 +210,7 @@ const DEFAULT_COLUMNS = computed<ColumnConfig[]>(() => [
   { title: t('common.shared.positions.col.industry'), key: 'industry', dataIndex: 'industry', width: 130 },
   { title: t('common.shared.positions.col.positionCategory'), key: 'positionCategory', dataIndex: 'positionCategory', width: 110 },
   { title: t('common.shared.positions.col.location'), key: 'location', dataIndex: 'location', width: 130 },
-  { title: t('common.shared.positions.col.recruitmentCycle'), key: 'recruitmentCycle', dataIndex: 'recruitmentCycle', width: 110 },
+  { title: t('common.shared.positions.col.recruitmentCycle'), key: 'recruitmentCycle', dataIndex: 'recruitmentCycle', width: 140 },
   { title: t('common.shared.positions.col.targetMajors'), key: 'targetMajors', dataIndex: 'targetMajors', width: 140 },
   { title: t('common.shared.positions.col.publishTime'), key: 'publishTime', dataIndex: 'publishTime', width: 110 },
   { title: t('common.shared.positions.col.deadline'), key: 'deadline', dataIndex: 'deadline', width: 110 },
