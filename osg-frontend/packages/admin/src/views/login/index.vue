@@ -187,7 +187,8 @@ const handleSubmit = async () => {
     })
     message.success(t('admin.login.message.success'))
     const redirect = route.query.redirect as string
-    router.push(redirect || '/dashboard')
+    // v1 暂不上首页（MainLayout 已 v-show="false" 隐藏入口），登录后默认跳第一个可见菜单。
+    router.push(redirect || '/permission/roles')
   } catch {
     // http interceptor 已经弹过 message.error，这里只刷新验证码
     refreshCaptcha()

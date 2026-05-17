@@ -26,25 +26,27 @@
       </template>
 
       <template v-else-if="column.dataIndex === 'companyName' || column.key === 'companyName'">
-        <a-space :size="8" align="center">
+        <div class="osg-positions-list-table__company-cell">
           <div
             :class="['osg-positions-list-table__logo', resolveLogoToneClass(record)]"
             :style="record.logoColor ? { background: record.logoColor } : undefined"
           >
             {{ resolveLogoText(record) }}
           </div>
-          <a
-            v-if="record.companyWebsite"
-            :href="record.companyWebsite"
-            target="_blank"
-            rel="noreferrer"
-            class="osg-positions-list-table__company-link"
-          >
-            {{ record.companyName }}
-            <i class="mdi mdi-open-in-new" aria-hidden="true" />
-          </a>
-          <span v-else>{{ record.companyName }}</span>
-        </a-space>
+          <a-tooltip :title="record.companyName" placement="topLeft">
+            <a
+              v-if="record.companyWebsite"
+              :href="record.companyWebsite"
+              target="_blank"
+              rel="noreferrer"
+              class="osg-positions-list-table__company-link"
+            >
+              <span class="osg-positions-list-table__company-text">{{ record.companyName }}</span>
+              <i class="mdi mdi-open-in-new" aria-hidden="true" />
+            </a>
+            <span v-else class="osg-positions-list-table__company-text">{{ record.companyName }}</span>
+          </a-tooltip>
+        </div>
       </template>
 
       <template v-else-if="column.dataIndex === 'industry' || column.key === 'industry'">
@@ -248,6 +250,24 @@ function resolveFallbackText(record: PositionTableRow, column: ColumnConfig): st
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.osg-positions-list-table__company-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.osg-positions-list-table__company-text {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  vertical-align: middle;
 }
 
 .osg-positions-list-table__title-link:hover,

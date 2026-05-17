@@ -97,7 +97,9 @@
                 {{ company.logoText }}
               </div>
               <div class="osg-positions-drilldown__company-meta">
-                <strong>{{ company.name }}</strong>
+                <a-tooltip :title="company.name" placement="topLeft">
+                  <strong>{{ company.name }}</strong>
+                </a-tooltip>
                 <span>{{ company.locations || '—' }}</span>
               </div>
             </button>
@@ -306,6 +308,7 @@ function resolveCompanyLogoToneClass(
 
 .osg-positions-drilldown__company-main-button {
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -316,14 +319,28 @@ function resolveCompanyLogoToneClass(
   cursor: pointer;
 }
 
+.osg-positions-drilldown__company-meta {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
 .osg-positions-drilldown__company-meta strong {
   display: block;
   color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 .osg-positions-drilldown__company-meta span {
   color: #64748b;
   font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
 }
 
 .osg-positions-drilldown__company-logo {
