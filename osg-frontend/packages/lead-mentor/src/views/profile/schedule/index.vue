@@ -309,11 +309,16 @@ const userIdLabel = computed(() => {
 const localCurrentWeekRange = buildWeekRange(currentWeekDays, t('leadMentor.schedule.k34'))
 const localNextWeekRange = buildWeekRange(nextWeekDays, t('leadMentor.schedule.k35'))
 const bannerDetail = computed(() => {
-  return statusView.value?.bannerDetail || t('leadMentor.schedule.k36')
+  // Ignore backend zh string; pick i18n key by nextWeekFilled flag.
+  return statusView.value?.nextWeekFilled ? t('leadMentor.schedule.k49') : t('leadMentor.schedule.k36')
 })
 const currentWeekHoursLabel = computed(() => formatHours(currentSchedule.value?.availableHours))
 const currentWeekAvailableDaysLabel = computed(() => formatCount(currentSchedule.value?.availableDayCount))
-const scheduleStatusLabel = computed(() => statusView.value?.scheduleStatus || t('leadMentor.schedule.k37'))
+const scheduleStatusLabel = computed(() => {
+  // Ignore backend zh string; mirror nextWeekStatusLabel logic.
+  if (statusView.value?.nextWeekFilled == null) return t('leadMentor.schedule.k37')
+  return statusView.value.nextWeekFilled ? t('leadMentor.schedule.k48') : t('leadMentor.schedule.k38')
+})
 const currentWeekRange = computed(() => {
   return currentSchedule.value?.weekRange ? t('leadMentor.schedule.k46', { range: currentSchedule.value.weekRange }) : localCurrentWeekRange
 })

@@ -666,7 +666,8 @@
     "k45": "Current Lead Mentor · ID: {id}",
     "k46": "{range} (This Week)",
     "k47": "{range} (Next Week)",
-    "k48": "Submitted"
+    "k48": "Submitted",
+    "k49": "Schedule synced to actual status. You can continue updating."
   },
   "reports": {
     "k1": "Learning Report",
