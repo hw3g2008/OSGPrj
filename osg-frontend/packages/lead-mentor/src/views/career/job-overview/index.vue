@@ -13,7 +13,11 @@
       </template>
     </PageHeader>
 
-    <InterviewCalendar v-if="activeTab === 'managed'" :events="calendarEvents" />
+    <InterviewCalendar
+      v-if="activeTab === 'managed'"
+      :events="calendarEvents"
+      style="margin-bottom: 16px;"
+    />
 
     <div class="filter-row">
       <a-select

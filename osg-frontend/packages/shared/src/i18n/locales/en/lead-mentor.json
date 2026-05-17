@@ -707,6 +707,11 @@
     "k32": "Failed to load student list",
     "k33": "Lead Mentor = Me",
     "k34": "Tech",
-    "k35": "{count} records total"
+    "k35": "{count} records total",
+    "relationOption": {
+      "coaching": "Students I Coach",
+      "managed": "Lead Mentor for Me",
+      "dual": "Dual Relation"
+    }
   }
 }

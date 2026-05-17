@@ -19,7 +19,7 @@
           :key="option.value"
           :value="option.value"
         >
-          {{ option.label }}
+          {{ resolveRelationLabel(option.value, option.label) }}
         </option>
       </select>
       <select v-model="filters.school" class="form-select">
@@ -39,7 +39,7 @@
           :key="option.value"
           :value="option.value"
         >
-          {{ option.label }}
+          {{ resolveDictLabel(option as { value: string; label: string; i18nKey?: string }) }}
         </option>
       </select>
       <button type="button" class="btn" @click="handleSearch">
@@ -85,11 +85,11 @@
                   <div class="relation-tags">
                     <span
                       v-for="relation in row.relations"
-                      :key="relation.label"
+                      :key="relation.value"
                       class="relation-tag"
                       :class="relation.tone"
                     >
-                      {{ relation.label }}
+                      {{ resolveRelationLabel(relation.value, relation.label) }}
                     </span>
                   </div>
                 </td>
@@ -102,10 +102,7 @@
                 <td class="metric metric--offer">{{ row.offerCount }}</td>
                 <td><RemainingHoursCell :hours="row.rawRemainingHours" /></td>
                 <td>
-                  <StudentStatusTag
-                    :account-status="row.rawAccountStatus"
-                    :label="row.accountStatusLabel"
-                  />
+                  <StudentStatusTag :account-status="row.rawAccountStatus" />
                 </td>
                 <td>
                   <button
@@ -143,7 +140,7 @@ import { computed, inject, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { StudentStatusTag, RemainingHoursCell } from '@osg/shared/components'
-import { useDictFacade, mergeDictWithExistingValues } from '@osg/shared'
+import { useDictFacade, mergeDictWithExistingValues, useI18nDict } from '@osg/shared'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
@@ -154,7 +151,17 @@ import {
   type LeadMentorStudentMeta,
 } from '@osg/shared/api'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
+const { tByI18nKey } = useI18nDict('admin.dict')
+
+function resolveRelationLabel(value?: string, fallback?: string): string {
+  const key = `leadMentor.students.relationOption.${value ?? ''}`
+  return value && te(key) ? (t(key) as string) : (fallback ?? '-')
+}
+
+function resolveDictLabel(option: { value: string; label: string; i18nKey?: string }): string {
+  return tByI18nKey(option.i18nKey, option.label)
+}
 
 interface RelationTag {
   value: string
