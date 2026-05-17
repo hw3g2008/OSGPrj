@@ -63,45 +63,59 @@
 
       <section class="card">
         <div class="card-body">
-          <div class="filter-row">
-            <input
-              class="form-input"
-              type="text"
-              :placeholder="scopeSections.mine.searchPlaceholder"
-              readonly
-            />
-            <select class="form-select">
-              <option
-                v-for="option in scopeSections.mine.filterOptions.coachingTypes"
-                :key="option"
-                :value="option"
+          <a-form layout="inline" class="filter-bar">
+            <a-form-item :label="t('leadMentor.classRecords.filter.search')">
+              <a-input
+                :placeholder="scopeSections.mine.searchPlaceholder"
+                allow-clear
+                style="width:200px"
+              />
+            </a-form-item>
+            <a-form-item :label="t('leadMentor.classRecords.filter.coachingType')">
+              <a-select
+                :placeholder="t('leadMentor.classRecords.filter.all')"
+                allow-clear
+                style="width:160px"
               >
-                {{ option }}
-              </option>
-            </select>
-            <select class="form-select form-select--wide">
-              <option
-                v-for="option in scopeSections.mine.filterOptions.courseContents"
-                :key="option"
-                :value="option"
+                <a-select-option
+                  v-for="option in scopeSections.mine.filterOptions.coachingTypes.slice(1)"
+                  :key="option"
+                  :value="option"
+                >{{ option }}</a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item :label="t('leadMentor.classRecords.filter.courseContent')">
+              <a-select
+                :placeholder="t('leadMentor.classRecords.filter.all')"
+                allow-clear
+                style="width:200px"
               >
-                {{ option }}
-              </option>
-            </select>
-            <select class="form-select">
-              <option
-                v-for="option in scopeSections.mine.filterOptions.timeRanges"
-                :key="option"
-                :value="option"
+                <a-select-option
+                  v-for="option in scopeSections.mine.filterOptions.courseContents.slice(1)"
+                  :key="option"
+                  :value="option"
+                >{{ option }}</a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item :label="t('leadMentor.classRecords.filter.timeRange')">
+              <a-select
+                :placeholder="t('leadMentor.classRecords.filter.all')"
+                allow-clear
+                style="width:160px"
               >
-                {{ option }}
-              </option>
-            </select>
-            <button type="button" class="btn btn-outline btn-sm btn-reset" @click="showUpcomingToast()">
-              <i class="mdi mdi-filter-variant" aria-hidden="true" />
-              {{ t('leadMentor.classRecords.filter.reset') }}
-            </button>
-          </div>
+                <a-select-option
+                  v-for="option in (scopeSections.mine.filterOptions.timeRanges || []).slice(1)"
+                  :key="option"
+                  :value="option"
+                >{{ option }}</a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item>
+              <a-button @click="showUpcomingToast()">
+                <i class="mdi mdi-filter-variant" style="margin-right:4px" />{{ t('leadMentor.classRecords.filter.reset') }}
+              </a-button>
+            </a-form-item>
+          </a-form>
         </div>
 
         <div class="card-body card-body--table">
@@ -129,10 +143,10 @@
                       <span class="meta-text">ID: {{ row.studentId }}</span>
                     </div>
                   </td>
-                  <td>
+                  <td class="cell-coaching">
                     <div class="stack-cell">
                       <span class="tag" :class="row.coachingTone">{{ row.coachingLabel }}</span>
-                      <span class="detail-text">{{ row.coachingDetail }}</span>
+                      <span v-if="row.coachingDetail" class="detail-text" :title="row.coachingDetail">{{ row.coachingDetail }}</span>
                     </div>
                   </td>
                   <td><span class="tag" :class="row.contentTone">{{ row.contentLabel }}</span></td>
@@ -182,45 +196,59 @@
 
       <section class="card">
         <div class="card-body">
-          <div class="filter-row">
-            <input
-              class="form-input"
-              type="text"
-              :placeholder="scopeSections.managed.searchPlaceholder"
-              readonly
-            />
-            <select class="form-select">
-              <option
-                v-for="option in scopeSections.managed.filterOptions.reporters"
-                :key="option"
-                :value="option"
+          <a-form layout="inline" class="filter-bar">
+            <a-form-item :label="t('leadMentor.classRecords.filter.search')">
+              <a-input
+                :placeholder="scopeSections.managed.searchPlaceholder"
+                allow-clear
+                style="width:200px"
+              />
+            </a-form-item>
+            <a-form-item :label="t('leadMentor.classRecords.filter.reporter')">
+              <a-select
+                :placeholder="t('leadMentor.classRecords.filter.all')"
+                allow-clear
+                style="width:160px"
               >
-                {{ option }}
-              </option>
-            </select>
-            <select class="form-select">
-              <option
-                v-for="option in scopeSections.managed.filterOptions.coachingTypes"
-                :key="option"
-                :value="option"
+                <a-select-option
+                  v-for="option in (scopeSections.managed.filterOptions.reporters || []).slice(1)"
+                  :key="option"
+                  :value="option"
+                >{{ option }}</a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item :label="t('leadMentor.classRecords.filter.coachingType')">
+              <a-select
+                :placeholder="t('leadMentor.classRecords.filter.all')"
+                allow-clear
+                style="width:160px"
               >
-                {{ option }}
-              </option>
-            </select>
-            <select class="form-select form-select--wide">
-              <option
-                v-for="option in scopeSections.managed.filterOptions.courseContents"
-                :key="option"
-                :value="option"
+                <a-select-option
+                  v-for="option in scopeSections.managed.filterOptions.coachingTypes.slice(1)"
+                  :key="option"
+                  :value="option"
+                >{{ option }}</a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item :label="t('leadMentor.classRecords.filter.courseContent')">
+              <a-select
+                :placeholder="t('leadMentor.classRecords.filter.all')"
+                allow-clear
+                style="width:200px"
               >
-                {{ option }}
-              </option>
-            </select>
-            <button type="button" class="btn btn-outline btn-sm btn-reset" @click="showUpcomingToast()">
-              <i class="mdi mdi-filter-variant" aria-hidden="true" />
-              {{ t('leadMentor.classRecords.filter.reset') }}
-            </button>
-          </div>
+                <a-select-option
+                  v-for="option in scopeSections.managed.filterOptions.courseContents.slice(1)"
+                  :key="option"
+                  :value="option"
+                >{{ option }}</a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item>
+              <a-button @click="showUpcomingToast()">
+                <i class="mdi mdi-filter-variant" style="margin-right:4px" />{{ t('leadMentor.classRecords.filter.reset') }}
+              </a-button>
+            </a-form-item>
+          </a-form>
         </div>
 
         <div class="card-body card-body--table">
@@ -255,10 +283,10 @@
                       <span class="meta-text">{{ t('leadMentor.classRecords.table.mentor') }}</span>
                     </div>
                   </td>
-                  <td>
+                  <td class="cell-coaching">
                     <div class="stack-cell">
                       <span class="tag" :class="row.coachingTone">{{ row.coachingLabel }}</span>
-                      <span class="detail-text">{{ row.coachingDetail }}</span>
+                      <span v-if="row.coachingDetail" class="detail-text" :title="row.coachingDetail">{{ row.coachingDetail }}</span>
                     </div>
                   </td>
                   <td><span class="tag" :class="row.contentTone">{{ row.contentLabel }}</span></td>
@@ -626,10 +654,15 @@ function resolveCoachingMeta(courseType: string) {
   }
 }
 
-function resolveContentMeta(classStatus: string) {
+function resolveContentMeta(classStatus: string, courseContent?: string | null) {
   const normalized = normalizeKey(classStatus)
+  const mapped = getContentLabelMap()[normalized]
+  // 后端已在 OsgClassRecordServiceImpl.deriveClassStatus 派生 class_status；
+  // 历史数据由 2026-05-17-class-record-class-status-backfill.sql 回填。
+  // map 仍命中不到时（未知 enum 扩展）退到 courseContent 后端中文文案，再退原 key。
+  const fallback = (courseContent ?? '').toString().trim() || classStatus
   return {
-    contentLabel: getContentLabelMap()[normalized] ?? classStatus,
+    contentLabel: mapped ?? fallback,
     contentTone: contentToneMap[normalized] ?? 'tag--info',
   }
 }
@@ -650,7 +683,7 @@ function resolveActionSurface(classStatus: string) {
 
 function buildRowFromList(row: LeadMentorClassRecordRow): ClassRecordRow {
   const coachingMeta = resolveCoachingMeta(row.courseType ?? '')
-  const contentMeta = resolveContentMeta(row.classStatus ?? '')
+  const contentMeta = resolveContentMeta(row.classStatus ?? '', row.courseContent)
   const status = normalizeKey(row.status)
   const normalizedStatus = status === 'approved' || status === 'rejected' ? status : 'pending'
   const statusMeta =
@@ -666,7 +699,9 @@ function buildRowFromList(row: LeadMentorClassRecordRow): ClassRecordRow {
     studentId: String(row.studentId ?? ''),
     coachingLabel: coachingMeta.coachingLabel,
     coachingTone: coachingMeta.coachingTone,
-    coachingDetail: row.feedbackContent?.split('\n').find((line) => line.trim())?.trim() ?? '—',
+    // 列表「辅导类型」副文本只显示真·辅导内容字段（comments）。
+    // feedbackContent 是「课程反馈」JSON，业务读不懂，仅在详情弹窗展示。
+    coachingDetail: (row.comments ?? '').toString().trim(),
     contentLabel: contentMeta.contentLabel,
     contentTone: contentMeta.contentTone,
     classDate: row.classDate ? formatDisplayDate(row.classDate) : '—',
@@ -687,9 +722,9 @@ async function loadRows() {
   isLoadingRecords.value = true
   loadErrorMessage.value = ''
   try {
-    const tab = activeStatuses[activeScope.value]
+    // 不传 tab：拉全量后客户端按 activeStatuses 过滤，否则切换 tab 后
+    // mineRows/managedRows 会被覆盖成子集，导致顶部 badge 计数随之变化。
     const filters = {
-      tab: tab !== 'all' ? tab : undefined,
       scope: activeScope.value,
     }
     const [listResponse, statsResponse] = await Promise.all([
@@ -946,12 +981,8 @@ watch(
   },
 )
 
-watch(
-  () => [activeStatuses.mine, activeStatuses.managed],
-  () => {
-    void loadRows()
-  },
-)
+// 切换状态 tab 仅做客户端过滤，不再触发请求，避免重新拉数据覆盖
+// mineRows/managedRows 导致 tab 计数 badge 抖动。
 </script>
 
 <style scoped lang="scss">
@@ -1103,6 +1134,11 @@ watch(
   min-height: 44px;
 }
 
+.filter-bar :deep(.ant-form-item) {
+  margin-bottom: 12px;
+  margin-right: 12px;
+}
+
 .form-input {
   width: 180px;
   padding: 12px 14px;
@@ -1199,6 +1235,22 @@ watch(
 .detail-text {
   color: var(--text);
   font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  display: inline-block;
+}
+
+.cell-coaching {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+}
+
+.cell-coaching .stack-cell {
+  max-width: 100%;
+  min-width: 0;
 }
 
 .tag {

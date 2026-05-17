@@ -379,4 +379,151 @@ class OsgClassRecordServiceImplTest
             .filter(row -> query.getClassDateEnd() == null || !row.getClassDate().after(query.getClassDateEnd()))
             .toList();
     }
+
+    // ====================================================================
+    // class_status 派生：覆盖 mentor / lead-mentor / assistant 三端 × 所有 enum
+    // 见 OsgClassRecordServiceImpl#deriveClassStatus
+    // ====================================================================
+
+    private static org.junit.jupiter.params.provider.Arguments deriveCase(
+        String courseType, String baseCourseCategory, String expected)
+    {
+        return org.junit.jupiter.params.provider.Arguments.of(courseType, baseCourseCategory, expected);
+    }
+
+    static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> classStatusDeriveCases()
+    {
+        return java.util.stream.Stream.of(
+            deriveCase("mock_interview", null, "mock_interview"),
+            deriveCase("relation_test", null, "networking_midterm"),
+            deriveCase("communication_test", null, "mock_midterm"),
+            deriveCase("job_coaching", null, "other"),
+            deriveCase("base_course", "tech", "technical"),
+            deriveCase("base_course", "behavior", "behavioral"),
+            deriveCase("base_course", "new_resume", "resume_revision"),
+            deriveCase("base_course", "resume_update", "resume_update"),
+            deriveCase("base_course", "case_study", "case_prep"),
+            deriveCase("base_course", "other", "other"),
+            deriveCase("base_course", null, "other"),
+            deriveCase("base_course", "", "other")
+        );
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest(name = "mentor derive: {0}/{1} -> {2}")
+    @org.junit.jupiter.params.provider.MethodSource("classStatusDeriveCases")
+    void createMentorClassRecordShouldDeriveClassStatus(String courseType, String baseCourseCategory, String expected)
+    {
+        OsgClassRecord record = new OsgClassRecord();
+        record.setStudentId(46706L);
+        record.setMentorId(101L);
+        record.setStudentName("Story1");
+        record.setClassDate(Timestamp.valueOf(LocalDateTime.of(2026, 5, 17, 10, 0)));
+        record.setDurationHours(1.0D);
+        record.setCourseType(courseType);
+        record.setBaseCourseCategory(baseCourseCategory);
+        record.setCreateBy("mentor_demo");
+
+        com.ruoyi.system.domain.OsgStudent stub = new com.ruoyi.system.domain.OsgStudent();
+        stub.setStudentId(46706L);
+        stub.setStudentName("Story1");
+        stub.setAccountStatus("0");
+        stub.setFrozen(0);
+        when(studentMapper.selectStudentByStudentId(46706L)).thenReturn(stub);
+        when(classRecordMapper.insertMentorClassRecord(any(OsgClassRecord.class))).thenReturn(1);
+
+        service.createMentorClassRecord(record);
+
+        ArgumentCaptor<OsgClassRecord> captor = ArgumentCaptor.forClass(OsgClassRecord.class);
+        verify(classRecordMapper).insertMentorClassRecord(captor.capture());
+        assertEquals(expected, captor.getValue().getClassStatus());
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest(name = "lead-mentor derive: {0}/{1} -> {2}")
+    @org.junit.jupiter.params.provider.MethodSource("classStatusDeriveCases")
+    void createLeadMentorClassRecordShouldDeriveClassStatus(String courseType, String baseCourseCategory, String expected)
+    {
+        OsgClassRecord record = new OsgClassRecord();
+        record.setStudentId(46706L);
+        record.setMentorId(101L);
+        record.setClassDate(Timestamp.valueOf(LocalDateTime.of(2026, 5, 17, 10, 0)));
+        record.setDurationHours(1.0D);
+        record.setCourseType(courseType);
+        record.setBaseCourseCategory(baseCourseCategory);
+        record.setFeedbackContent("derive-test");
+        record.setCreateBy("lm_demo");
+
+        com.ruoyi.system.domain.OsgStudent student = new com.ruoyi.system.domain.OsgStudent();
+        student.setStudentId(46706L);
+        student.setStudentName("Story1");
+        student.setLeadMentorId(101L);
+        student.setAccountStatus("0");
+        when(studentMapper.selectStudentByStudentId(46706L)).thenReturn(student);
+        when(classRecordMapper.insertMentorClassRecord(any(OsgClassRecord.class))).thenReturn(1);
+
+        service.createLeadMentorClassRecord(record);
+
+        ArgumentCaptor<OsgClassRecord> captor = ArgumentCaptor.forClass(OsgClassRecord.class);
+        verify(classRecordMapper).insertMentorClassRecord(captor.capture());
+        assertEquals(expected, captor.getValue().getClassStatus());
+    }
+
+    @Test
+    void createMentorClassRecordShouldPreserveExplicitClassStatus()
+    {
+        // 显式提供 classStatus（如 absent 流、admin 修订）→ 派生不应覆盖
+        OsgClassRecord record = new OsgClassRecord();
+        record.setStudentId(46706L);
+        record.setMentorId(101L);
+        record.setStudentName("Story1");
+        record.setClassDate(Timestamp.valueOf(LocalDateTime.of(2026, 5, 17, 10, 0)));
+        record.setDurationHours(1.0D);
+        record.setCourseType("base_course");
+        record.setBaseCourseCategory("tech");
+        record.setClassStatus("absent");
+        record.setMemberStatus("absent");
+        record.setAbsentRemark("学员未到场");
+        record.setCreateBy("mentor_demo");
+
+        com.ruoyi.system.domain.OsgStudent stub = new com.ruoyi.system.domain.OsgStudent();
+        stub.setStudentId(46706L);
+        stub.setStudentName("Story1");
+        stub.setAccountStatus("0");
+        stub.setFrozen(0);
+        when(studentMapper.selectStudentByStudentId(46706L)).thenReturn(stub);
+        when(classRecordMapper.insertMentorClassRecord(any(OsgClassRecord.class))).thenReturn(1);
+
+        service.createMentorClassRecord(record);
+
+        ArgumentCaptor<OsgClassRecord> captor = ArgumentCaptor.forClass(OsgClassRecord.class);
+        verify(classRecordMapper).insertMentorClassRecord(captor.capture());
+        assertEquals("absent", captor.getValue().getClassStatus());
+    }
+
+    @Test
+    void createMentorClassRecordShouldLeaveClassStatusNullWhenCourseTypeUnknown()
+    {
+        // 未知 courseType（防御未来 enum 扩展）→ 不强写 class_status
+        OsgClassRecord record = new OsgClassRecord();
+        record.setStudentId(46706L);
+        record.setMentorId(101L);
+        record.setStudentName("Story1");
+        record.setClassDate(Timestamp.valueOf(LocalDateTime.of(2026, 5, 17, 10, 0)));
+        record.setDurationHours(1.0D);
+        record.setCourseType("future_unknown_type");
+        record.setCreateBy("mentor_demo");
+
+        com.ruoyi.system.domain.OsgStudent stub = new com.ruoyi.system.domain.OsgStudent();
+        stub.setStudentId(46706L);
+        stub.setStudentName("Story1");
+        stub.setAccountStatus("0");
+        stub.setFrozen(0);
+        when(studentMapper.selectStudentByStudentId(46706L)).thenReturn(stub);
+        when(classRecordMapper.insertMentorClassRecord(any(OsgClassRecord.class))).thenReturn(1);
+
+        service.createMentorClassRecord(record);
+
+        ArgumentCaptor<OsgClassRecord> captor = ArgumentCaptor.forClass(OsgClassRecord.class);
+        verify(classRecordMapper).insertMentorClassRecord(captor.capture());
+        assertNull(captor.getValue().getClassStatus());
+    }
 }

@@ -113,6 +113,9 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> createLeadMentorClassRecord(OsgClassRecord record)
     {
+        // 早派生：让 validator 内 "课程内容不能为空" 校验能拿到值，
+        // 同时保留 absent 等显式 classStatus（deriveClassStatus 内部仅当为空才派生）
+        deriveClassStatus(record);
         validateLeadMentorCreate(record);
         validateCourseSourceLink(record);
 
@@ -132,6 +135,7 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> createAssistantClassRecord(OsgClassRecord record)
     {
+        deriveClassStatus(record);
         validateLeadMentorCreate(record);
         validateCourseSourceLink(record);
 
@@ -1422,6 +1426,8 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
         {
             record.setMemberStatus(OsgClassReportConstants.MEMBER_STATUS_NORMAL);
         }
+        // 在 absent 分支之前派生 class_status（仅当上游未显式提供）
+        deriveClassStatus(record);
         // absent 记录：事实上不存在的字段必须 NULL 化（防御性，不信任前端）
         if ("absent".equalsIgnoreCase(record.getClassStatus()))
         {
@@ -1430,6 +1436,60 @@ public class OsgClassRecordServiceImpl implements IOsgClassRecordService
             record.setFeedbackContent(null);
             record.setTopics(null);
         }
+    }
+
+    /**
+     * 按 courseType + baseCourseCategory 派生 class_status（课程内容子类型 enum）。
+     * 前端 ClassReportPayload 不收集 classStatus，落库前在 service 层统一派生，
+     * 让列表 / 详情 / 筛选所有读取路径都能拿到具体子类型 key，而不是回退到 "其他"。
+     * 仅当 classStatus 为空时派生；已显式提供（如 admin 修订、absent 流）保留原值。
+     */
+    private void deriveClassStatus(OsgClassRecord record)
+    {
+        if (record == null)
+        {
+            return;
+        }
+        String current = record.getClassStatus();
+        if (current != null && !current.isBlank())
+        {
+            return;
+        }
+        String courseType = record.getCourseType();
+        if (courseType == null || courseType.isBlank())
+        {
+            return;
+        }
+        String normalizedCourseType = courseType.trim().toLowerCase();
+        String derived = switch (normalizedCourseType) {
+            case "mock_interview" -> "mock_interview";
+            case "relation_test" -> "networking_midterm";
+            case "communication_test" -> "mock_midterm";
+            case "job_coaching" -> "other";
+            case "base_course" -> deriveBaseCourseClassStatus(record.getBaseCourseCategory());
+            default -> null;
+        };
+        if (derived != null)
+        {
+            record.setClassStatus(derived);
+        }
+    }
+
+    private String deriveBaseCourseClassStatus(String baseCourseCategory)
+    {
+        if (baseCourseCategory == null || baseCourseCategory.isBlank())
+        {
+            return "other";
+        }
+        return switch (baseCourseCategory.trim().toLowerCase()) {
+            case "tech" -> "technical";
+            case "behavior" -> "behavioral";
+            case "new_resume" -> "resume_revision";
+            case "resume_update" -> "resume_update";
+            case "case_study" -> "case_prep";
+            case "other" -> "other";
+            default -> "other";
+        };
     }
 
     private OsgStudent requireManagedStudent(Long studentId, Long leadMentorId)
