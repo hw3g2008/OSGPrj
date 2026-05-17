@@ -343,7 +343,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, reactive, ref, watch } from 'vue'
+import { computed, inject, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { PageHeader } from '@osg/shared/components/PageHeader'
 import { ClassRecordStatusTag } from '@osg/shared/components'
@@ -717,27 +717,31 @@ function buildRowFromList(row: LeadMentorClassRecordRow): ClassRecordRow {
   }
 }
 
+async function loadScope(scope: ScopeKey) {
+  // 不传 tab：拉全量后客户端按 activeStatuses 过滤，否则切换 tab 后
+  // mineRows/managedRows 会被覆盖成子集，导致顶部 badge 计数随之变化。
+  const [listResponse, statsResponse] = await Promise.all([
+    getLeadMentorClassRecordList({ scope }),
+    getLeadMentorClassRecordStats({ scope }),
+  ])
+  const mappedRows = (listResponse.rows ?? []).map(buildRowFromList)
+  if (scope === 'mine') {
+    mineRows.value = mappedRows
+  } else {
+    managedRows.value = mappedRows
+  }
+  return statsResponse
+}
+
 async function loadRows() {
+  // 同时加载 mine + managed，让顶部「我的课程 N / 管理课程 N」两个 badge
+  // 以及下方 status tab 计数从初始化起就正确，不必等用户切 scope。
   if (isLoadingRecords.value) return
   isLoadingRecords.value = true
   loadErrorMessage.value = ''
   try {
-    // 不传 tab：拉全量后客户端按 activeStatuses 过滤，否则切换 tab 后
-    // mineRows/managedRows 会被覆盖成子集，导致顶部 badge 计数随之变化。
-    const filters = {
-      scope: activeScope.value,
-    }
-    const [listResponse, statsResponse] = await Promise.all([
-      getLeadMentorClassRecordList(filters),
-      getLeadMentorClassRecordStats({ scope: activeScope.value }),
-    ])
-    const mappedRows = (listResponse.rows ?? []).map(buildRowFromList)
-    if (activeScope.value === 'mine') {
-      mineRows.value = mappedRows
-    } else {
-      managedRows.value = mappedRows
-    }
-    statsSummary.value = statsResponse
+    const [, managedStats] = await Promise.all([loadScope('mine'), loadScope('managed')])
+    statsSummary.value = managedStats
   } catch (error) {
     loadErrorMessage.value = error instanceof Error ? error.message : t('leadMentor.classRecords.error.loadFailed')
   } finally {
@@ -974,15 +978,9 @@ onMounted(() => {
   void loadRows()
 })
 
-watch(
-  () => activeScope.value,
-  () => {
-    void loadRows()
-  },
-)
-
-// 切换状态 tab 仅做客户端过滤，不再触发请求，避免重新拉数据覆盖
-// mineRows/managedRows 导致 tab 计数 badge 抖动。
+// 切 scope 不触发请求：onMounted 已并行拉了 mine + managed 两份数据，
+// 切换只是切换可见数组；status tab 切换同样仅做客户端过滤。
+// 重新拉数据仅在提交新记录后（handleReportSubmitted）发生。
 </script>
 
 <style scoped lang="scss">
