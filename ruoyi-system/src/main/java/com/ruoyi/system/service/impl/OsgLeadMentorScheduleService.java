@@ -32,12 +32,6 @@ import com.ruoyi.system.mapper.OsgStaffScheduleMapper;
 public class OsgLeadMentorScheduleService
 {
     private static final List<String> SLOT_ORDER = Arrays.asList("morning", "afternoon", "evening");
-    private static final Map<String, String> SLOT_LABELS = Map.of(
-        "morning", "上午 9-12",
-        "afternoon", "下午 14-18",
-        "evening", "晚上 19-22"
-    );
-    private static final List<String> WEEKDAY_LABELS = Arrays.asList("周一", "周二", "周三", "周四", "周五", "周六", "周日");
     private static final DateTimeFormatter MONTH_DAY_FORMATTER = DateTimeFormatter.ofPattern("MM/dd");
     private static final String DEFAULT_REASON = "班主任自主更新排期";
 
@@ -67,13 +61,10 @@ public class OsgLeadMentorScheduleService
         payload.put("staffId", context.staffId());
         payload.put("forceScheduleModal", !nextWeekFilled);
         payload.put("nextWeekFilled", nextWeekFilled);
-        payload.put("scheduleStatus", nextWeekFilled ? "已提交" : "待填写");
         payload.put("currentWeek", currentWeek);
         payload.put("nextWeek", nextWeek);
-        payload.put("bannerTitle", "请在周日前更新下周排期");
-        payload.put("bannerDetail", nextWeekFilled
-            ? "排期已按真实状态同步，可继续更新"
-            : "未填写排期将无法被安排课程，系统将发送邮件提醒");
+        // Display strings (scheduleStatus / bannerTitle / bannerDetail) live in frontend i18n —
+        // frontend resolves them locally from nextWeekFilled.
         return payload;
     }
 
@@ -125,14 +116,12 @@ public class OsgLeadMentorScheduleService
         List<OsgStaffSchedule> rows = staffScheduleMapper.selectStaffScheduleList(context.staffId(), weekScope);
         List<String> selectedSlotKeys = new ArrayList<>();
         Map<Integer, List<String>> daySelections = new LinkedHashMap<>();
-        Map<Integer, List<String>> daySlotLabels = new LinkedHashMap<>();
         BigDecimal availableHours = BigDecimal.ZERO;
         String note = "";
 
         for (int weekday = 1; weekday <= 7; weekday++)
         {
             daySelections.put(weekday, new ArrayList<>());
-            daySlotLabels.put(weekday, new ArrayList<>());
         }
 
         for (OsgStaffSchedule row : rows)
@@ -153,10 +142,9 @@ public class OsgLeadMentorScheduleService
             String selectedKey = slotKey(row.getWeekday(), row.getTimeSlot());
             selectedSlotKeys.add(selectedKey);
             daySelections.get(row.getWeekday()).add(row.getTimeSlot());
-            daySlotLabels.get(row.getWeekday()).add(slotLabel(row.getTimeSlot()));
         }
 
-        List<Map<String, Object>> days = buildDayPayloads(weekScope, daySelections, daySlotLabels);
+        List<Map<String, Object>> days = buildDayPayloads(weekScope, daySelections);
         boolean filled = !rows.isEmpty();
 
         Map<String, Object> payload = new LinkedHashMap<>();
@@ -175,8 +163,7 @@ public class OsgLeadMentorScheduleService
     }
 
     private List<Map<String, Object>> buildDayPayloads(String weekScope,
-                                                       Map<Integer, List<String>> daySelections,
-                                                       Map<Integer, List<String>> daySlotLabels)
+                                                       Map<Integer, List<String>> daySelections)
     {
         LocalDate monday = resolveWeekMonday(weekScope);
         List<Map<String, Object>> days = new ArrayList<>(7);
@@ -185,10 +172,9 @@ public class OsgLeadMentorScheduleService
             LocalDate date = monday.plusDays(weekday - 1L);
             Map<String, Object> day = new LinkedHashMap<>();
             day.put("weekday", weekday);
-            day.put("label", WEEKDAY_LABELS.get(weekday - 1));
+            // weekday label / slot labels are i18n display concerns — frontend renders them.
             day.put("date", date.format(MONTH_DAY_FORMATTER));
             day.put("selectedSlots", new ArrayList<>(daySelections.get(weekday)));
-            day.put("selectedSlotLabels", new ArrayList<>(daySlotLabels.get(weekday)));
             days.add(day);
         }
         return days;
@@ -376,11 +362,6 @@ public class OsgLeadMentorScheduleService
     private String slotKey(Integer weekday, String timeSlot)
     {
         return weekday + "-" + timeSlot;
-    }
-
-    private String slotLabel(String timeSlot)
-    {
-        return SLOT_LABELS.getOrDefault(timeSlot, timeSlot);
     }
 
     private boolean isTruthy(Integer value)

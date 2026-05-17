@@ -99,7 +99,7 @@ test.describe('Lead Mentor Schedule Behavior @lead-mentor @api', () => {
     expect(saved.availableHours).toBe(18)
     expect(saved.selectedSlotKeys).toEqual(['1-morning', '3-evening'])
     expect(refreshedNext.selectedSlotKeys).toEqual(['1-morning', '3-evening'])
-    expect(refreshedStatus.scheduleStatus).toBe('已提交')
+    expect(refreshedStatus.nextWeekFilled).toBe(true)
 
     await expect(page.locator('#page-schedule')).toContainText('已提交')
     await expect(page.locator('#lead-next-weekly-hours')).toHaveValue('18')
@@ -124,7 +124,7 @@ test.describe('Lead Mentor Schedule Behavior @lead-mentor @api', () => {
         availableHours: saved.availableHours,
         selectedSlotKeys: saved.selectedSlotKeys,
         note: saved.note,
-        refreshedStatus: refreshedStatus.scheduleStatus,
+        refreshedStatus: refreshedStatus.nextWeekFilled ? 'submitted' : 'pending',
         persistedSelection: reloadedNext.selectedSlotKeys,
       },
       evidenceRef:

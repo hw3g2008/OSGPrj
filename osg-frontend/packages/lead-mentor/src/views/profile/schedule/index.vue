@@ -373,7 +373,13 @@ function currentWeekDayValue(dayKey: string) {
   if (!backendDay) {
     return t('leadMentor.schedule.k37')
   }
-  return backendDay.selectedSlotLabels.length > 0 ? backendDay.selectedSlotLabels.join(' / ') : t('leadMentor.schedule.k39')
+  if (!backendDay.selectedSlots || backendDay.selectedSlots.length === 0) {
+    return t('leadMentor.schedule.k39')
+  }
+  // Map slot codes to translated labels via local timeSlots i18n.
+  const labels = backendDay.selectedSlots
+    .map((code) => timeSlots.find((slot) => slot.id === code)?.label ?? code)
+  return labels.join(' / ')
 }
 
 function closeForceScheduleModal() {

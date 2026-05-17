@@ -49,13 +49,13 @@ const currentScheduleView: LeadMentorScheduleView = {
   note: '本周固定排期',
   weekRange: '03/23 - 03/29',
   days: [
-    { weekday: 1, label: '周一', date: '03/23', selectedSlots: ['morning'], selectedSlotLabels: ['上午 9-12'] },
-    { weekday: 2, label: '周二', date: '03/24', selectedSlots: [], selectedSlotLabels: [] },
-    { weekday: 3, label: '周三', date: '03/25', selectedSlots: ['evening'], selectedSlotLabels: ['晚上 19-22'] },
-    { weekday: 4, label: '周四', date: '03/26', selectedSlots: [], selectedSlotLabels: [] },
-    { weekday: 5, label: '周五', date: '03/27', selectedSlots: [], selectedSlotLabels: [] },
-    { weekday: 6, label: '周六', date: '03/28', selectedSlots: [], selectedSlotLabels: [] },
-    { weekday: 7, label: '周日', date: '03/29', selectedSlots: [], selectedSlotLabels: [] },
+    { weekday: 1, date: '03/23', selectedSlots: ['morning'] },
+    { weekday: 2, date: '03/24', selectedSlots: [] },
+    { weekday: 3, date: '03/25', selectedSlots: ['evening'] },
+    { weekday: 4, date: '03/26', selectedSlots: [] },
+    { weekday: 5, date: '03/27', selectedSlots: [] },
+    { weekday: 6, date: '03/28', selectedSlots: [] },
+    { weekday: 7, date: '03/29', selectedSlots: [] },
   ],
 }
 
@@ -71,13 +71,13 @@ const nextSchedulePendingView: LeadMentorScheduleView = {
   note: '',
   weekRange: '03/30 - 04/05',
   days: [
-    { weekday: 1, label: '周一', date: '03/30', selectedSlots: [], selectedSlotLabels: [] },
-    { weekday: 2, label: '周二', date: '03/31', selectedSlots: [], selectedSlotLabels: [] },
-    { weekday: 3, label: '周三', date: '04/01', selectedSlots: [], selectedSlotLabels: [] },
-    { weekday: 4, label: '周四', date: '04/02', selectedSlots: [], selectedSlotLabels: [] },
-    { weekday: 5, label: '周五', date: '04/03', selectedSlots: [], selectedSlotLabels: [] },
-    { weekday: 6, label: '周六', date: '04/04', selectedSlots: [], selectedSlotLabels: [] },
-    { weekday: 7, label: '周日', date: '04/05', selectedSlots: [], selectedSlotLabels: [] },
+    { weekday: 1, date: '03/30', selectedSlots: [] },
+    { weekday: 2, date: '03/31', selectedSlots: [] },
+    { weekday: 3, date: '04/01', selectedSlots: [] },
+    { weekday: 4, date: '04/02', selectedSlots: [] },
+    { weekday: 5, date: '04/03', selectedSlots: [] },
+    { weekday: 6, date: '04/04', selectedSlots: [] },
+    { weekday: 7, date: '04/05', selectedSlots: [] },
   ],
 }
 
@@ -89,13 +89,13 @@ const nextScheduleSavedView: LeadMentorScheduleView = {
   selectedSlotKeys: ['1-morning', '3-evening'],
   note: '周三晚上保留面试时段',
   days: [
-    { weekday: 1, label: '周一', date: '03/30', selectedSlots: ['morning'], selectedSlotLabels: ['上午 9-12'] },
-    { weekday: 2, label: '周二', date: '03/31', selectedSlots: [], selectedSlotLabels: [] },
-    { weekday: 3, label: '周三', date: '04/01', selectedSlots: ['evening'], selectedSlotLabels: ['晚上 19-22'] },
-    { weekday: 4, label: '周四', date: '04/02', selectedSlots: [], selectedSlotLabels: [] },
-    { weekday: 5, label: '周五', date: '04/03', selectedSlots: [], selectedSlotLabels: [] },
-    { weekday: 6, label: '周六', date: '04/04', selectedSlots: [], selectedSlotLabels: [] },
-    { weekday: 7, label: '周日', date: '04/05', selectedSlots: [], selectedSlotLabels: [] },
+    { weekday: 1, date: '03/30', selectedSlots: ['morning'] },
+    { weekday: 2, date: '03/31', selectedSlots: [] },
+    { weekday: 3, date: '04/01', selectedSlots: ['evening'] },
+    { weekday: 4, date: '04/02', selectedSlots: [] },
+    { weekday: 5, date: '04/03', selectedSlots: [] },
+    { weekday: 6, date: '04/04', selectedSlots: [] },
+    { weekday: 7, date: '04/05', selectedSlots: [] },
   ],
 }
 
@@ -103,9 +103,6 @@ const pendingStatusView: LeadMentorScheduleStatusView = {
   staffId: 810,
   forceScheduleModal: true,
   nextWeekFilled: false,
-  scheduleStatus: '待填写',
-  bannerTitle: '请在周日前更新下周排期',
-  bannerDetail: '未填写排期将无法被安排课程，系统将发送邮件提醒',
   currentWeek: currentScheduleView,
   nextWeek: nextSchedulePendingView,
 }
@@ -114,8 +111,6 @@ const savedStatusView: LeadMentorScheduleStatusView = {
   ...pendingStatusView,
   forceScheduleModal: false,
   nextWeekFilled: true,
-  scheduleStatus: '已提交',
-  bannerDetail: '排期已按真实状态同步，可继续更新',
   nextWeek: nextScheduleSavedView,
 }
 

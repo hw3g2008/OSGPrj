@@ -823,8 +823,7 @@ class OsgLeadMentorStoryRegressionTest
         when(leadMentorScheduleService.selectStatusView(user)).thenReturn(Map.of(
             "staffId", 810L,
             "forceScheduleModal", true,
-            "nextWeekFilled", false,
-            "scheduleStatus", "待填写"
+            "nextWeekFilled", false
         ));
         when(leadMentorScheduleService.saveNextSchedule(eq(user), eq("leadmentor_schedule"), any())).thenReturn(Map.of(
             "staffId", 810L,
@@ -855,7 +854,7 @@ class OsgLeadMentorStoryRegressionTest
         assertEquals(true, currentData.get("readonly"));
         assertEquals(12, currentData.get("availableHours"));
         assertEquals(true, statusData.get("forceScheduleModal"));
-        assertEquals("待填写", statusData.get("scheduleStatus"));
+        assertEquals(false, statusData.get("nextWeekFilled"));
         assertEquals(2, saveData.get("selectedSlotCount"));
         assertEquals(18, saveData.get("availableHours"));
     }

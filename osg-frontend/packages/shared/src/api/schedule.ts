@@ -2,10 +2,8 @@ import { http } from '../utils/request'
 
 export interface LeadMentorScheduleDayView {
   weekday: number
-  label: string
   date: string
   selectedSlots: string[]
-  selectedSlotLabels: string[]
 }
 
 export interface LeadMentorScheduleView {
@@ -26,9 +24,6 @@ export interface LeadMentorScheduleStatusView {
   staffId: number
   forceScheduleModal: boolean
   nextWeekFilled: boolean
-  scheduleStatus: string
-  bannerTitle: string
-  bannerDetail: string
   currentWeek: LeadMentorScheduleView
   nextWeek: LeadMentorScheduleView
 }

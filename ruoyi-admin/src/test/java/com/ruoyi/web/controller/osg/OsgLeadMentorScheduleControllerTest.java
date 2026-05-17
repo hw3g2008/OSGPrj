@@ -207,7 +207,6 @@ class OsgLeadMentorScheduleControllerTest
             .andExpect(jsonPath("$.data.staffId").value(810))
             .andExpect(jsonPath("$.data.forceScheduleModal").value(true))
             .andExpect(jsonPath("$.data.nextWeekFilled").value(false))
-            .andExpect(jsonPath("$.data.scheduleStatus").value("待填写"))
             .andExpect(jsonPath("$.data.currentWeek.availableHours").value(12))
             .andExpect(jsonPath("$.data.nextWeek.filled").value(false));
     }
@@ -247,8 +246,7 @@ class OsgLeadMentorScheduleControllerTest
                 .header("Authorization", "Bearer lead-mentor-token"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.forceScheduleModal").value(false))
-            .andExpect(jsonPath("$.data.nextWeekFilled").value(true))
-            .andExpect(jsonPath("$.data.scheduleStatus").value("已提交"));
+            .andExpect(jsonPath("$.data.nextWeekFilled").value(true));
     }
 
     @Test
