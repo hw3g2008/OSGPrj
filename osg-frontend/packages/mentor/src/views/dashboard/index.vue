@@ -155,7 +155,7 @@ import { listClassRecords, type ClassRecord } from '@/api/classRecord'
 import { listJobOverview, type JobCoaching } from '@/api/jobOverview'
 import { listMockPractice, type MockPractice } from '@/api/mockPractice'
 import { getMentorProfile } from '@/api/profile'
-import { getCurrentSchedule, getLastWeekSchedule, type MentorSchedule } from '@/api/schedule'
+import { mentorScheduleApi, type LeadMentorScheduleView } from '@osg/shared/api/schedule'
 
 const { t } = useI18n()
 
@@ -166,8 +166,8 @@ const profile = reactive<Record<string, any>>({
   phonenumber: '',
 })
 
-const schedule = ref<MentorSchedule | null>(null)
-const lastWeekSchedule = ref<MentorSchedule | null>(null)
+const schedule = ref<LeadMentorScheduleView | null>(null)
+const nextWeekSchedule = ref<LeadMentorScheduleView | null>(null)
 const jobRows = ref<JobCoaching[]>([])
 const mockRows = ref<MockPractice[]>([])
 const classRows = ref<ClassRecord[]>([])
@@ -179,14 +179,8 @@ const avatarInitials = computed(() => {
   return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() || '').join('')
 })
 
-const scheduleHours = computed(() => Number(schedule.value?.totalHours || 0))
-const activeScheduleDays = computed(() => {
-  const current = schedule.value
-  if (!current) return 0
-  return ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-    .filter((key) => current[key as keyof MentorSchedule] && current[key as keyof MentorSchedule] !== 'unavailable')
-    .length
-})
+const scheduleHours = computed(() => Number(schedule.value?.availableHours || 0))
+const activeScheduleDays = computed(() => Number(schedule.value?.availableDayCount || 0))
 
 const pendingWorkCount = computed(() => jobRows.value.length + mockRows.value.length + classRows.value.length)
 
@@ -223,15 +217,15 @@ const statCards = computed(() => [
 
 const scheduleRows = computed(() => {
   const current = schedule.value
-  const last = lastWeekSchedule.value
+  const next = nextWeekSchedule.value
   return [
     {
       label: t('mentor.dashboard.k32'),
-      value: current?.totalHours ? `${current.totalHours}h` : t('mentor.dashboard.k33'),
+      value: current?.availableHours ? `${current.availableHours}h` : t('mentor.dashboard.k33'),
     },
     {
       label: t('mentor.dashboard.k34'),
-      value: last?.totalHours ? `${last.totalHours}h` : t('mentor.dashboard.k35'),
+      value: next?.availableHours ? `${next.availableHours}h` : t('mentor.dashboard.k35'),
     },
     {
       label: t('mentor.dashboard.k36'),
@@ -244,11 +238,11 @@ const recentJobRows = computed(() => jobRows.value.slice(0, 5))
 const recentClassRows = computed(() => classRows.value.slice(0, 5))
 
 async function loadDashboard() {
-  const [profileView, scheduleView, lastWeekView, jobOverviewView, mockPracticeView, classRecordsView] =
+  const [profileView, scheduleView, nextWeekView, jobOverviewView, mockPracticeView, classRecordsView] =
     await Promise.all([
       getMentorProfile(),
-      getCurrentSchedule().catch(() => null),
-      getLastWeekSchedule().catch(() => null),
+      mentorScheduleApi.getSchedule('current').catch(() => null),
+      mentorScheduleApi.getSchedule('next').catch(() => null),
       listJobOverview().catch(() => ({ rows: [] as JobCoaching[] })),
       listMockPractice().catch(() => ({ rows: [] as MockPractice[] })),
       listClassRecords().catch(() => ({ rows: [] as ClassRecord[] })),
@@ -256,7 +250,7 @@ async function loadDashboard() {
 
   Object.assign(profile, profileView || {})
   schedule.value = scheduleView
-  lastWeekSchedule.value = lastWeekView
+  nextWeekSchedule.value = nextWeekView
   jobRows.value = Array.isArray(jobOverviewView?.rows) ? jobOverviewView.rows : []
   mockRows.value = Array.isArray(mockPracticeView?.rows) ? mockPracticeView.rows : []
   classRows.value = Array.isArray(classRecordsView?.rows) ? classRecordsView.rows : []

@@ -1,571 +1,477 @@
 <template>
-  <div id="page-schedule">
-    <PageHeader
-      :title-zh="t('mentor.schedule.k22')"
-      title-en="My Schedule"
-    />
+  <div id="page-schedule" class="page-schedule" data-page="profile-schedule">
+    <PageHeader :title-zh="t('leadMentor.schedule.k21')" />
 
-    <div v-if="showReminder" class="warning-banner">
-      <i class="mdi mdi-alert-circle warning-icon" />
-      <div class="warning-copy">
-        <div class="warning-title"><i class="mdi mdi-alert" /> {{ t('mentor.schedule.k1') }}</div>
-        <div class="warning-desc">{{ t('mentor.schedule.k2') }}</div>
+    <section class="schedule-banner" :aria-label="t('leadMentor.schedule.k44')">
+      <div class="schedule-banner__icon">
+        <i class="mdi mdi-calendar-alert" aria-hidden="true" />
       </div>
-      <a-button type="primary" danger @click="focusCurrentWeek">
-        <i class="mdi mdi-calendar-edit" style="margin-right:4px" />{{ t('mentor.schedule.k3') }}
-      </a-button>
-    </div>
+      <div class="schedule-banner__content">
+        <div class="schedule-banner__title">
+          <i class="mdi mdi-alert" aria-hidden="true" />
+          {{ t('leadMentor.schedule.k1') }}
+        </div>
+        <div class="schedule-banner__sub">{{ bannerDetail }}</div>
+      </div>
+      <span class="schedule-banner__tag">{{ t('leadMentor.schedule.k2') }}</span>
+    </section>
 
-    <div class="status-card" :class="{ 'border-danger': !hasFilledCurrentWeek, 'border-success': hasFilledCurrentWeek }">
-      <div class="status-user">
-        <div class="user-avatar">{{ userInitials }}</div>
-        <div>
-          <div class="status-name">{{ userName }}</div>
-          <div class="text-muted text-sm">{{ t('mentor.schedule.k42', { id: userId || '-' }) }}</div>
+    <section class="card">
+      <div class="card-body">
+        <div class="status-shell">
+          <div class="mentor-summary">
+            <div class="user-avatar">{{ mentorInitial }}</div>
+            <div>
+              <div class="mentor-name">{{ displayName }}</div>
+              <div class="mentor-meta">{{ t('leadMentor.schedule.k45', { id: userIdLabel }) }}</div>
+            </div>
+          </div>
+          <div class="status-metrics">
+            <div class="status-metric">
+              <div class="status-metric__value status-metric__value--hours">{{ currentWeekHoursLabel }}</div>
+              <div class="status-metric__label">{{ t('leadMentor.schedule.k3') }}</div>
+            </div>
+            <div class="status-metric">
+              <div class="status-metric__value status-metric__value--days">{{ currentWeekAvailableDaysLabel }}</div>
+              <div class="status-metric__label">{{ t('leadMentor.schedule.k4') }}</div>
+            </div>
+            <div class="status-metric">
+              <div class="status-metric__value status-metric__value--pending">{{ scheduleStatusLabel }}</div>
+              <div class="status-metric__label">{{ t('leadMentor.schedule.k5') }}</div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="status-stats">
-        <div>
-          <div class="stat-big" :style="{ color: hasFilledCurrentWeek ? '#22C55E' : '#DC2626' }">{{ currentWeekHours }}h</div>
-          <div class="text-muted text-sm">{{ t('mentor.schedule.k4') }}</div>
-        </div>
-        <div>
-          <div class="stat-big" :style="{ color: hasFilledCurrentWeek ? '#22C55E' : '#DC2626' }">{{ currentWeekAvailableDays }}</div>
-          <div class="text-muted text-sm">{{ t('mentor.schedule.k5') }}</div>
-        </div>
-        <div>
-          <div class="stat-big" :style="{ color: hasFilledCurrentWeek ? '#22C55E' : '#DC2626' }">{{ hasFilledCurrentWeek ? '✓' : '✗' }}</div>
-          <div class="text-muted text-sm">{{ hasFilledCurrentWeek ? t('mentor.schedule.k43') : t('mentor.schedule.k44') }}</div>
-        </div>
-      </div>
-    </div>
+    </section>
 
-    <div ref="currentWeekCardRef" class="card" id="this-week-unfilled">
-      <div class="card-header current-header">
-        <div>
-          <span class="card-title"><i class="mdi mdi-calendar-week card-title-icon current" />{{ t('mentor.schedule.k6') }}</span>
-          <span class="tag danger" :class="{ success: hasFilledCurrentWeek }">{{ hasFilledCurrentWeek ? t('mentor.schedule.k43') : t('mentor.schedule.k44') }}</span>
-        </div>
-        <span class="week-range">{{ t('mentor.schedule.k45', { range: currentWeekRangeLabel }) }}</span>
+    <section class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <i class="mdi mdi-calendar-week" aria-hidden="true" />
+          {{ t('leadMentor.schedule.k6') }}
+        </span>
+        <span class="card-tag">{{ t('leadMentor.schedule.k7') }}</span>
+        <span class="card-range">{{ currentWeekRange }}</span>
       </div>
       <div class="card-body">
-        <div v-if="!hasFilledCurrentWeek" class="empty-state">
-          <i class="mdi mdi-calendar-remove empty-icon" />
-          <h3>{{ t('mentor.schedule.k7') }}</h3>
-          <p>{{ t('mentor.schedule.k8') }}</p>
+        <div class="schedule-stats">
+          <div class="schedule-stat">
+            <div class="schedule-stat__value">{{ currentWeekHoursLabel }}</div>
+            <div class="schedule-stat__label">{{ t('leadMentor.schedule.k8') }}</div>
+          </div>
+          <div class="schedule-stat">
+            <div class="schedule-stat__value schedule-stat__value--success">{{ currentWeekAvailableDaysLabel }}</div>
+            <div class="schedule-stat__label">{{ t('leadMentor.schedule.k4') }}</div>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">{{ t('mentor.schedule.k9') }} <span class="req">*</span></label>
-          <div class="hours-row">
-            <input
-              id="mentor-this-weekly-hours"
-              ref="currentHoursInputRef"
-              type="number"
-              class="form-input week-hours"
-              min="0"
-              max="40"
-              placeholder="0-40"
-              :value="currentWeek.totalHours"
-              @input="syncCurrentHours"
+        <div class="readonly-block">
+          <label class="form-label">
+            <i class="mdi mdi-calendar-check" aria-hidden="true" />
+            {{ t('leadMentor.schedule.k9') }}
+            <span class="form-label-note">{{ t('leadMentor.schedule.k10') }}</span>
+          </label>
+          <div class="readonly-grid">
+            <article
+              v-for="day in currentWeekDays"
+              :key="day.key"
+              class="readonly-day"
+              :class="[`readonly-day--${day.accent}`]"
             >
-            <span class="text-muted">{{ t('mentor.schedule.k10') }}</span>
-            <div class="hour-shortcuts">
-              <a-button size="small" @click="setCurrentHours(5)">5h</a-button>
-              <a-button size="small" @click="setCurrentHours(10)">10h</a-button>
-              <a-button size="small" @click="setCurrentHours(20)">20h</a-button>
-            </div>
+              <div class="readonly-day__label">{{ day.label }}</div>
+              <div class="readonly-day__date">{{ day.date }}</div>
+              <div class="readonly-day__value">{{ currentWeekDayValue(day.key) }}</div>
+            </article>
           </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">{{ t('mentor.schedule.k11') }} <span class="req">*</span></label>
-          <div class="schedule-grid">
-            <div v-for="day in currentDays" :key="day.key" class="day-card" :class="{ weekend: day.weekend }">
-              <div class="day-name">{{ day.label }}</div>
-              <div class="day-date">{{ day.dateLabel }}</div>
-              <label v-for="slot in timeSlots" :key="slot.key" class="slot-option">
-                <input v-model="currentWeek.days[day.key][slot.key]" type="checkbox">
-                <span>{{ slot.label }}</span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-actions">
-          <a-button type="primary" class="current-submit" @click="submitCurrentWeek">
-            <i class="mdi mdi-check-circle" style="margin-right:4px" />{{ t('mentor.schedule.k12') }}
-          </a-button>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card" id="mentor-next-week-panel">
-      <div class="card-header next-header">
-        <div>
-          <span class="card-title"><i class="mdi mdi-calendar-arrow-right card-title-icon next" />{{ t('mentor.schedule.k13') }}</span>
-          <span class="tag warning">{{ t('mentor.schedule.k14') }}</span>
-        </div>
-        <span class="week-range">{{ t('mentor.schedule.k46', { range: nextWeekRangeLabel }) }}</span>
+    <section class="card">
+      <div class="card-header card-header--warning">
+        <span class="card-title card-title--warning">
+          <i class="mdi mdi-calendar-arrow-right" aria-hidden="true" />
+          {{ t('leadMentor.schedule.k11') }}
+        </span>
+        <span class="card-range card-range--warning">
+          {{ nextWeekRange }}
+          <span class="card-tag card-tag--warning">{{ nextWeekStatusLabel }}</span>
+        </span>
       </div>
       <div class="card-body">
         <div class="form-group">
-          <label class="form-label">{{ t('mentor.schedule.k15') }} <span class="req">*</span></label>
+          <label class="form-label form-label--large">
+            <i class="mdi mdi-clock-outline" aria-hidden="true" />
+            {{ t('leadMentor.schedule.k12') }}
+            <span class="required-mark">*</span>
+          </label>
           <div class="hours-row">
             <input
               id="mentor-next-weekly-hours"
+              v-model="weeklyHours"
               type="number"
-              class="form-input week-hours"
               min="0"
               max="40"
-              placeholder="0-40"
-              :value="nextWeek.totalHours"
-              @input="syncNextHours"
+              class="form-input form-input--hours"
+              placeholder="?"
+            />
+            <span class="hours-unit">{{ t('leadMentor.schedule.k13') }}</span>
+            <div class="hours-quick-actions">
+              <button
+                v-for="option in quickHourOptions"
+                :key="option"
+                type="button"
+                class="btn btn-outline btn-sm"
+                @click="setWeeklyHours(option)"
+              >
+                {{ option }}h
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label--large">
+            <i class="mdi mdi-calendar-check" aria-hidden="true" />
+            {{ t('leadMentor.schedule.k14') }}
+            <span class="required-mark">*</span>
+            <span class="form-label-note">{{ t('leadMentor.schedule.k15') }}</span>
+          </label>
+          <div class="editable-grid">
+            <article
+              v-for="day in nextWeekDays"
+              :key="day.key"
+              class="editable-day"
+              :class="[`editable-day--${day.accent}`]"
             >
-            <span class="text-muted">{{ t('mentor.schedule.k10') }}</span>
-            <div class="hour-shortcuts">
-              <a-button size="small" @click="setNextHours(5)">5h</a-button>
-              <a-button size="small" @click="setNextHours(10)">10h</a-button>
-              <a-button size="small" @click="setNextHours(15)">15h</a-button>
-              <a-button size="small" @click="setNextHours(20)">20h</a-button>
-            </div>
+              <div class="editable-day__label">{{ day.label }}</div>
+              <div class="editable-day__date">{{ day.date }}</div>
+              <div class="slot-list">
+                <label v-for="slot in timeSlots" :key="slot.id" class="slot-option">
+                  <input
+                    v-model="nextWeekSelections[day.key]"
+                    type="checkbox"
+                    :value="slot.id"
+                  />
+                  <span>{{ slot.label }}</span>
+                </label>
+              </div>
+            </article>
+          </div>
+          <div class="editable-note">
+            <i class="mdi mdi-information-outline" aria-hidden="true" />
+            {{ t('leadMentor.schedule.k16') }}
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">{{ t('mentor.schedule.k16') }} <span class="req">*</span> <span class="helper">{{ t('mentor.schedule.k17') }}</span></label>
-          <div class="schedule-grid next-grid">
-            <div v-for="day in nextDays" :key="day.key" class="day-card" :class="{ weekend: day.weekend }">
-              <div class="day-name">{{ day.label }}</div>
-              <div class="day-date">{{ day.dateLabel }}</div>
-              <label v-for="slot in timeSlots" :key="slot.key" class="slot-option">
-                <input v-model="nextWeek.days[day.key][slot.key]" type="checkbox">
-                <span>{{ slot.label }}</span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">{{ t('mentor.schedule.k18') }}</label>
-          <a-textarea
-            v-model:value="nextWeek.note"
-            :rows="2"
-            :placeholder="t('mentor.schedule.k23')"
+          <label class="form-label form-label--large">
+            <i class="mdi mdi-note-text" aria-hidden="true" />
+            {{ t('leadMentor.schedule.k17') }}
+          </label>
+          <textarea
+            v-model="note"
+            class="form-textarea"
+            rows="2"
+            :placeholder="t('leadMentor.schedule.k22')"
           />
         </div>
 
-        <div class="form-actions split">
-          <a-button type="primary" class="next-submit" @click="saveNextWeek">
-            <i class="mdi mdi-check" style="margin-right:4px" />{{ t('mentor.schedule.k19') }}
-          </a-button>
-          <a-button @click="resetNextWeek">{{ t('mentor.schedule.k20') }}</a-button>
-        </div>
-      </div>
-    </div>
-
-    <a-modal
-      v-model:open="feedbackModal.visible"
-      wrap-class-name="osg-modal-form"
-      :width="480"
-      :footer="null"
-      :title="null"
-      :closable="false"
-      :body-style="{ padding: 0 }"
-      :get-container="false"
-      :destroy-on-close="true"
-      @cancel="closeFeedbackModal"
-    >
-      <div id="modal-mentor-schedule-feedback" :class="feedbackModal.tone === 'error' ? 'modal-content--error' : 'modal-content--success'">
-        <div class="modal-header" :class="feedbackModal.tone === 'error' ? 'modal-header--error' : 'modal-header--success'">
-          <span class="modal-title">
-            <i :class="feedbackModal.tone === 'error' ? 'mdi mdi-alert-circle' : 'mdi mdi-check-circle'" />
-            {{ feedbackModal.title }}
-          </span>
-          <button class="modal-close" type="button" @click="closeFeedbackModal">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="success-card">
-            <div class="success-icon" :class="{ 'success-icon--error': feedbackModal.tone === 'error' }">
-              <i :class="feedbackModal.tone === 'error' ? 'mdi mdi-alert' : 'mdi mdi-bell-ring'" />
-            </div>
-            <div class="success-text">{{ feedbackModal.message }}</div>
+        <div class="form-footer">
+          <button type="button" class="btn btn-primary btn-primary--warning" @click="saveNextSchedule()">
+            <i class="mdi mdi-check" aria-hidden="true" />
+            {{ t('leadMentor.schedule.k18') }}
+          </button>
+          <button type="button" class="btn btn-outline" @click="resetDraft">{{ t('leadMentor.schedule.k19') }}</button>
+          <div class="form-footer__warning">
+            <i class="mdi mdi-alert" aria-hidden="true" />
+            {{ t('leadMentor.schedule.k20') }}
           </div>
         </div>
-        <div class="modal-footer">
-          <a-button type="primary" class="btn-primary" @click="closeFeedbackModal">{{ t('mentor.schedule.k21') }}</a-button>
-        </div>
       </div>
-    </a-modal>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { PageHeader } from '@osg/shared/components/PageHeader'
-import { http } from '@osg/shared/utils/request'
+import { message } from 'ant-design-vue'
+import {
+  mentorScheduleApi,
+  type LeadMentorScheduleStatusView,
+  type LeadMentorScheduleView,
+} from '@osg/shared/api/schedule'
 import { getUser } from '@osg/shared/utils'
+import type { UserInfo } from '@osg/shared/types'
 
 const { t } = useI18n()
 
-type DayKey = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
-type SlotKey = 'morning' | 'afternoon' | 'evening'
-
-interface DaySlots {
-  morning: boolean
-  afternoon: boolean
-  evening: boolean
+interface WeekDayCard {
+  key: string
+  label: string
+  date: string
+  accent: 'weekday' | 'weekend' | 'holiday'
 }
 
-interface WeekState {
-  weekStartDate: string
-  totalHours: string
-  note: string
-  days: Record<DayKey, DaySlots>
+interface TimeSlotOption {
+  id: string
+  label: string
 }
 
-const dayDefinitions: Array<{ key: DayKey; label: string; offset: number; weekend: boolean }> = [
-  { key: 'monday', label: t('mentor.schedule.k24'), offset: 0, weekend: false },
-  { key: 'tuesday', label: t('mentor.schedule.k25'), offset: 1, weekend: false },
-  { key: 'wednesday', label: t('mentor.schedule.k26'), offset: 2, weekend: false },
-  { key: 'thursday', label: t('mentor.schedule.k27'), offset: 3, weekend: false },
-  { key: 'friday', label: t('mentor.schedule.k28'), offset: 4, weekend: false },
-  { key: 'saturday', label: t('mentor.schedule.k29'), offset: 5, weekend: true },
-  { key: 'sunday', label: t('mentor.schedule.k30'), offset: 6, weekend: true },
+const WEEKDAY_LABELS = [
+  t('leadMentor.schedule.k23'),
+  t('leadMentor.schedule.k24'),
+  t('leadMentor.schedule.k25'),
+  t('leadMentor.schedule.k26'),
+  t('leadMentor.schedule.k27'),
+  t('leadMentor.schedule.k28'),
+  t('leadMentor.schedule.k29'),
+]
+const quickHourOptions = [5, 10, 15, 20]
+const timeSlots: TimeSlotOption[] = [
+  { id: 'morning', label: t('leadMentor.schedule.k30') },
+  { id: 'afternoon', label: t('leadMentor.schedule.k31') },
+  { id: 'evening', label: t('leadMentor.schedule.k32') },
 ]
 
-const timeSlots: Array<{ key: SlotKey; label: string }> = [
-  { key: 'morning', label: t('mentor.schedule.k31') },
-  { key: 'afternoon', label: t('mentor.schedule.k32') },
-  { key: 'evening', label: t('mentor.schedule.k33') },
-]
+const userInfo = computed(() => getUser<UserInfo>())
+const currentSchedule = ref<LeadMentorScheduleView | null>(null)
+const nextSchedule = ref<LeadMentorScheduleView | null>(null)
+const statusView = ref<LeadMentorScheduleStatusView | null>(null)
+const weeklyHours = ref('')
+const note = ref('')
 
-const currentWeekCardRef = ref<HTMLElement | null>(null)
-const currentHoursInputRef = ref<HTMLInputElement | null>(null)
-const feedbackModal = reactive({
-  visible: false,
-  title: '',
-  message: '',
-  tone: 'success' as 'success' | 'error',
+function formatMonthDay(date: Date) {
+  return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
+}
+
+function createWeek(offsetDays: number) {
+  const today = new Date()
+  const monday = new Date(today)
+  const dayOfWeek = monday.getDay()
+  const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+  monday.setDate(monday.getDate() + diffToMonday + offsetDays)
+
+  const days: WeekDayCard[] = []
+  for (let index = 0; index < 7; index += 1) {
+    const current = new Date(monday)
+    current.setDate(monday.getDate() + index)
+    days.push({
+      key: String(index + 1),
+      label: WEEKDAY_LABELS[index],
+      date: formatMonthDay(current),
+      accent: index === 2 ? 'holiday' : index >= 5 ? 'weekend' : 'weekday',
+    })
+  }
+  return days
+}
+
+function buildWeekRange(days: WeekDayCard[], suffix: string) {
+  return `${days[0]?.date ?? '--/--'} - ${days[6]?.date ?? '--/--'} (${suffix})`
+}
+
+const currentWeekDays = createWeek(0)
+const nextWeekDays = createWeek(7)
+const nextWeekSelections = reactive<Record<string, string[]>>(
+  Object.fromEntries(nextWeekDays.map((day) => [day.key, []])),
+)
+
+const displayName = computed(() => {
+  return userInfo.value?.nickName?.trim() || userInfo.value?.userName?.trim() || t('leadMentor.schedule.k33')
 })
 
-const user = getUser<any>()
-const userName = computed(() => user?.nickName || user?.userName || 'Mentor')
-const userId = computed(() => user?.userId || '')
-const userInitials = computed(() => {
-  const value = userName.value.trim()
-  return value ? value.slice(0, 2).toUpperCase() : 'M'
+const mentorInitial = computed(() => {
+  const name = displayName.value.trim()
+  return name.slice(0, 1).toUpperCase() || 'M'
 })
 
-function createDaySlots(): DaySlots {
-  return { morning: false, afternoon: false, evening: false }
+const userIdLabel = computed(() => String(userInfo.value?.userId ?? '--'))
+
+const localCurrentWeekRange = buildWeekRange(currentWeekDays, t('leadMentor.schedule.k34'))
+const localNextWeekRange = buildWeekRange(nextWeekDays, t('leadMentor.schedule.k35'))
+
+const bannerDetail = computed(() =>
+  statusView.value?.nextWeekFilled ? t('leadMentor.schedule.k49') : t('leadMentor.schedule.k36'),
+)
+
+function formatHours(value: number | null | undefined) {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '--h'
+  return `${value}h`
 }
 
-function createWeekState(weekStartDate: string): WeekState {
-  return {
-    weekStartDate,
-    totalHours: '',
-    note: '',
-    days: {
-      monday: createDaySlots(),
-      tuesday: createDaySlots(),
-      wednesday: createDaySlots(),
-      thursday: createDaySlots(),
-      friday: createDaySlots(),
-      saturday: createDaySlots(),
-      sunday: createDaySlots(),
-    },
-  }
+function formatCount(value: number | null | undefined) {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '--'
+  return String(value)
 }
 
-function getBackendBaseUrl() {
-  const configured = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
-  if (configured && /^https?:\/\//i.test(configured)) {
-    return configured
-  }
-  if (typeof window !== 'undefined' && window.location?.hostname) {
-    const { protocol, hostname, port } = window.location
-    const backendPort = port === '3002' ? '28080' : port || '28080'
-    return `${protocol}//${hostname}:${backendPort}`
-  }
-  return 'http://127.0.0.1:28080'
+const currentWeekHoursLabel = computed(() => formatHours(currentSchedule.value?.availableHours))
+const currentWeekAvailableDaysLabel = computed(() => formatCount(currentSchedule.value?.availableDayCount))
+const scheduleStatusLabel = computed(() => {
+  if (statusView.value?.nextWeekFilled == null) return t('leadMentor.schedule.k37')
+  return statusView.value.nextWeekFilled ? t('leadMentor.schedule.k48') : t('leadMentor.schedule.k38')
+})
+const currentWeekRange = computed(() =>
+  currentSchedule.value?.weekRange
+    ? t('leadMentor.schedule.k46', { range: currentSchedule.value.weekRange })
+    : localCurrentWeekRange,
+)
+const nextWeekRange = computed(() =>
+  nextSchedule.value?.weekRange
+    ? t('leadMentor.schedule.k47', { range: nextSchedule.value.weekRange })
+    : localNextWeekRange,
+)
+const nextWeekStatusLabel = computed(() =>
+  statusView.value?.nextWeekFilled ? t('leadMentor.schedule.k48') : t('leadMentor.schedule.k38'),
+)
+
+function setWeeklyHours(option: number) {
+  weeklyHours.value = String(option)
 }
 
-function getScheduleApiUrl() {
-  return `${getBackendBaseUrl()}/mentor/schedule`
-}
-
-function toLocalDate(value: string | Date) {
-  const date = value instanceof Date ? new Date(value) : new Date(value)
-  date.setHours(0, 0, 0, 0)
-  return date
-}
-
-function formatDate(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-function getWeekStart(date: Date, weekOffset = 0) {
-  const current = new Date(date)
-  current.setHours(0, 0, 0, 0)
-  const day = current.getDay() || 7
-  current.setDate(current.getDate() - (day - 1) + weekOffset * 7)
-  return current
-}
-
-function formatWeekRange(startDate: string) {
-  const start = toLocalDate(startDate)
-  const end = new Date(start)
-  end.setDate(start.getDate() + 6)
-  const monthStart = String(start.getMonth() + 1).padStart(2, '0')
-  const dayStart = String(start.getDate()).padStart(2, '0')
-  const monthEnd = String(end.getMonth() + 1).padStart(2, '0')
-  const dayEnd = String(end.getDate()).padStart(2, '0')
-  return `${monthStart}/${dayStart} - ${monthEnd}/${dayEnd}`
-}
-
-function parseDayValue(value: unknown): DaySlots {
-  const slots = createDaySlots()
-  const text = String(value ?? '').trim()
-  if (!text || text === 'unavailable') {
-    return slots
-  }
-  if (text === 'all_day') {
-    return { morning: true, afternoon: true, evening: true }
-  }
-  for (const token of text.split(/[|,]/).map(part => part.trim()).filter(Boolean)) {
-    if (token in slots) {
-      slots[token as SlotKey] = true
-    }
-  }
-  return slots
-}
-
-function serializeDayValue(slots: DaySlots) {
-  const active = timeSlots.filter(slot => slots[slot.key]).map(slot => slot.key)
-  if (active.length === 0) {
-    return 'unavailable'
-  }
-  if (active.length === timeSlots.length) {
-    return 'all_day'
-  }
-  return active.join(',')
-}
-
-function hydrateWeek(state: WeekState, data: Record<string, any>) {
-  state.weekStartDate = data.weekStartDate ? formatDate(toLocalDate(data.weekStartDate)) : state.weekStartDate
-  state.totalHours = data.totalHours === 0 ? '0' : String(data.totalHours || '')
-  state.note = data.remark || data.note || ''
-  dayDefinitions.forEach((day) => {
-    state.days[day.key] = parseDayValue(data[day.key])
+function applyNextScheduleDraft(scheduleView: LeadMentorScheduleView | null) {
+  weeklyHours.value =
+    scheduleView?.availableHours && scheduleView.availableHours > 0 ? String(scheduleView.availableHours) : ''
+  note.value = scheduleView?.note || ''
+  nextWeekDays.forEach((day) => {
+    const backendDay = scheduleView?.days.find((entry) => String(entry.weekday) === day.key)
+    nextWeekSelections[day.key] = [...(backendDay?.selectedSlots ?? [])]
   })
 }
 
-function buildPayload(state: WeekState) {
-  return {
-    weekStartDate: state.weekStartDate,
-    totalHours: Number(state.totalHours || 0),
-    monday: serializeDayValue(state.days.monday),
-    tuesday: serializeDayValue(state.days.tuesday),
-    wednesday: serializeDayValue(state.days.wednesday),
-    thursday: serializeDayValue(state.days.thursday),
-    friday: serializeDayValue(state.days.friday),
-    saturday: serializeDayValue(state.days.saturday),
-    sunday: serializeDayValue(state.days.sunday),
-    remark: state.note.trim(),
-  }
+function resetDraft() {
+  applyNextScheduleDraft(nextSchedule.value)
 }
 
-const currentWeek = reactive(createWeekState(formatDate(getWeekStart(new Date()))))
-const nextWeek = reactive(createWeekState(formatDate(getWeekStart(new Date(), 1))))
-
-const currentWeekHours = computed(() => Number(currentWeek.totalHours || 0))
-const nextWeekHours = computed(() => Number(nextWeek.totalHours || 0))
-const hasFilledCurrentWeek = computed(() => currentWeekHours.value > 0 || dayDefinitions.some(day => serializeDayValue(currentWeek.days[day.key]) !== 'unavailable'))
-const currentWeekAvailableDays = computed(() => dayDefinitions.filter(day => serializeDayValue(currentWeek.days[day.key]) !== 'unavailable').length)
-const showReminder = computed(() => !hasFilledCurrentWeek.value)
-const currentWeekRangeLabel = computed(() => formatWeekRange(currentWeek.weekStartDate))
-const nextWeekRangeLabel = computed(() => formatWeekRange(nextWeek.weekStartDate))
-const currentDays = computed(() => dayDefinitions.map((day) => ({
-  ...day,
-  dateLabel: (() => {
-    const date = getWeekStart(new Date(currentWeek.weekStartDate), 0)
-    date.setDate(date.getDate() + day.offset)
-    return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
-  })(),
-})))
-const nextDays = computed(() => dayDefinitions.map((day) => ({
-  ...day,
-  dateLabel: (() => {
-    const date = getWeekStart(new Date(nextWeek.weekStartDate), 0)
-    date.setDate(date.getDate() + day.offset)
-    return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
-  })(),
-})))
-
-function focusCurrentWeek() {
-  currentWeekCardRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  currentHoursInputRef.value?.focus()
+function currentWeekDayValue(dayKey: string) {
+  const backendDay = currentSchedule.value?.days.find((day) => String(day.weekday) === dayKey)
+  if (!backendDay) return t('leadMentor.schedule.k37')
+  if (!backendDay.selectedSlots || backendDay.selectedSlots.length === 0) return t('leadMentor.schedule.k39')
+  return backendDay.selectedSlots
+    .map((code) => timeSlots.find((slot) => slot.id === code)?.label ?? code)
+    .join(' / ')
 }
 
-function setCurrentHours(value: number) {
-  currentWeek.totalHours = String(value)
-  currentHoursInputRef.value?.focus()
+function collectSelectedSlotKeys() {
+  return nextWeekDays.flatMap((day) =>
+    (nextWeekSelections[day.key] ?? []).map((slotId) => `${day.key}-${slotId}`),
+  )
 }
 
-function setNextHours(value: number) {
-  nextWeek.totalHours = String(value)
-}
-
-function syncCurrentHours(event: Event) {
-  currentWeek.totalHours = (event.target as HTMLInputElement).value
-}
-
-function syncNextHours(event: Event) {
-  nextWeek.totalHours = (event.target as HTMLInputElement).value
-}
-
-function openFeedbackModal(title: string, message: string, tone: 'success' | 'error' = 'success') {
-  feedbackModal.visible = true
-  feedbackModal.title = title
-  feedbackModal.message = message
-  feedbackModal.tone = tone
-}
-
-function closeFeedbackModal() {
-  feedbackModal.visible = false
-  feedbackModal.title = ''
-  feedbackModal.message = ''
-  feedbackModal.tone = 'success'
-}
-
-async function persistSchedule(state: WeekState, successMessage: string) {
+async function loadScheduleViews(preserveDraft = false) {
   try {
-    await http.put(getScheduleApiUrl(), buildPayload(state))
-    openFeedbackModal(t('mentor.schedule.k34'), successMessage, 'success')
-  } catch {
-    openFeedbackModal(t('mentor.schedule.k35'), t('mentor.schedule.k36'), 'error')
+    const [currentView, nextView, nextStatus] = await Promise.all([
+      mentorScheduleApi.getSchedule('current'),
+      mentorScheduleApi.getSchedule('next'),
+      mentorScheduleApi.getStatus(),
+    ])
+    currentSchedule.value = currentView
+    nextSchedule.value = nextView
+    statusView.value = nextStatus
+    if (!preserveDraft) applyNextScheduleDraft(nextView)
+  } catch (error) {
+    // swallow - banner reflects loading state
   }
 }
 
-async function submitCurrentWeek() {
-  if (!hasFilledCurrentWeek.value) {
-    openFeedbackModal(t('mentor.schedule.k37'), t('mentor.schedule.k38'), 'error')
-    return
-  }
-  await persistSchedule(currentWeek, t('mentor.schedule.k39'))
-}
-
-async function saveNextWeek() {
-  if (nextWeekHours.value <= 0) {
-    openFeedbackModal(t('mentor.schedule.k37'), t('mentor.schedule.k40'), 'error')
-    return
-  }
-  await persistSchedule(nextWeek, t('mentor.schedule.k41'))
-}
-
-function resetNextWeek() {
-  nextWeek.totalHours = ''
-  nextWeek.note = ''
-  dayDefinitions.forEach((day) => {
-    nextWeek.days[day.key] = createDaySlots()
-  })
-}
-
-onMounted(async () => {
+async function saveNextSchedule() {
   try {
-    const data = await http.get(getScheduleApiUrl())
-    if (data && typeof data === 'object' && 'monday' in data) {
-      hydrateWeek(currentWeek, data as Record<string, any>)
-    }
-  } catch {
-    // Keep the page usable even when the backend returns no schedule data.
+    await mentorScheduleApi.saveNext({
+      availableHours: Number(weeklyHours.value),
+      selectedSlotKeys: collectSelectedSlotKeys(),
+      note: note.value.trim(),
+    })
+    await loadScheduleViews()
+    message.success(t('leadMentor.schedule.k41'))
+  } catch (error) {
+    // backend error message rendered by axios interceptor
   }
-})
+}
+
+void loadScheduleViews()
 </script>
 
 <style scoped>
-.page-header{margin-bottom:24px}
-.page-title{font-size:26px;font-weight:700;color:#1E293B}
-.page-title-en{font-size:14px;color:#94A3B8;font-weight:400;margin-left:8px}
-.page-sub{font-size:14px;color:#64748B;margin-top:6px}
-.warning-banner{padding:16px 20px;background:linear-gradient(135deg,#FEE2E2,#FECACA);border-radius:12px;margin-bottom:20px;display:flex;align-items:center;gap:16px;border:2px solid #DC2626}
-.warning-icon{font-size:32px;color:#DC2626}
-.warning-copy{flex:1}
-.warning-title{font-weight:600;color:#991B1B;margin-bottom:4px;display:flex;align-items:center;gap:6px}
-.warning-desc{font-size:13px;color:#B91C1C}
-.status-card{background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 24px rgba(115,153,198,0.12)}
-.status-card.border-danger{border:2px solid #DC2626}
-.status-card.border-success{border:2px solid #22C55E}
-.status-user{display:flex;align-items:center;gap:16px}
-.user-avatar{width:50px;height:50px;background:linear-gradient(135deg,#7399C6,#9BB8D9);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px}
-.status-name{font-weight:600}
-.status-stats{display:flex;gap:24px;text-align:center}
-.stat-big{font-size:24px;font-weight:700}
-.card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(115,153,198,0.12);margin-bottom:20px;overflow:hidden}
-.card-header{padding:18px 22px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.card-title{font-size:16px;font-weight:600;display:inline-flex;align-items:center;gap:8px}
-.card-title-icon{font-size:18px}
-.card-title-icon.current{color:#DC2626}
-.card-title-icon.next{color:#D97706}
-.week-range{font-size:13px;font-weight:500;color:#92400E}
-.current-header{background:linear-gradient(135deg,#FEE2E2,#FECACA)}
-.next-header{background:linear-gradient(135deg,#FEF3C7,#FDE68A)}
-.card-body{padding:22px}
-.empty-state{padding:36px 20px;background:#FEF2F2;border-radius:12px;margin-bottom:20px;text-align:center}
-.empty-icon{font-size:64px;color:#DC2626;margin-bottom:16px;display:block}
-.empty-state h3{font-size:18px;color:#991B1B;margin-bottom:8px}
-.empty-state p{font-size:14px;color:#B91C1C;margin-bottom:0}
-.form-group{margin-bottom:24px}
-.form-label{display:block;font-size:15px;font-weight:600;margin-bottom:12px;color:#1E293B}
-.req{color:#DC2626}
-.helper{font-weight:400;font-size:12px;color:#64748B}
-.hours-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.week-hours{width:120px;text-align:center;font-size:20px;font-weight:700}
-.hour-shortcuts{display:flex;gap:8px;flex-wrap:wrap;margin-left:12px}
-.btn{padding:10px 20px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px}
-.btn-primary{background:linear-gradient(135deg,#7399C6,#9BB8D9);color:#fff;box-shadow:0 4px 12px rgba(115,153,198,0.3)}
-.btn-danger{background:#DC2626;color:#fff;box-shadow:0 4px 12px rgba(220,38,38,0.3)}
-.btn-outline{background:#fff;color:#64748B;border:1px solid #E2E8F0}
-.btn-sm{padding:6px 12px;font-size:13px}
-.btn-outline:hover{border-color:#7399C6;color:#7399C6}
-.schedule-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
-.day-card{padding:12px 10px;background:#F8FAFC;border-radius:10px;border:2px dashed #E2E8F0}
-.day-card.weekend{background:#DCFCE7;border-color:#22C55E}
-.day-name{font-weight:700;font-size:13px;margin-bottom:4px}
-.day-date{font-size:11px;color:#64748B;margin-bottom:10px}
-.slot-option{display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;margin-bottom:6px}
-.slot-option:last-child{margin-bottom:0}
-.form-textarea,.form-input{width:100%;padding:12px 14px;border:2px solid #E2E8F0;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box}
-.form-textarea{resize:vertical}
-.form-actions{display:flex;justify-content:center;align-items:center;gap:12px;padding-top:16px;border-top:1px solid #E2E8F0}
-.form-actions.split{justify-content:flex-start}
-.form-actions.split .ant-btn{height:auto;padding:12px 32px}
-.current-submit{height:auto;padding:14px 40px;font-size:16px;background:#DC2626;box-shadow:0 4px 12px rgba(220,38,38,0.3)}
-.next-submit{height:auto;padding:12px 32px;background:linear-gradient(135deg,#F59E0B,#D97706)}
-.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-.modal-content{background:#fff;border-radius:20px;max-height:90vh;overflow-y:auto}
-.modal-content--success{box-shadow:0 24px 64px rgba(15,23,42,.22)}
-.modal-content--error{box-shadow:0 24px 64px rgba(127,29,29,.18)}
-.modal-header{padding:22px 26px;background:linear-gradient(135deg,#7399C6,#5A7BA3);color:#fff;border-radius:20px 20px 0 0;display:flex;justify-content:space-between;align-items:center}
-.modal-header--success{background:linear-gradient(135deg,#7399C6,#4F8B72)}
-.modal-header--error{background:linear-gradient(135deg,#DC2626,#B91C1C)}
-.modal-title{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px}
-.modal-close{width:36px;height:36px;border-radius:10px;border:none;background:rgba(255,255,255,0.2);cursor:pointer;font-size:20px;color:#fff}
-.modal-body{padding:24px}
-.modal-footer{padding:18px 26px;border-top:1px solid #E2E8F0;display:flex;justify-content:flex-end;gap:12px;background:#F8FAFC;border-radius:0 0 20px 20px}
-.success-card{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:8px 0}
-.success-icon{width:56px;height:56px;border-radius:18px;background:#E8F0F8;color:#7399C6;display:flex;align-items:center;justify-content:center;font-size:28px}
-.success-icon--error{background:#FEE2E2;color:#DC2626}
-.success-text{font-size:15px;font-weight:600;color:#1E293B;line-height:1.6}
-.text-muted{color:#94A3B8}
-.text-sm{font-size:12px}
-.tag{display:inline-flex;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600}
-.tag.danger{background:#FEE2E2;color:#991B1B}
-.tag.warning{background:#FEF3C7;color:#92400E}
-.tag.success{background:#D1FAE5;color:#065F46}
+.page-schedule { color: #1e293b; }
+.schedule-banner { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 16px 20px; border-radius: 12px; background: linear-gradient(135deg, #fef3c7, #fde68a); }
+.schedule-banner__icon { display: inline-flex; align-items: center; justify-content: center; font-size: 32px; color: #d97706; }
+.schedule-banner__content { flex: 1; }
+.schedule-banner__title { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-weight: 600; color: #92400e; }
+.schedule-banner__sub { font-size: 13px; color: #b45309; }
+.schedule-banner__tag { display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 999px; background: #dc2626; color: #fff; font-size: 12px; font-weight: 600; }
+.card { margin-bottom: 20px; background: #fff; border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--card-shadow); }
+.card-header { display: flex; align-items: center; gap: 12px; padding: 18px 22px; background: linear-gradient(135deg, #e8f0f8, #dbeafe); border-radius: 16px 16px 0 0; }
+.card-header--warning { background: linear-gradient(135deg, #fef3c7, #fde68a); }
+.card-body { padding: 22px; }
+.card-title { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: #0f172a; }
+.card-title--warning { color: #92400e; }
+.card-tag { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 999px; background: #e2e8f0; color: #475569; font-size: 12px; font-weight: 600; }
+.card-tag--warning { margin-left: 8px; background: #dc2626; color: #fff; }
+.card-range { margin-left: auto; font-size: 13px; font-weight: 500; color: var(--primary); }
+.card-range--warning { color: #92400e; }
+.status-shell { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.mentor-summary { display: flex; align-items: center; gap: 16px; }
+.user-avatar { width: 50px; height: 50px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--primary-gradient); color: #fff; font-size: 18px; font-weight: 700; }
+.mentor-name { font-weight: 600; color: #0f172a; }
+.mentor-meta { margin-top: 4px; font-size: 13px; color: var(--muted); }
+.status-metrics { display: flex; gap: 24px; text-align: center; }
+.status-metric__value { font-size: 24px; font-weight: 700; }
+.status-metric__value--hours { color: #22c55e; }
+.status-metric__value--days { color: #3b82f6; }
+.status-metric__value--pending { color: #d97706; }
+.status-metric__label { margin-top: 4px; font-size: 12px; color: var(--muted); }
+.schedule-stats { display: flex; gap: 24px; margin-bottom: 20px; padding: 16px; border-radius: 10px; background: #f8fafc; }
+.schedule-stat { flex: 1; text-align: center; }
+.schedule-stat:first-child { border-right: 1px solid var(--border); }
+.schedule-stat__value { font-size: 28px; font-weight: 700; color: var(--primary); }
+.schedule-stat__value--success { color: #22c55e; }
+.schedule-stat__label { margin-top: 4px; font-size: 12px; color: var(--muted); }
+.readonly-block { margin-bottom: 4px; }
+.form-group { margin-bottom: 24px; }
+.form-label { display: block; margin-bottom: 12px; font-size: 13px; font-weight: 600; color: var(--text2); }
+.form-label--large { font-size: 15px; }
+.form-label i { margin-right: 6px; }
+.form-label-note { font-size: 12px; font-weight: 400; color: var(--muted); }
+.required-mark { color: var(--danger); }
+.readonly-grid, .editable-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+.editable-grid { gap: 12px; }
+.readonly-day, .editable-day { text-align: center; border-radius: 12px; }
+.readonly-day { padding: 12px 6px; border: 1px dashed #cbd5e1; background: #f8fafc; }
+.readonly-day--holiday { border-color: #dc2626; background: #fee2e2; }
+.readonly-day--weekend { border-color: #22c55e; background: #dcfce7; }
+.editable-day { padding: 16px 8px; border: 2px dashed #d97706; background: #fef3c7; }
+.editable-day--holiday { border-color: #dc2626; background: #fee2e2; }
+.editable-day--weekend { border-color: #22c55e; background: #dcfce7; }
+.readonly-day__label, .editable-day__label { margin-bottom: 4px; font-size: 14px; font-weight: 700; color: #0f172a; }
+.readonly-day__date, .editable-day__date { margin-bottom: 10px; font-size: 12px; color: var(--muted); }
+.readonly-day--holiday .readonly-day__label, .readonly-day--holiday .readonly-day__date, .editable-day--holiday .editable-day__label, .editable-day--holiday .editable-day__date { color: #dc2626; }
+.readonly-day--weekend .readonly-day__label, .readonly-day--weekend .readonly-day__date, .editable-day--weekend .editable-day__label, .editable-day--weekend .editable-day__date { color: #166534; }
+.readonly-day__value { font-size: 11px; color: #64748b; }
+.slot-list { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.slot-option { display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; }
+.hours-row { display: flex; align-items: center; gap: 12px; }
+.form-input { width: 120px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: #fff; font-size: 20px; font-weight: 700; text-align: center; }
+.form-input--hours { border-width: 2px; border-color: #d97706; }
+.hours-unit { font-size: 15px; color: var(--muted); }
+.hours-quick-actions { display: flex; gap: 8px; margin-left: 24px; }
+.btn { border: none; border-radius: 10px; padding: 10px 20px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.btn-sm { padding: 8px 14px; }
+.btn-outline { background: #fff; border: 1px solid var(--border); color: var(--text2); }
+.btn-primary { color: #fff; background: var(--primary-gradient); box-shadow: 0 4px 12px rgba(115, 153, 198, 0.3); }
+.btn-primary--warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.editable-note { display: flex; align-items: center; gap: 4px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+.form-textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; resize: vertical; font-size: 14px; color: #0f172a; }
+.form-footer { display: flex; align-items: center; gap: 12px; padding-top: 16px; border-top: 1px solid var(--border); }
+.form-footer__warning { margin-left: auto; display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--danger); }
+@media (max-width: 1280px) { .readonly-grid, .editable-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 960px) {
+  .status-shell, .hours-row, .form-footer { flex-direction: column; align-items: stretch; }
+  .status-metrics, .hours-quick-actions { margin-left: 0; justify-content: space-between; }
+  .card-range { margin-left: 0; }
+}
+@media (max-width: 720px) {
+  .readonly-grid, .editable-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .schedule-banner, .card-header { flex-direction: column; align-items: flex-start; }
+}
 </style>

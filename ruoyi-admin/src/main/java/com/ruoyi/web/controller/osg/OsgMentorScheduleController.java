@@ -1,40 +1,123 @@
 package com.ruoyi.web.controller.osg;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
+
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.common.core.domain.model.LoginUser;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.SecurityUtils;
-import com.ruoyi.system.domain.OsgMentorSchedule;
-import com.ruoyi.system.service.IOsgMentorScheduleService;
+import com.ruoyi.system.service.impl.OsgLeadMentorScheduleService;
+import com.ruoyi.system.service.impl.OsgMentorAccessService;
+
 @RestController
 @RequestMapping("/mentor/schedule")
-public class OsgMentorScheduleController extends BaseController {
-    @Autowired private IOsgMentorScheduleService service;
+public class OsgMentorScheduleController extends BaseController
+{
+    private static final String ACCESS_DENIED_MESSAGE = "该账号无导师端访问权限";
+
+    @Autowired
+    private OsgLeadMentorScheduleService scheduleService;
+
+    @Autowired
+    private OsgMentorAccessService mentorAccessService;
 
     @GetMapping
-    public AjaxResult current() {
-        return success(service.selectByMentorAndWeek(SecurityUtils.getUserId(), getCurrentWeekStart()));
+    public AjaxResult schedule(@RequestParam(value = "weekScope", required = false) String weekScope)
+    {
+        if (!hasMentorAccess())
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, ACCESS_DENIED_MESSAGE);
+        }
+
+        try
+        {
+            return AjaxResult.success(scheduleService.selectScheduleView(resolveUser(), weekScope));
+        }
+        catch (ServiceException ex)
+        {
+            return handleServiceException(ex);
+        }
     }
-    @PutMapping
-    public AjaxResult save(@RequestBody OsgMentorSchedule r) {
-        r.setMentorId(SecurityUtils.getUserId());
-        r.setCreateBy(SecurityUtils.getUsername());
-        r.setUpdateBy(SecurityUtils.getUsername());
-        return toAjax(service.saveOrUpdate(r));
+
+    @GetMapping("/status")
+    public AjaxResult status()
+    {
+        if (!hasMentorAccess())
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, ACCESS_DENIED_MESSAGE);
+        }
+
+        try
+        {
+            return AjaxResult.success(scheduleService.selectStatusView(resolveUser()));
+        }
+        catch (ServiceException ex)
+        {
+            return handleServiceException(ex);
+        }
     }
-    @GetMapping("/last-week")
-    public AjaxResult lastWeek() {
-        return success(service.selectByMentorAndWeek(SecurityUtils.getUserId(), getLastWeekStart()));
+
+    @PutMapping("/next")
+    public AjaxResult saveNext(@RequestBody(required = false) Map<String, Object> body)
+    {
+        if (!hasMentorAccess())
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, ACCESS_DENIED_MESSAGE);
+        }
+
+        try
+        {
+            return AjaxResult.success("导师下周排期已保存",
+                scheduleService.saveNextSchedule(resolveUser(), resolveOperator(), body));
+        }
+        catch (ServiceException ex)
+        {
+            return handleServiceException(ex);
+        }
     }
-    private String getCurrentWeekStart() {
-        Calendar c = Calendar.getInstance(); c.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
-        return new SimpleDateFormat("yyyy-MM-dd").format(c.getTime());
+
+    private boolean hasMentorAccess()
+    {
+        return mentorAccessService.hasMentorAccess(resolveUser());
     }
-    private String getLastWeekStart() {
-        Calendar c = Calendar.getInstance(); c.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY); c.add(Calendar.WEEK_OF_YEAR, -1);
-        return new SimpleDateFormat("yyyy-MM-dd").format(c.getTime());
+
+    private SysUser resolveUser()
+    {
+        LoginUser loginUser = SecurityUtils.getLoginUser();
+        return loginUser == null ? null : loginUser.getUser();
+    }
+
+    private String resolveOperator()
+    {
+        try
+        {
+            return getUsername();
+        }
+        catch (ServiceException ex)
+        {
+            SysUser user = resolveUser();
+            return user == null ? "system" : user.getUserName();
+        }
+    }
+
+    private AjaxResult handleServiceException(ServiceException ex)
+    {
+        String message = ex.getMessage();
+        if (message != null && (message.contains("无权") || message.contains("仅允许")))
+        {
+            return AjaxResult.error(HttpStatus.FORBIDDEN, message);
+        }
+        return AjaxResult.error(HttpStatus.BAD_REQUEST, message);
     }
 }

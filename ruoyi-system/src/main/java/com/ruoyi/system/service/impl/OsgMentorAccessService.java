@@ -121,7 +121,6 @@ public class OsgMentorAccessService
     {
         return exists("select count(1) from osg_job_coaching where del_flag = '0' and mentor_id = ?", userId)
                 || exists("select count(1) from osg_class_record where del_flag = '0' and mentor_id = ?", userId)
-                || exists("select count(1) from osg_mentor_schedule where del_flag = '0' and mentor_id = ?", userId)
                 || exists("select count(1) from osg_mock_practice where del_flag = '0' and find_in_set(?, mentor_ids)", String.valueOf(userId));
     }
 

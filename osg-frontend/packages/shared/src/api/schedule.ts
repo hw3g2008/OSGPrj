@@ -41,16 +41,39 @@ export interface LeadMentorScheduleSaveResult extends LeadMentorScheduleView {
   affectedRows: number
 }
 
-export function getLeadMentorSchedule(weekScope: 'current' | 'next'): Promise<LeadMentorScheduleView> {
-  return http.get('/lead-mentor/schedule', { params: { weekScope } })
+export interface StaffScheduleApi {
+  getSchedule(weekScope: 'current' | 'next'): Promise<LeadMentorScheduleView>
+  getStatus(): Promise<LeadMentorScheduleStatusView>
+  saveNext(payload: LeadMentorScheduleSavePayload): Promise<LeadMentorScheduleSaveResult>
 }
 
-export function getLeadMentorScheduleStatus(): Promise<LeadMentorScheduleStatusView> {
-  return http.get('/lead-mentor/schedule/status')
+function createStaffScheduleApi(basePath: string): StaffScheduleApi {
+  return {
+    getSchedule(weekScope) {
+      return http.get(basePath, { params: { weekScope } })
+    },
+    getStatus() {
+      return http.get(`${basePath}/status`)
+    },
+    saveNext(payload) {
+      return http.put(`${basePath}/next`, payload)
+    },
+  }
 }
 
-export function saveLeadMentorNextSchedule(
-  payload: LeadMentorScheduleSavePayload,
-): Promise<LeadMentorScheduleSaveResult> {
-  return http.put('/lead-mentor/schedule/next', payload)
+export const leadMentorScheduleApi = createStaffScheduleApi('/lead-mentor/schedule')
+export const mentorScheduleApi = createStaffScheduleApi('/mentor/schedule')
+export const assistantScheduleApi = createStaffScheduleApi('/assistant/schedule')
+
+// Back-compat named exports used by lead-mentor pages and existing tests.
+export function getLeadMentorSchedule(weekScope: 'current' | 'next') {
+  return leadMentorScheduleApi.getSchedule(weekScope)
+}
+
+export function getLeadMentorScheduleStatus() {
+  return leadMentorScheduleApi.getStatus()
+}
+
+export function saveLeadMentorNextSchedule(payload: LeadMentorScheduleSavePayload) {
+  return leadMentorScheduleApi.saveNext(payload)
 }

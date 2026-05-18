@@ -33,7 +33,8 @@ public class OsgLeadMentorScheduleService
 {
     private static final List<String> SLOT_ORDER = Arrays.asList("morning", "afternoon", "evening");
     private static final DateTimeFormatter MONTH_DAY_FORMATTER = DateTimeFormatter.ofPattern("MM/dd");
-    private static final String DEFAULT_REASON = "班主任自主更新排期";
+    private static final String DEFAULT_REASON = "员工自主更新排期";
+    private static final Set<String> SUPPORTED_STAFF_TYPES = Set.of("lead_mentor", "mentor", "assistant");
 
     @Autowired
     private OsgStaffMapper staffMapper;
@@ -212,30 +213,30 @@ public class OsgLeadMentorScheduleService
     {
         if (user == null)
         {
-            throw new ServiceException("班主任排期不存在");
+            throw new ServiceException("员工排期不存在");
         }
 
         String email = StringUtils.trimToNull(user.getEmail());
         if (email == null)
         {
-            throw new ServiceException("班主任排期不存在");
+            throw new ServiceException("员工排期不存在");
         }
+
+        String placeholders = String.join(",", Collections.nCopies(SUPPORTED_STAFF_TYPES.size(), "?"));
+        List<Object> args = new ArrayList<>();
+        args.add(email);
+        args.addAll(SUPPORTED_STAFF_TYPES);
 
         Long staffId;
         try
         {
             staffId = jdbcTemplate.queryForObject(
-                """
-                    select staff_id
-                    from osg_staff
-                    where email = ?
-                      and staff_type = 'lead_mentor'
-                      and (account_status is null or account_status <> 'frozen')
-                    order by staff_id asc
-                    limit 1
-                    """,
+                "select staff_id from osg_staff where email = ? and staff_type in ("
+                    + placeholders
+                    + ") and (account_status is null or account_status <> 'frozen')"
+                    + " order by staff_id asc limit 1",
                 Long.class,
-                email
+                args.toArray()
             );
         }
         catch (EmptyResultDataAccessException ex)
@@ -245,13 +246,13 @@ public class OsgLeadMentorScheduleService
 
         if (staffId == null)
         {
-            throw new ServiceException("班主任排期不存在");
+            throw new ServiceException("员工排期不存在");
         }
 
         OsgStaff staff = staffMapper.selectStaffByStaffId(staffId);
         if (staff == null)
         {
-            throw new ServiceException("班主任排期不存在");
+            throw new ServiceException("员工排期不存在");
         }
 
         return new StaffContext(staffId, staff, user);
@@ -262,7 +263,7 @@ public class OsgLeadMentorScheduleService
         Long requestedStaffId = asLong(body.get("staffId"));
         if (requestedStaffId != null && !Objects.equals(requestedStaffId, ownStaffId))
         {
-            throw new ServiceException("仅允许提交本人下周排期");
+            throw new ServiceException("仅允许提交本人排期");
         }
     }
 

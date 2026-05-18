@@ -1,9 +1,6 @@
 <template>
   <div id="page-schedule" class="page-schedule" data-page="profile-schedule">
-    <PageHeader
-      :title-zh="t('leadMentor.schedule.k21')"
-      title-en="My Schedule"
-    />
+    <PageHeader :title-zh="t('leadMentor.schedule.k21')" />
 
     <section class="schedule-banner" :aria-label="t('leadMentor.schedule.k44')">
       <div class="schedule-banner__icon">
